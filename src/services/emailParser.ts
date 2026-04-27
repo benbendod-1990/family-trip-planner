@@ -22,6 +22,37 @@ function text(msg: GmailMessage): string {
   return `${msg.subject} ${msg.snippet} ${msg.body}`.replace(/<[^>]*>/g, ' ')
 }
 
+const TICKET_URL_KEYWORDS = /manage|booking|ticket|reservation|pnr|check.?in|eticket|e-ticket|my.?trip|itinerary|boarding/i
+const JUNK_URL_RE = /unsubscribe|tracking|track\.|\/track\/|click\.|gstatic|googleusercontent|facebook|twitter|instagram|linkedin|youtube|mailchimp|sendgrid|sailthru|emltrk|pixel|beacon/i
+
+function extractUrls(body: string): string[] {
+  const urls = new Set<string>()
+  for (const m of body.matchAll(/href\s*=\s*["']([^"']+)["']/gi)) {
+    if (m[1].startsWith('http')) urls.add(m[1])
+  }
+  for (const m of body.matchAll(/https?:\/\/[^\s<>"')\]]+/gi)) {
+    urls.add(m[0].replace(/[.,;:]+$/, ''))
+  }
+  return [...urls]
+}
+
+function findTicketUrl(body: string, fromEmail: string): string | undefined {
+  const candidates = extractUrls(body).filter(u => !JUNK_URL_RE.test(u))
+  if (!candidates.length) return undefined
+
+  const senderDomain = fromEmail.split('@')[1]?.toLowerCase().split('.').slice(-2).join('.')
+
+  const keywordHit = candidates.find(u => TICKET_URL_KEYWORDS.test(u))
+  if (keywordHit) return keywordHit
+
+  if (senderDomain) {
+    const domainHit = candidates.find(u => u.toLowerCase().includes(senderDomain))
+    if (domainHit) return domainHit
+  }
+
+  return candidates[0]
+}
+
 function isoDate(raw: string): string {
   const d = new Date(raw)
   return isNaN(d.getTime()) ? '' : d.toISOString().slice(0, 10)
@@ -330,6 +361,7 @@ export function parseEmails(messages: GmailMessage[]): ParsedEmail[] {
     const base = { subject: msg.subject, from: msg.from, date: msg.date }
 
     if (type === 'flight') {
+      const ticketUrl = findTicketUrl(msg.body, msg.from)
       const isElAl = /el\s*al|elal-ticketing/i.test(`${msg.from} ${msg.subject} ${txt.slice(0, 500)}`)
       if (isElAl) {
         const flights = parseElAlFlights(txt)
@@ -339,12 +371,12 @@ export function parseEmails(messages: GmailMessage[]): ParsedEmail[] {
             messageId: `${msg.id}:${i}`,
             subject: `${msg.subject} — ${flight.flightNumber} ${flight.departureAirport}→${flight.arrivalAirport}`,
             type: 'flight' as const,
-            flight,
+            flight: { ...flight, ticketUrl },
           }))
         }
       }
       const flight = parseFlightFromText(txt, msg.from)
-      if (flight) return [{ ...base, messageId: msg.id, type: 'flight', flight }]
+      if (flight) return [{ ...base, messageId: msg.id, type: 'flight', flight: { ...flight, ticketUrl } }]
     }
 
     if (type === 'accommodation') {

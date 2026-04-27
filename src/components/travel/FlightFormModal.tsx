@@ -40,6 +40,7 @@ export default function FlightFormModal({ open, onClose, tripId, editFlight }: P
   const [cabinClass, setCabinClass] = useState<CabinClass>(editFlight?.cabinClass ?? 'economy')
   const [confirmationNumber, setConfirmationNumber] = useState(editFlight?.confirmationNumber ?? '')
   const [baggageIncluded, setBaggageIncluded] = useState(editFlight?.baggageIncluded ?? false)
+  const [ticketUrl, setTicketUrl] = useState(editFlight?.ticketUrl ?? '')
 
   const handleSave = () => {
     if (!airline.trim() || !flightNumber.trim()) return
@@ -47,6 +48,7 @@ export default function FlightFormModal({ open, onClose, tripId, editFlight }: P
       airline, flightNumber, departureAirport, arrivalAirport,
       departureTime, arrivalTime, cost: Number(cost), currency,
       direction, cabinClass, confirmationNumber: confirmationNumber || undefined, baggageIncluded,
+      ticketUrl: ticketUrl.trim() || undefined,
     }
     if (editFlight) {
       updateFlight(tripId, editFlight.id, data)
@@ -86,6 +88,13 @@ export default function FlightFormModal({ open, onClose, tripId, editFlight }: P
           </Select>
         </Stack>
         <Input label="מספר אישור" value={confirmationNumber} onChange={e => setConfirmationNumber(e.target.value)} placeholder="ABC123" />
+        <Input
+          label="לינק לכרטיס / ניהול הזמנה"
+          value={ticketUrl}
+          onChange={e => setTicketUrl(e.target.value)}
+          placeholder="https://..."
+          type="url"
+        />
         <Switch label="כבודה כלולה" checked={baggageIncluded} onChange={checked => setBaggageIncluded(checked)} />
         <Stack direction="row" justify="end" spacing="sm">
           <Button variant="ghost" onClick={onClose}>ביטול</Button>

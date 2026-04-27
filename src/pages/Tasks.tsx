@@ -14,13 +14,19 @@ import {
 } from 'myk-library'
 import { DataTable } from 'myk-library'
 import type { ColumnDef } from 'myk-library'
-import { Plus, Pencil, Trash2, ListTodo } from 'lucide-react'
+import { Plus, Pencil, Trash2, ListTodo, History } from 'lucide-react'
 import styled from 'styled-components'
 import { useTripStore } from '@/stores/tripStore'
 import { useBreakpoint } from '@/hooks/useBreakpoint'
 import type { TripTask } from '@/types/task'
 import { formatDateISO, formatDateShort } from '@/utils/date'
 import TaskFormModal from '@/components/tasks/TaskFormModal'
+import { format, parseISO } from 'date-fns'
+import { he } from 'date-fns/locale'
+
+const formatCompletedAt = (iso: string): string => {
+  try { return format(parseISO(iso), 'd MMM HH:mm', { locale: he }) } catch { return iso }
+}
 
 const PageWrapper = styled.div<{ $mobile: boolean }>`
   padding: ${({ $mobile }) => ($mobile ? '12px' : '24px')};
@@ -54,6 +60,13 @@ export default function Tasks() {
   }, [trip?.family])
 
   const allTasks = trip?.tasks ?? EMPTY_TASKS
+
+  const recentlyCompleted = useMemo(() => {
+    return allTasks
+      .filter(t => t.done && t.completedAt)
+      .sort((a, b) => (b.completedAt ?? '').localeCompare(a.completedAt ?? ''))
+      .slice(0, 5)
+  }, [allTasks])
 
   const { filteredTasks, openCount, doneCount, overdueCount } = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -129,13 +142,20 @@ export default function Tasks() {
     },
     {
       key: 'dueDate',
-      header: 'עד',
-      width: 140,
+      header: 'עד / בוצע',
+      width: 160,
       cell: (t) => {
+        if (t.done && t.completedAt) {
+          return (
+            <Badge size="sm" variant="success">
+              ✓ {formatCompletedAt(t.completedAt)}
+            </Badge>
+          )
+        }
         if (!t.dueDate) return '—'
         const isOverdue = !t.done && t.dueDate < todayISO
         const isToday = t.dueDate === todayISO
-        const variant = t.done ? 'success' : isOverdue ? 'error' : isToday ? 'warning' : 'default'
+        const variant = isOverdue ? 'error' : isToday ? 'warning' : 'default'
         return (
           <Badge size="sm" variant={variant}>
             {formatDateShort(t.dueDate)}
@@ -268,6 +288,35 @@ export default function Tasks() {
               />
             )}
           />
+        </Box>
+      )}
+
+      {recentlyCompleted.length > 0 && (
+        <Box>
+          <Stack direction="row" spacing="xs" align="center" style={{ marginBottom: 8 }}>
+            <History size={14} />
+            <Typography variant="body2" style={{ fontWeight: 600 }}>בוצעו לאחרונה</Typography>
+          </Stack>
+          <Stack direction="column" spacing="xs">
+            {recentlyCompleted.map(t => {
+              const m = t.assignedTo ? familyById.get(t.assignedTo) : undefined
+              return (
+                <Stack key={t.id} direction="row" spacing="sm" align="center" style={{ flexWrap: 'wrap' }}>
+                  <Typography variant="body2" style={{ textDecoration: 'line-through', color: '#6b7280' }}>
+                    ✓ {t.title}
+                  </Typography>
+                  {t.completedAt && (
+                    <Badge size="sm" variant="success">{formatCompletedAt(t.completedAt)}</Badge>
+                  )}
+                  {m && (
+                    <Typography variant="caption" style={{ color: '#6b7280' }}>
+                      {m.emoji} {m.name}
+                    </Typography>
+                  )}
+                </Stack>
+              )
+            })}
+          </Stack>
         </Box>
       )}
 

@@ -6,9 +6,10 @@ import { formatDateHe } from '@/utils/date'
 import type { TripDay, TripEvent } from '@/types/trip'
 import EventFormModal from './EventFormModal'
 import WeatherBadge from './WeatherBadge'
-import { Plus, Pencil, Trash2 } from 'lucide-react'
+import { Plus, Pencil, Trash2, Navigation } from 'lucide-react'
 import styled from 'styled-components'
 import type { DayWeather } from '@/services/weatherService'
+import { wazeUrl } from '@/utils/maps'
 
 const CATEGORY_COLORS: Record<string, string> = {
   activity: '#f59e0b',
@@ -63,7 +64,19 @@ export default function DayColumn({ day, tripId, dayIndex, weather }: Props) {
         </Stack>
         <Badge size="sm" variant="default">{CATEGORY_LABEL[event.category]}</Badge>
         {event.location && (
-          <Typography variant="body2" style={{ color: '#6b7280' }}>📍 {event.location}</Typography>
+          <Stack direction="row" spacing="xs" align="center" style={{ flexWrap: 'wrap' }}>
+            <Typography variant="body2" style={{ color: '#6b7280' }}>📍 {event.location}</Typography>
+            <a
+              href={wazeUrl(event.location)}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 4, color: '#2563eb', fontSize: 13, textDecoration: 'none' }}
+              aria-label={`נווט ל-${event.location} ב-Waze`}
+            >
+              <Navigation size={13} />
+              <span>Waze</span>
+            </a>
+          </Stack>
         )}
         {event.cost !== undefined && (
           <Typography variant="body2" style={{ color: '#059669' }}>₪{event.cost.toLocaleString()}</Typography>

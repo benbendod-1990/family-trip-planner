@@ -49,4 +49,5 @@ export interface Flight {
   cabinClass: CabinClass
   confirmationNumber?: string
   baggageIncluded?: boolean
+  ticketUrl?: string
 }

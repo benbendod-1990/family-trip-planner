@@ -10,10 +10,11 @@ import AccommodationFormModal from '@/components/travel/AccommodationFormModal'
 import CarRentalFormModal from '@/components/travel/CarRentalFormModal'
 import GmailSyncModal from '@/components/gmail/GmailSyncModal'
 import type { Flight, Accommodation, CarRental, CarCategory } from '@/types/accommodation'
-import { Plus, Pencil, Trash2, Plane, Hotel, Car, Mail } from 'lucide-react'
+import { Plus, Pencil, Trash2, Plane, Hotel, Car, Mail, Navigation, Ticket } from 'lucide-react'
 import styled from 'styled-components'
 import { parseISO, format } from 'date-fns'
 import { he } from 'date-fns/locale'
+import { wazeUrl } from '@/utils/maps'
 
 const PageWrapper = styled.div<{ $mobile: boolean }>`
   padding: ${({ $mobile }) => ($mobile ? '12px' : '24px')};
@@ -196,6 +197,17 @@ function FlightCard({ flight, tripId, onEdit, onDelete, isMobile }: { flight: Fl
             {flight.baggageIncluded && <Chip size="sm" variant="success">כבודה כלולה</Chip>}
             {flight.confirmationNumber && <Chip size="sm">{flight.confirmationNumber}</Chip>}
           </Stack>
+          {flight.ticketUrl && (
+            <a
+              href={flight.ticketUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: '#2563eb', fontSize: 14, textDecoration: 'none' }}
+            >
+              <Ticket size={14} />
+              <span>פתח כרטיס טיסה</span>
+            </a>
+          )}
         </Stack>
         <Stack direction={isMobile ? 'row' : 'column'} align={isMobile ? 'center' : 'end'} justify={isMobile ? 'between' : undefined} spacing="xs" style={isMobile ? { width: '100%' } : undefined}>
           <Typography variant="h6" style={{ margin: 0, color: '#059669' }}>
@@ -211,6 +223,21 @@ function FlightCard({ flight, tripId, onEdit, onDelete, isMobile }: { flight: Fl
   )
 }
 
+function WazeLink({ address }: { address: string }) {
+  return (
+    <a
+      href={wazeUrl(address)}
+      target="_blank"
+      rel="noopener noreferrer"
+      style={{ display: 'inline-flex', alignItems: 'center', gap: 4, color: '#2563eb', fontSize: 13, textDecoration: 'none' }}
+      aria-label={`נווט ל-${address} ב-Waze`}
+    >
+      <Navigation size={13} />
+      <span>Waze</span>
+    </a>
+  )
+}
+
 function CarRentalCard({ rental, tripId, onEdit, onDelete, isMobile }: { rental: CarRental; tripId: string; onEdit: (r: CarRental) => void; onDelete: (tid: string, rid: string) => void; isMobile: boolean }) {
   return (
     <Card variant="outlined" padding="md">
@@ -222,10 +249,16 @@ function CarRentalCard({ rental, tripId, onEdit, onDelete, isMobile }: { rental:
             <Badge size="sm" variant="info">{CAR_CATEGORY_LABEL[rental.carCategory]}</Badge>
           </Stack>
           {rental.carModel && <Typography variant="body2" style={{ color: '#6b7280' }}>🚗 {rental.carModel}</Typography>}
-          <Typography variant="body2">
-            📍 {rental.pickupLocation}
-            {rental.dropoffLocation && rental.dropoffLocation !== rental.pickupLocation && ` → ${rental.dropoffLocation}`}
-          </Typography>
+          <Stack direction="row" spacing="xs" align="center" style={{ flexWrap: 'wrap' }}>
+            <Typography variant="body2">
+              📍 {rental.pickupLocation}
+              {rental.dropoffLocation && rental.dropoffLocation !== rental.pickupLocation && ` → ${rental.dropoffLocation}`}
+            </Typography>
+            {rental.pickupLocation && <WazeLink address={rental.pickupLocation} />}
+            {rental.dropoffLocation && rental.dropoffLocation !== rental.pickupLocation && (
+              <WazeLink address={rental.dropoffLocation} />
+            )}
+          </Stack>
           <Typography variant="body2" style={{ color: '#6b7280' }}>
             {formatDateOnly(rental.pickupDate)} – {formatDateOnly(rental.dropoffDate)}
           </Typography>
@@ -259,7 +292,12 @@ function AccCard({ acc, tripId, onEdit, onDelete, isMobile }: { acc: Accommodati
             <Typography variant="body1" style={{ fontWeight: 600 }}>{acc.name}</Typography>
             <Badge size="sm">{TYPE_LABEL[acc.type]}</Badge>
           </Stack>
-          {acc.address && <Typography variant="body2" style={{ color: '#6b7280' }}>📍 {acc.address}</Typography>}
+          {acc.address && (
+            <Stack direction="row" spacing="xs" align="center" style={{ flexWrap: 'wrap' }}>
+              <Typography variant="body2" style={{ color: '#6b7280' }}>📍 {acc.address}</Typography>
+              <WazeLink address={acc.address} />
+            </Stack>
+          )}
           <Typography variant="body2">
             ✅ {formatDateOnly(acc.checkIn)} – 🏁 {formatDateOnly(acc.checkOut)}
           </Typography>
