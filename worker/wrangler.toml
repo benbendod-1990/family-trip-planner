@@ -8,7 +8,7 @@ workers_dev = true
 
 # Secrets (set via `wrangler secret put <KEY>`):
 #   ANTHROPIC_API_KEY — Claude API key (required)
-#   SUPABASE_JWT_SECRET — Supabase JWT secret, used to verify tokens from browser (required)
+#   SUPABASE_JWT_SECRET — only for legacy projects on HS256 (modern Supabase uses ES256/JWKS)
 #   SHARED_API_SECRET — optional fallback shared secret for dev/test
 
 # Dev-only config (loaded from .dev.vars; keep it out of git)
@@ -16,3 +16,4 @@ workers_dev = true
 
 [vars]
 ALLOWED_ORIGIN = "http://localhost:3002,https://family-trip-planner-end.pages.dev"
+SUPABASE_URL = "https://fmybfgryipzlfukirizp.supabase.co"

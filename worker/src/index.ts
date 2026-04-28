@@ -8,6 +8,7 @@ import { runItineraryParse, type ItineraryParseRequest } from './itinerary'
 
 export interface Env {
   ANTHROPIC_API_KEY: string
+  SUPABASE_URL?: string
   SUPABASE_JWT_SECRET?: string
   SHARED_API_SECRET?: string
   ALLOWED_ORIGIN: string
