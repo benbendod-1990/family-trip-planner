@@ -1,5 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import Home from './pages/Home'
+import Login from './pages/Login'
+import Quickstart from './pages/Quickstart'
 import Dashboard from './pages/Dashboard'
 import Itinerary from './pages/Itinerary'
 import Family from './pages/Family'
@@ -15,6 +17,8 @@ function App() {
   return (
     <Routes>
       <Route path="/" element={<Home />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/quickstart" element={<Quickstart />} />
       <Route path="/profile" element={<FamilyProfile />} />
       <Route path="/trip/:id" element={<AppLayout />}>
         <Route index element={<Navigate to="dashboard" replace />} />

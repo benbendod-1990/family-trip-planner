@@ -1,0 +1,13 @@
+# Copy to `.dev.vars` for local `wrangler dev` and fill in real values.
+# .dev.vars is in .gitignore — never commit real secrets.
+
+# From https://console.anthropic.com/ — this is what Ben already has.
+ANTHROPIC_API_KEY=sk-ant-...
+
+# From Supabase → Settings → API → JWT Settings → "JWT Secret"
+# Used to verify the access_token from the browser (RS256 or HS256 depending on project).
+SUPABASE_JWT_SECRET=your-supabase-jwt-secret
+
+# Optional: simpler auth for dev/testing (client sends `x-api-secret` header).
+# If set, requests can bypass Supabase JWT check with this value.
+SHARED_API_SECRET=change-me-for-dev

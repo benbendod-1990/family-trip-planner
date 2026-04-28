@@ -4,6 +4,7 @@ import { useTripStore } from '@/stores/tripStore'
 import { useBreakpoint } from '@/hooks/useBreakpoint'
 import { useWeather } from '@/hooks/useWeather'
 import DayColumn from '@/components/itinerary/DayColumn'
+import SmartAddBar from '@/components/itinerary/SmartAddBar'
 import GmailSyncModal from '@/components/gmail/GmailSyncModal'
 import AiItineraryModal from '@/components/ai/AiItineraryModal'
 import { Stack, Typography, Badge, Button, Grid } from 'myk-library'
@@ -111,6 +112,10 @@ export default function Itinerary() {
           ))}
         </div>
       )}
+
+      <div style={{ padding: `12px ${isMobile ? '12px' : '24px'} 0` }}>
+        <SmartAddBar trip={trip} />
+      </div>
 
       <GridWrapper $mobile={isMobile}>
         <Grid columns="repeat(auto-fit, minmax(280px, 1fr))" gap="md" autoFlow="row">

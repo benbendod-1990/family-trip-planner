@@ -8,6 +8,24 @@ export interface DayWeather {
   precipitation: number
 }
 
+export async function reverseGeocode(coords: TripCoords): Promise<{ name?: string; address?: string } | null> {
+  try {
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?lat=${coords.lat}&lon=${coords.lon}&format=json`,
+      { headers: { 'Accept-Language': 'he,en', 'User-Agent': 'myk-trip-plan/1.0' } }
+    )
+    if (!res.ok) return null
+    const data = await res.json()
+    if (!data) return null
+    const a = data.address ?? {}
+    const name =
+      data.name || a.attraction || a.tourism || a.amenity || a.shop || a.building || undefined
+    return { name, address: data.display_name as string | undefined }
+  } catch {
+    return null
+  }
+}
+
 export async function geocodeDestination(destination: string): Promise<TripCoords | null> {
   // Nominatim (OpenStreetMap) — supports Hebrew and all languages
   try {

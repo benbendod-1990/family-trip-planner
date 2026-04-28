@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Card, Badge, Stack, Chip, ActionIcon, Typography } from 'myk-library'
 import { useNavigate } from 'react-router-dom'
-import { Trash2, Calendar, Download, Archive } from 'lucide-react'
+import { Trash2, Calendar, Download, Archive, Users } from 'lucide-react'
 import { useTripStore } from '@/stores/tripStore'
 import { formatDateShort, getTripDuration } from '@/utils/date'
 import styled from 'styled-components'
@@ -9,6 +9,8 @@ import type { TripPlan } from '@/types/trip-plan'
 import { exportTripAsJSON } from '@/utils/export'
 import PostTripDebriefModal from '@/components/archive/PostTripDebriefModal'
 import { useArchiveStore } from '@/stores/archiveStore'
+import InviteMemberModal from '@/components/cloud/InviteMemberModal'
+import { useAuth } from '@/lib/AuthContext'
 
 const Emoji = styled.div`
   font-size: 48px;
@@ -26,6 +28,8 @@ export default function TripCard({ trip }: Props) {
   const archivedTrips = useArchiveStore(s => s.archivedTrips)
   const duration = getTripDuration(trip.startDate, trip.endDate)
   const [showDebrief, setShowDebrief] = useState(false)
+  const [showInvite, setShowInvite] = useState(false)
+  const { session } = useAuth()
   const isArchived = archivedTrips.some(a => a.id === trip.id)
 
   const handleDelete = (e: React.MouseEvent) => {
@@ -46,6 +50,17 @@ export default function TripCard({ trip }: Props) {
     >
       <div style={{ position: 'absolute', top: 12, left: 12 }}>
         <Stack direction="row" spacing="xs">
+          {session && (
+            <ActionIcon
+              variant="subtle"
+              size="sm"
+              onClick={(e: React.MouseEvent) => { e.stopPropagation(); setShowInvite(true) }}
+              title="שתף עם בן/בת זוג"
+              style={{ color: '#3b82f6' }}
+            >
+              <Users size={14} />
+            </ActionIcon>
+          )}
           <ActionIcon
             variant="subtle"
             size="sm"
@@ -91,6 +106,14 @@ export default function TripCard({ trip }: Props) {
         open={showDebrief}
         onClose={() => setShowDebrief(false)}
         trip={trip}
+      />
+    )}
+    {showInvite && (
+      <InviteMemberModal
+        open={showInvite}
+        onClose={() => setShowInvite(false)}
+        tripId={trip.id}
+        tripName={trip.name}
       />
     )}
     </>

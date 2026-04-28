@@ -1,67 +1,192 @@
 import { useParams } from 'react-router-dom'
-import {
-  Stack, Typography, Badge, Card, StatCard, Progress,
-} from 'myk-library'
+import { Card, Typography } from 'myk-library'
 import styled from 'styled-components'
 import { useTripStore, getTotalSpent } from '@/stores/tripStore'
 import { formatCurrency } from '@/utils/currency'
 import { formatDateShort, getTripDuration } from '@/utils/date'
 import { useBreakpoint } from '@/hooks/useBreakpoint'
 import CountdownTimer from '@/components/dashboard/CountdownTimer'
+import PhaseBadge, { type TripPhase } from '@/components/dashboard/PhaseBadge'
+import ReadinessCard from '@/components/dashboard/ReadinessCard'
+import WeatherPreview from '@/components/dashboard/WeatherPreview'
+import BookingsCard from '@/components/dashboard/BookingsCard'
+import UrgentTasksCard from '@/components/dashboard/UrgentTasksCard'
+import TodayCard from '@/components/dashboard/TodayCard'
+import SpendingInsight from '@/components/dashboard/SpendingInsight'
+import QuickActions from '@/components/dashboard/QuickActions'
+import MiniStat from '@/components/dashboard/MiniStat'
 import { Wallet, ListTodo, CalendarDays, Backpack } from 'lucide-react'
+import { differenceInCalendarDays, parseISO } from 'date-fns'
 
 const PageWrapper = styled.div<{ $mobile: boolean }>`
-  padding: ${({ $mobile }) => ($mobile ? '12px' : '24px')};
+  padding: ${({ $mobile }) => ($mobile ? '12px 12px 32px' : '24px')};
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: ${({ $mobile }) => ($mobile ? '14px' : '20px')};
+  max-width: 1100px;
+  margin: 0 auto;
+  width: 100%;
+  min-width: 0;
+  overflow-x: hidden;
+  box-sizing: border-box;
 `
 
-const HeroCard = styled(Card)`
+const HeroCard = styled(Card)<{ $mobile: boolean }>`
+  padding: ${({ $mobile }) => ($mobile ? '20px 16px' : '32px 24px')};
   text-align: center;
-  padding: 32px 24px;
+  background: linear-gradient(135deg, rgba(245,158,11,0.08), rgba(245,158,11,0.02));
+  border: 1px solid rgba(245,158,11,0.18);
+  position: relative;
+  overflow: hidden;
 `
 
-const EmojiHero = styled.div`
-  font-size: 56px;
+const HeroEmoji = styled.div<{ $mobile: boolean }>`
+  font-size: ${({ $mobile }) => ($mobile ? '44px' : '64px')};
   line-height: 1;
   margin-bottom: 8px;
 `
 
-const StatsGrid = styled.div<{ $cols: number }>`
-  display: grid;
-  grid-template-columns: repeat(${({ $cols }) => $cols}, 1fr);
-  gap: 16px;
+const HeroTitle = styled.h2<{ $mobile: boolean }>`
+  font-size: ${({ $mobile }) => ($mobile ? '20px' : '28px')};
+  font-weight: 800;
+  margin: 0 0 6px;
+  letter-spacing: -0.01em;
+  word-break: break-word;
 `
 
-const FamilyAvatars = styled.div`
+const HeroMeta = styled.div`
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  padding: 4px 0;
-`
-
-const Avatar = styled.div`
-  font-size: 32px;
-  title: attr(title);
-`
-
-const SectionTitle = styled.div`
+  justify-content: center;
+  gap: 6px 14px;
   font-size: 13px;
+  color: #c9d1d9;
+  margin-bottom: 10px;
+`
+
+const HeroMetaItem = styled.span`
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+`
+
+const SectionLabel = styled.div`
+  font-size: 11px;
+  font-weight: 700;
+  color: #8b949e;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 8px;
+  padding: 0 4px;
+`
+
+const StatsGrid = styled.div<{ $mobile: boolean }>`
+  display: grid;
+  grid-template-columns: repeat(${({ $mobile }) => ($mobile ? 2 : 4)}, minmax(0, 1fr));
+  gap: ${({ $mobile }) => ($mobile ? '8px' : '14px')};
+  width: 100%;
+`
+
+const FamilyCard = styled(Card)`
+  padding: 14px 16px;
+`
+
+const FamilyTitle = styled.div`
+  font-size: 12px;
   font-weight: 600;
-  color: ${({ theme }) => theme.colors.gray[500]};
+  color: #8b949e;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 `
+
+const FamilyRow = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 16px;
+`
+
+const FamilyMember = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 56px;
+`
+
+const Emoji = styled.div`
+  font-size: 30px;
+  line-height: 1;
+`
+
+const MemberName = styled.div`
+  font-size: 11px;
+  color: #c9d1d9;
+  text-align: center;
+  max-width: 64px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+`
+
+const Tip = styled.div`
+  display: flex;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(96,165,250,0.08);
+  border: 1px solid rgba(96,165,250,0.2);
+  font-size: 13px;
+  line-height: 1.5;
+  color: #c9d1d9;
+`
+
+const TipIcon = styled.div`
+  font-size: 18px;
+  flex-shrink: 0;
+  line-height: 1.2;
+`
+
+function determinePhase(startDate: string, endDate: string, todayISO: string): { phase: TripPhase; daysToStart: number; dayOfTrip: number } {
+  const today = parseISO(todayISO)
+  const start = parseISO(startDate)
+  const end = parseISO(endDate)
+  const daysToStart = differenceInCalendarDays(start, today)
+  const dayOfTrip = differenceInCalendarDays(today, start) + 1
+
+  if (today > end) return { phase: 'done', daysToStart, dayOfTrip }
+  if (today >= start) return { phase: 'live', daysToStart, dayOfTrip }
+  if (daysToStart <= 14) return { phase: 'soon', daysToStart, dayOfTrip }
+  return { phase: 'planning', daysToStart, dayOfTrip }
+}
+
+function pickTip(phase: TripPhase, daysToStart: number): { icon: string; text: string } | null {
+  if (phase === 'planning' && daysToStart > 60) {
+    return { icon: '✈️', text: 'מומלץ להזמין טיסות 60-90 יום מראש לחיסכון משמעותי במחיר.' }
+  }
+  if (phase === 'planning' && daysToStart > 30) {
+    return { icon: '🏨', text: 'זה הזמן לסגור הזמנות לינה - המחירים הטובים ביותר נסגרים חודש לפני הטיול.' }
+  }
+  if (phase === 'planning') {
+    return { icon: '📋', text: 'התחילו לרשום משימות ולתכנן את הימים - נשארו פחות מחודשיים.' }
+  }
+  if (phase === 'soon' && daysToStart > 7) {
+    return { icon: '🎒', text: 'התחילו להכין רשימת ציוד ולוודא שכל ההזמנות בידיכם.' }
+  }
+  if (phase === 'soon') {
+    return { icon: '🛂', text: 'בדקו דרכונים, ביטוחים, מתאמים ומסמכים נדרשים - השבוע יוצאים!' }
+  }
+  return null
+}
 
 export default function Dashboard() {
   const { id } = useParams<{ id: string }>()
   const trip = useTripStore(s => s.trips.find(t => t.id === id))
-  const { isMobile, isTablet } = useBreakpoint()
+  const { isMobile } = useBreakpoint()
 
   if (!trip) return null
 
+  const todayISO = new Date().toISOString().slice(0, 10)
   const duration = getTripDuration(trip.startDate, trip.endDate)
   const totalSpent = getTotalSpent(trip)
   const totalBudget = trip.budget.totalBudget
@@ -76,132 +201,125 @@ export default function Dashboard() {
   const packedItems = packingItems.filter(i => i.packed).length
   const packingPct = packingItems.length > 0 ? Math.round((packedItems / packingItems.length) * 100) : 0
 
-  // next upcoming event
-  const today = new Date().toISOString().slice(0, 10)
-  const nextEvent = trip.days
-    .filter(d => d.date >= today)
-    .flatMap(d => d.events.map(e => ({ ...e, date: d.date })))
-    .sort((a, b) => a.date.localeCompare(b.date) || a.startTime.localeCompare(b.startTime))[0]
+  const totalEvents = trip.days.flatMap(d => d.events).length
 
-  const statCols = isMobile ? 2 : isTablet ? 2 : 4
+  const { phase, daysToStart, dayOfTrip } = determinePhase(trip.startDate, trip.endDate, todayISO)
+  const tip = pickTip(phase, daysToStart)
 
   return (
     <PageWrapper $mobile={isMobile}>
-
-      {/* Hero */}
-      <HeroCard variant="elevated" padding="lg">
-        <EmojiHero>{trip.coverEmoji}</EmojiHero>
-        <Typography variant="h3" style={{ margin: '0 0 4px' }}>{trip.name}</Typography>
-        <Stack direction="row" align="center" justify="center" spacing="sm" style={{ marginBottom: 8 }}>
-          <Badge variant="info" size="sm">📍 {trip.destination}</Badge>
-          <Badge variant="default" size="sm">🗓️ {formatDateShort(trip.startDate)} – {formatDateShort(trip.endDate)}</Badge>
-          <Badge variant="default" size="sm">⏱️ {duration} ימים</Badge>
-        </Stack>
+      {/* Hero — phase-aware */}
+      <HeroCard $mobile={isMobile} variant="elevated">
+        <HeroEmoji $mobile={isMobile}>{trip.coverEmoji}</HeroEmoji>
+        <HeroTitle $mobile={isMobile}>{trip.name}</HeroTitle>
+        <HeroMeta>
+          <HeroMetaItem>📍 {trip.destination}</HeroMetaItem>
+          <HeroMetaItem>🗓 {formatDateShort(trip.startDate)} – {formatDateShort(trip.endDate)}</HeroMetaItem>
+          <HeroMetaItem>⏱ {duration} ימים</HeroMetaItem>
+        </HeroMeta>
+        <PhaseBadge phase={phase} daysToStart={daysToStart} dayOfTrip={dayOfTrip} totalDays={duration} />
       </HeroCard>
 
-      {/* Countdown */}
-      <Card variant="outlined" padding="lg">
-        <SectionTitle>עוד כמה עד הטיול</SectionTitle>
-        <CountdownTimer startDate={trip.startDate} endDate={trip.endDate} />
-      </Card>
-
-      {/* Stats */}
-      <StatsGrid $cols={statCols}>
-        <StatCard
-          title="תקציב"
-          value={formatCurrency(totalSpent, currency)}
-          description={totalBudget > 0 ? `מתוך ${formatCurrency(totalBudget, currency)}` : 'לא הוגדר'}
-          icon={<Wallet size={20} />}
-          color={budgetPct > 90 ? '#ef4444' : '#f59e0b'}
-        />
-        <StatCard
-          title="משימות"
-          value={`${doneTasks}/${tasks.length}`}
-          description={`${taskPct}% הושלמו`}
-          icon={<ListTodo size={20} />}
-          color={taskPct === 100 && tasks.length > 0 ? '#10b981' : '#f59e0b'}
-        />
-        <StatCard
-          title="ימי טיול"
-          value={duration}
-          description={`${trip.days.flatMap(d => d.events).length} אירועים מתוכננים`}
-          icon={<CalendarDays size={20} />}
-          color="#f59e0b"
-        />
-        <StatCard
-          title="ציוד"
-          value={`${packedItems}/${packingItems.length}`}
-          description={packingItems.length > 0 ? `${packingPct}% ארוז` : 'לא הוגדר'}
-          icon={<Backpack size={20} />}
-          color={packingPct === 100 && packingItems.length > 0 ? '#10b981' : '#f59e0b'}
-        />
-      </StatsGrid>
-
-      {/* Progress bars */}
-      {(totalBudget > 0 || tasks.length > 0) && (
+      {/* Countdown — only when there's something to count */}
+      {phase !== 'done' && (
         <Card variant="outlined" padding="md">
-          <Stack direction="column" spacing="md">
-            {totalBudget > 0 && (
-              <Stack direction="column" spacing="xs">
-                <Stack direction="row" justify="between">
-                  <Typography variant="body2">💰 תקציב</Typography>
-                  <Typography variant="body2">{budgetPct}%</Typography>
-                </Stack>
-                <Progress value={budgetPct} variant={budgetPct > 90 ? 'danger' : 'primary'} size="sm" />
-              </Stack>
-            )}
-            {tasks.length > 0 && (
-              <Stack direction="column" spacing="xs">
-                <Stack direction="row" justify="between">
-                  <Typography variant="body2">✅ משימות</Typography>
-                  <Typography variant="body2">{doneTasks}/{tasks.length}</Typography>
-                </Stack>
-                <Progress value={taskPct} variant={taskPct === 100 ? 'success' : 'primary'} size="sm" />
-              </Stack>
-            )}
-            {packingItems.length > 0 && (
-              <Stack direction="column" spacing="xs">
-                <Stack direction="row" justify="between">
-                  <Typography variant="body2">🎒 ציוד</Typography>
-                  <Typography variant="body2">{packedItems}/{packingItems.length}</Typography>
-                </Stack>
-                <Progress value={packingPct} variant={packingPct === 100 ? 'success' : 'primary'} size="sm" />
-              </Stack>
-            )}
-          </Stack>
+          <SectionLabel>{phase === 'live' ? '🔥 הטיול בעיצומו' : '⏳ עוד כמה עד הטיול'}</SectionLabel>
+          <CountdownTimer startDate={trip.startDate} endDate={trip.endDate} />
         </Card>
       )}
+
+      {/* Today (during-trip) */}
+      {phase === 'live' && <TodayCard trip={trip} todayISO={todayISO} />}
+
+      {/* Stats grid */}
+      <div>
+        <SectionLabel>📊 סקירה מהירה</SectionLabel>
+        <StatsGrid $mobile={isMobile}>
+          <MiniStat
+            title="תקציב"
+            value={formatCurrency(totalSpent, currency)}
+            description={totalBudget > 0 ? `מתוך ${formatCurrency(totalBudget, currency)}` : 'לא הוגדר'}
+            icon={<Wallet size={16} />}
+            color={budgetPct > 90 ? '#ef4444' : '#f59e0b'}
+          />
+          <MiniStat
+            title="משימות"
+            value={`${doneTasks}/${tasks.length}`}
+            description={tasks.length > 0 ? `${taskPct}% הושלמו` : 'אין משימות'}
+            icon={<ListTodo size={16} />}
+            color={taskPct === 100 && tasks.length > 0 ? '#10b981' : '#f59e0b'}
+          />
+          <MiniStat
+            title="ימי טיול"
+            value={duration}
+            description={`${totalEvents} אירועים`}
+            icon={<CalendarDays size={16} />}
+            color="#60a5fa"
+          />
+          <MiniStat
+            title="ציוד"
+            value={packingItems.length > 0 ? `${packedItems}/${packingItems.length}` : '—'}
+            description={packingItems.length > 0 ? `${packingPct}% ארוז` : 'לא הוגדר'}
+            icon={<Backpack size={16} />}
+            color={packingPct === 100 && packingItems.length > 0 ? '#10b981' : '#f59e0b'}
+          />
+        </StatsGrid>
+      </div>
+
+      {/* Smart tip */}
+      {tip && (
+        <Tip>
+          <TipIcon>{tip.icon}</TipIcon>
+          <div><strong>טיפ לתכנון:</strong> {tip.text}</div>
+        </Tip>
+      )}
+
+      {/* Readiness — pre-trip emphasis */}
+      {phase !== 'done' && <ReadinessCard trip={trip} />}
+
+      {/* Weather forecast */}
+      <WeatherPreview tripId={trip.id} startDate={trip.startDate} endDate={trip.endDate} />
+
+      {/* Bookings status */}
+      <BookingsCard trip={trip} />
+
+      {/* Spending insight */}
+      <SpendingInsight trip={trip} todayISO={todayISO} phase={phase} />
+
+      {/* Urgent tasks */}
+      {phase !== 'done' && <UrgentTasksCard trip={trip} />}
 
       {/* Family */}
       {trip.family.length > 0 && (
-        <Card variant="outlined" padding="md">
-          <SectionTitle>👨‍👩‍👧‍👦 משפחה</SectionTitle>
-          <FamilyAvatars>
+        <FamilyCard variant="outlined">
+          <FamilyTitle>👨‍👩‍👧‍👦 משפחה ({trip.family.length})</FamilyTitle>
+          <FamilyRow>
             {trip.family.map(m => (
-              <Stack key={m.id} direction="column" align="center" spacing="xs">
-                <Avatar title={m.name}>{m.emoji}</Avatar>
-                <Typography variant="caption">{m.name}</Typography>
-              </Stack>
+              <FamilyMember key={m.id} title={m.name}>
+                <Emoji>{m.emoji}</Emoji>
+                <MemberName>{m.name}</MemberName>
+              </FamilyMember>
             ))}
-          </FamilyAvatars>
-        </Card>
+          </FamilyRow>
+        </FamilyCard>
       )}
 
-      {/* Next event */}
-      {nextEvent && (
+      {/* Quick navigation */}
+      <div>
+        <SectionLabel>🚀 קיצורי דרך</SectionLabel>
+        <QuickActions tripId={trip.id} />
+      </div>
+
+      {phase === 'done' && (
         <Card variant="outlined" padding="md">
-          <SectionTitle>⏭️ האירוע הבא</SectionTitle>
-          <Stack direction="column" spacing="xs">
-            <Typography variant="body1" style={{ fontWeight: 600 }}>{nextEvent.title}</Typography>
-            <Stack direction="row" spacing="sm">
-              <Badge size="sm">{formatDateShort(nextEvent.date)}</Badge>
-              <Badge size="sm">🕐 {nextEvent.startTime}</Badge>
-              {nextEvent.location && <Badge size="sm">📍 {nextEvent.location}</Badge>}
-            </Stack>
-          </Stack>
+          <Typography variant="h5" style={{ textAlign: 'center', margin: 0 }}>
+            🎉 איזה כיף שהיה!
+          </Typography>
+          <Typography variant="body2" style={{ textAlign: 'center', color: '#8b949e', marginTop: 8 }}>
+            הוצאתם {formatCurrency(totalSpent, currency)} ב-{duration} ימים. עברתם {totalEvents} חוויות יחד.
+          </Typography>
         </Card>
       )}
-
     </PageWrapper>
   )
 }

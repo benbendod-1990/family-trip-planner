@@ -3,32 +3,39 @@ import styled from 'styled-components'
 import { Typography } from 'myk-library'
 
 const Row = styled.div`
-  display: flex;
-  gap: 8px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
   justify-content: center;
-  flex-wrap: nowrap;
 `
 
 const Unit = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
-  flex: 1;
+  padding: 10px 4px;
+  border-radius: 12px;
+  background: rgba(245,158,11,0.05);
+  border: 1px solid rgba(245,158,11,0.12);
   min-width: 0;
 `
 
 const Num = styled.div`
-  font-size: clamp(28px, 8vw, 40px);
-  font-weight: 700;
+  font-size: clamp(22px, 7vw, 36px);
+  font-weight: 800;
   line-height: 1;
   color: ${({ theme }) => theme.colors.primary[500]};
   font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
 `
 
 const Label = styled.div`
-  font-size: 12px;
+  font-size: 10px;
   color: ${({ theme }) => theme.colors.gray[500]};
-  margin-top: 4px;
+  margin-top: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
 `
 
 interface Props {

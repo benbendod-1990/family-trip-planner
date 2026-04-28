@@ -1,0 +1,147 @@
+{
+  "id": "34980c90-bd66-4270-8d45-3e96787b07ef",
+  "name": "הולנד — אוגוסט 2026",
+  "destination": "הולנד",
+  "startDate": "2026-08-20",
+  "endDate": "2026-08-27",
+  "coverEmoji": "🌷",
+  "createdAt": "2026-04-24T15:40:00.000Z",
+  "updatedAt": "2026-04-24T15:40:00.000Z",
+  "family": [
+    { "id": "87973dde-1f43-4571-862b-5ef5393e1734", "name": "בן", "emoji": "👨", "isChild": false },
+    { "id": "cc9b60f1-4149-4b61-b429-83bb80ddd5e9", "name": "גל", "emoji": "👩", "isChild": false },
+    { "id": "17c85afc-3e0a-447b-b913-04931a0a4d13", "name": "עומר", "emoji": "👦", "isChild": true },
+    { "id": "c7251151-bcac-4eea-8b32-7d1c93e1de3a", "name": "ארי", "emoji": "👶", "isChild": true }
+  ],
+  "flights": [
+    {
+      "id": "94092b7b-998a-4ee2-985e-dc015df15872",
+      "airline": "Aegean Airlines",
+      "flightNumber": "89G5SO",
+      "departureAirport": "TLV",
+      "arrivalAirport": "AMS",
+      "departureTime": "2026-08-20T00:00:00.000Z",
+      "arrivalTime": "2026-08-20T00:00:00.000Z",
+      "cost": 0,
+      "currency": "EUR",
+      "direction": "outbound",
+      "cabinClass": "economy",
+      "confirmationNumber": "89G5SO"
+    },
+    {
+      "id": "8d76808e-bedc-4dd3-ae11-b520aac10c51",
+      "airline": "easyJet",
+      "flightNumber": "EJU7971",
+      "departureAirport": "AMS",
+      "arrivalAirport": "TLV",
+      "departureTime": "2026-08-27T07:20:00.000Z",
+      "arrivalTime": "2026-08-27T12:00:00.000Z",
+      "cost": 0,
+      "currency": "EUR",
+      "direction": "return",
+      "cabinClass": "economy",
+      "confirmationNumber": "KBFMXH5",
+      "baggageIncluded": false
+    }
+  ],
+  "accommodations": [
+    {
+      "id": "c9ac25e4-dbda-478d-8b44-8047af840e47",
+      "name": "GuestHouse Hotel Kaatsheuvel",
+      "type": "hotel",
+      "address": "Kaatsheuvel, Netherlands",
+      "checkIn": "2026-08-20",
+      "checkOut": "2026-08-23",
+      "cost": 0,
+      "currency": "EUR",
+      "notes": "ליד Efteling — בדוק תאריכי check-in/out בהזמנה."
+    },
+    {
+      "id": "c17816ec-a714-40b1-8cc3-f1abfcb694cc",
+      "name": "Lake Resort Beekse Bergen — Safari Hotel",
+      "type": "hotel",
+      "address": "Hilvarenbeek, Netherlands",
+      "checkIn": "2026-08-23",
+      "checkOut": "2026-08-27",
+      "cost": 1558.55,
+      "currency": "EUR",
+      "confirmationNumber": "09526000923",
+      "notes": "שולם במלואו 22/10/2025. סאפרי + מלון."
+    }
+  ],
+  "carRentals": [],
+  "budget": {
+    "currency": "EUR",
+    "totalBudget": 5000,
+    "items": [
+      {
+        "id": "1dc96dcb-28cc-4bce-95b7-3f9bdbc6fddb",
+        "category": "accommodation",
+        "label": "Beekse Bergen Safari Hotel",
+        "planned": 1558.55,
+        "actual": 1558.55,
+        "date": "2025-10-22",
+        "paidBy": "87973dde-1f43-4571-862b-5ef5393e1734"
+      },
+      {
+        "id": "50b4b0b8-7fae-4180-bc35-dc98ddc07e76",
+        "category": "other",
+        "label": "ביטוח נסיעות PassportCard",
+        "planned": 0
+      }
+    ]
+  },
+  "tasks": [
+    {
+      "id": "bf92f72b-9259-4215-8ebc-cb50e1449733",
+      "title": "🚨 לטפל בביטול easyJet EJU7971",
+      "description": "טיסת חזור AMS→TLV 27/8 07:20 בוטלה. 3 אפשרויות: החלפה חינם / שובר 12 חודשים / החזר מלא תוך 7 ימים. הזמנה KBFMXH5.",
+      "dueDate": "2026-05-01",
+      "assignedTo": "87973dde-1f43-4571-862b-5ef5393e1734",
+      "done": false,
+      "createdAt": "2026-04-24T15:40:00.000Z",
+      "updatedAt": "2026-04-24T15:40:00.000Z"
+    },
+    {
+      "id": "52489398-f1b1-4d25-b419-9e5c1780ee16",
+      "title": "להזמין רכב שכור לאמסטרדם",
+      "description": "איסוף בשדה Schiphol, החזרה ב-27/8. SUV/van עבור 2 מבוגרים + 2 ילדים + כבודה. בדוק Sixt/Europcar/Hertz.",
+      "dueDate": "2026-06-01",
+      "assignedTo": "87973dde-1f43-4571-862b-5ef5393e1734",
+      "done": false,
+      "createdAt": "2026-04-24T15:40:00.000Z",
+      "updatedAt": "2026-04-24T15:40:00.000Z"
+    },
+    {
+      "id": "64277dc5-0ac6-47de-bf0c-d06e28da0f4e",
+      "title": "לאשר תאריך ושעת טיסת Aegean הלוך",
+      "description": "הזמנה 89G5SO — היה עדכון זמן ב-9/3. לוודא שעת המראה עדכנית ולעדכן במערכת.",
+      "dueDate": "2026-05-15",
+      "assignedTo": "87973dde-1f43-4571-862b-5ef5393e1734",
+      "done": false,
+      "createdAt": "2026-04-24T15:40:00.000Z",
+      "updatedAt": "2026-04-24T15:40:00.000Z"
+    },
+    {
+      "id": "077ef4ad-0283-4d32-8788-2f4e033b8c92",
+      "title": "לאשר תאריכי check-in/out במלונות",
+      "description": "GuestHouse Kaatsheuvel + Beekse Bergen — לבדוק אימיילים ולעדכן.",
+      "dueDate": "2026-05-10",
+      "assignedTo": "cc9b60f1-4149-4b61-b429-83bb80ddd5e9",
+      "done": false,
+      "createdAt": "2026-04-24T15:40:00.000Z",
+      "updatedAt": "2026-04-24T15:40:00.000Z"
+    }
+  ],
+  "packingItems": [],
+  "days": [
+    { "id": "c2918440-9a34-4573-b19c-d87878f51cb7", "date": "2026-08-20", "label": "הגעה לאמסטרדם", "events": [] },
+    { "id": "1bd3a225-3778-4608-9377-5db2d6fdbb9d", "date": "2026-08-21", "events": [] },
+    { "id": "d7714e41-57b5-4d50-af04-6d9dc340b753", "date": "2026-08-22", "events": [] },
+    { "id": "15241df6-7033-4615-85d9-4ecf71b5b3eb", "date": "2026-08-23", "label": "מעבר ל-Beekse Bergen", "events": [] },
+    { "id": "60aa816c-a870-4480-b936-5de9f799422a", "date": "2026-08-24", "events": [] },
+    { "id": "dd54898c-0d21-4db9-8af4-cfee4d20d32d", "date": "2026-08-25", "events": [] },
+    { "id": "25db279f-20c1-4a6f-b21b-b688e9602874", "date": "2026-08-26", "events": [] },
+    { "id": "b76c90f9-f78a-454e-952c-28e164e149c8", "date": "2026-08-27", "label": "טיסת חזור", "events": [] }
+  ]
+}

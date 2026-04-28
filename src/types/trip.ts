@@ -1,4 +1,5 @@
 import type { ID } from './family'
+import type { TripCoords } from './trip-plan'
 
 export type TripEventCategory = 'activity' | 'meal' | 'transport' | 'rest' | 'tour'
 
@@ -10,6 +11,7 @@ export interface TripEvent {
   title: string
   description?: string
   location?: string
+  coords?: TripCoords
   category: TripEventCategory
   cost?: number
 }

@@ -1,0 +1,18 @@
+name = "family-trip-planner-api"
+main = "src/index.ts"
+compatibility_date = "2025-03-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Free tier: 100k requests/day, 10ms CPU/req
+workers_dev = true
+
+# Secrets (set via `wrangler secret put <KEY>`):
+#   ANTHROPIC_API_KEY — Claude API key (required)
+#   SUPABASE_JWT_SECRET — Supabase JWT secret, used to verify tokens from browser (required)
+#   SHARED_API_SECRET — optional fallback shared secret for dev/test
+
+# Dev-only config (loaded from .dev.vars; keep it out of git)
+# For local dev, copy .dev.vars.example → .dev.vars and fill in.
+
+[vars]
+ALLOWED_ORIGIN = "http://localhost:3002,https://family-trip-planner-end.pages.dev"

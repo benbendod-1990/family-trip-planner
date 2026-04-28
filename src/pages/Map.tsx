@@ -1,13 +1,15 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
-import { Stack, Typography, Badge, Button, Spinner } from 'myk-library'
+import { Stack, Typography, Badge, Button } from 'myk-library'
 import styled, { keyframes } from 'styled-components'
 import { useTripStore } from '@/stores/tripStore'
-import { useAiStore } from '@/stores/aiStore'
-import { geocodeDestination } from '@/services/weatherService'
-import { sendAiMessage } from '@/services/aiService'
+import { geocodeDestination, reverseGeocode } from '@/services/weatherService'
 import { useBreakpoint } from '@/hooks/useBreakpoint'
-import { List, X, Sparkles } from 'lucide-react'
+import { wazeUrl, googleMapsUrl } from '@/utils/maps'
+import { formatDateShort } from '@/utils/date'
+import { fetchMapInsights, type MapInsightsResponse } from '@/lib/aiClient'
+import SmartAddBar from '@/components/itinerary/SmartAddBar'
+import type { TripCoords } from '@/types/trip-plan'
 import L from 'leaflet'
 
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png'
@@ -21,44 +23,30 @@ L.Icon.Default.mergeOptions({
   shadowUrl: markerShadow,
 })
 
-// ── Marker CSS injected once ──────────────────────────────────────────────────
-const MARKER_STYLES = `
-.myk-marker {
-  display: flex; align-items: center; gap: 4px;
-  padding: 3px 10px; border-radius: 20px;
-  font-weight: 600; font-size: 12px; white-space: nowrap;
-  cursor: pointer;
-}
-.myk-marker-hotel {
-  background: #1c2130; border: 2px solid #f59e0b;
-  color: #f59e0b; box-shadow: 0 2px 8px rgba(245,158,11,0.35);
-}
-.myk-marker-event {
-  background: #1c2130; border: 2px solid #60a5fa;
-  color: #60a5fa; box-shadow: 0 2px 8px rgba(96,165,250,0.3);
-}
-.myk-marker-ai {
-  background: #1c2130; border: 2px solid #a78bfa;
-  color: #a78bfa; box-shadow: 0 2px 8px rgba(167,139,250,0.3);
-}
-`
-if (typeof document !== 'undefined' && !document.getElementById('myk-map-styles')) {
-  const style = document.createElement('style')
-  style.id = 'myk-map-styles'
-  style.textContent = MARKER_STYLES
-  document.head.appendChild(style)
-}
+// Distinct, high-contrast palette for up to ~14 days. After that, colors recycle.
+const DAY_PALETTE = [
+  '#ef4444', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6',
+  '#ec4899', '#06b6d4', '#84cc16', '#f97316', '#6366f1',
+  '#14b8a6', '#d946ef', '#eab308', '#0ea5e9',
+]
+const DESTINATION_COLOR = '#1f2937' // neutral dark for the trip's anchor
+const STAY_COLOR = '#7c3aed' // accommodations span multiple days → fixed color
 
-// ── Types ─────────────────────────────────────────────────────────────────────
-interface AiSuggestion {
+type PointKind = 'destination' | 'accommodation' | 'event'
+
+interface MapPoint {
+  id: string
+  kind: PointKind
   name: string
   address: string
-  type: string
-  description: string
-  coords?: { lat: number; lon: number }
+  date?: string // YYYY-MM-DD
+  startTime?: string
+  category?: string
+  emoji: string
+  color: string
+  dayIndex?: number
 }
 
-// ── Styled components ─────────────────────────────────────────────────────────
 const slide = keyframes`
   from { transform: translateX(100%); }
   to   { transform: translateX(-100%); }
@@ -71,13 +59,9 @@ const PageWrapper = styled.div`
 `
 
 const MapHeader = styled.div<{ $mobile: boolean }>`
-  padding: 10px ${({ $mobile }) => ($mobile ? '10px' : '16px')};
+  padding: 12px ${({ $mobile }) => ($mobile ? '12px' : '24px')};
   border-bottom: 1px solid ${({ theme }) => theme.colors.gray[200]};
   flex-shrink: 0;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  align-items: center;
 `
 
 const LoadingBar = styled.div`
@@ -85,6 +69,7 @@ const LoadingBar = styled.div`
   background: ${({ theme }) => theme.colors.gray[200]};
   overflow: hidden;
   flex-shrink: 0;
+
   &::after {
     content: '';
     display: block;
@@ -95,20 +80,32 @@ const LoadingBar = styled.div`
   }
 `
 
-const MapArea = styled.div`
+const Body = styled.div<{ $mobile: boolean }>`
   flex: 1;
-  position: relative;
   min-height: 0;
+  display: flex;
+  flex-direction: ${({ $mobile }) => ($mobile ? 'column' : 'row')};
 `
 
 const MapWrapper = styled.div`
-  position: absolute;
-  inset: 0;
+  flex: 1;
+  min-height: 0;
+  position: relative;
+
   .leaflet-container {
     height: 100%;
     width: 100%;
     background: #e8e8e8;
   }
+`
+
+const Sidebar = styled.aside<{ $mobile: boolean }>`
+  width: ${({ $mobile }) => ($mobile ? '100%' : '320px')};
+  max-height: ${({ $mobile }) => ($mobile ? '40vh' : 'none')};
+  border-${({ $mobile }) => ($mobile ? 'top' : 'right')}: 1px solid ${({ theme }) => theme.colors.gray[200]};
+  background: ${({ theme }) => theme.colors.gray[50] ?? '#fafafa'};
+  overflow-y: auto;
+  padding: 12px 14px;
 `
 
 const ErrorBox = styled.div`
@@ -118,209 +115,251 @@ const ErrorBox = styled.div`
   justify-content: center;
 `
 
-const SidebarPanel = styled.div<{ $open: boolean }>`
+const FloatingAddPanel = styled.div<{ $mobile: boolean }>`
   position: absolute;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  width: 260px;
-  background: ${({ theme }) => theme.colors.gray[50]};
-  border-left: 1px solid ${({ theme }) => theme.colors.gray[200]};
   z-index: 1000;
-  overflow-y: auto;
-  transform: translateX(${({ $open }) => ($open ? '0' : '100%')});
-  transition: transform 0.25s ease;
-  display: flex;
-  flex-direction: column;
-`
-
-const SidebarHeader = styled.div`
-  padding: 12px 14px 8px;
-  border-bottom: 1px solid ${({ theme }) => theme.colors.gray[200]};
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-shrink: 0;
-`
-
-const SidebarSection = styled.div`
-  padding: 8px 0;
-  border-bottom: 1px solid ${({ theme }) => theme.colors.gray[100]};
-`
-
-const SectionLabel = styled.div`
-  font-size: 11px;
-  font-weight: 700;
-  color: ${({ theme }) => theme.colors.gray[500]};
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  padding: 0 14px 4px;
-`
-
-const LocationRow = styled.button`
-  width: 100%;
-  text-align: right;
-  background: none;
-  border: none;
-  padding: 6px 14px;
-  cursor: pointer;
-  font-family: inherit;
-  font-size: 13px;
-  color: ${({ theme }) => theme.colors.gray[800]};
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  transition: background 0.1s;
-
-  &:hover {
-    background: ${({ theme }) => theme.colors.gray[100]};
-  }
-`
-
-const LocationSub = styled.span`
-  font-size: 11px;
-  color: ${({ theme }) => theme.colors.gray[500]};
-`
-
-const AiPanel = styled.div<{ $visible: boolean }>`
-  position: absolute;
-  bottom: 16px;
-  left: 16px;
-  z-index: 999;
-  background: ${({ theme }) => theme.colors.gray[50]};
-  border: 1px solid ${({ theme }) => theme.colors.gray[200]};
+  background: white;
   border-radius: 12px;
-  padding: 12px;
-  max-width: 280px;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.25);
-  display: ${({ $visible }) => ($visible ? 'block' : 'none')};
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.18);
+  padding: 0;
+  ${({ $mobile }) =>
+    $mobile
+      ? `inset-inline: 12px; bottom: 12px; max-width: none;`
+      : `inset-inline-start: 16px; bottom: 16px; width: 360px;`}
 `
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
-function hotelIcon(name: string) {
-  return L.divIcon({
-    className: '',
-    html: `<div class="myk-marker myk-marker-hotel">🏨 ${escHtml(name)}</div>`,
-    iconAnchor: [0, 24],
-  })
+const HintBubble = styled.div`
+  position: absolute;
+  top: 12px;
+  inset-inline-start: 50%;
+  transform: translateX(-50%);
+  background: rgba(31, 41, 55, 0.92);
+  color: white;
+  font-size: 12px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  z-index: 999;
+  pointer-events: none;
+`
+
+const LegendDot = styled.span<{ $color: string }>`
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: ${({ $color }) => $color};
+  margin-inline-end: 6px;
+  vertical-align: middle;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+`
+
+const TipCard = styled.div<{ $color: string }>`
+  border: 1px solid ${({ theme }) => theme.colors.gray[200]};
+  border-inline-start: 3px solid ${({ $color }) => $color};
+  border-radius: 6px;
+  padding: 8px 10px;
+  margin-bottom: 8px;
+  background: white;
+  font-size: 13px;
+`
+
+function pinSvg(color: string, emoji: string): string {
+  return `
+    <div style="
+      position: relative;
+      width: 30px;
+      height: 38px;
+      transform: translate(-15px, -38px);
+      filter: drop-shadow(0 2px 2px rgba(0,0,0,0.35));
+    ">
+      <svg viewBox="0 0 30 38" width="30" height="38" xmlns="http://www.w3.org/2000/svg">
+        <path d="M15 0 C6.7 0 0 6.7 0 15 C0 26 15 38 15 38 C15 38 30 26 30 15 C30 6.7 23.3 0 15 0 Z"
+          fill="${color}" stroke="white" stroke-width="2" />
+        <circle cx="15" cy="15" r="9" fill="white" />
+      </svg>
+      <div style="
+        position: absolute;
+        top: 5px;
+        left: 0;
+        width: 30px;
+        text-align: center;
+        font-size: 14px;
+        line-height: 20px;
+      ">${emoji}</div>
+    </div>
+  `
 }
 
-function eventIcon(title: string) {
-  return L.divIcon({
-    className: '',
-    html: `<div class="myk-marker myk-marker-event">📅 ${escHtml(title)}</div>`,
-    iconAnchor: [0, 24],
-  })
+function eventEmoji(category?: string): string {
+  switch (category) {
+    case 'meal': return '🍽️'
+    case 'transport': return '🚗'
+    case 'rest': return '😴'
+    case 'tour': return '🗺️'
+    default: return '📍'
+  }
 }
 
-function aiIcon(name: string) {
-  return L.divIcon({
-    className: '',
-    html: `<div class="myk-marker myk-marker-ai">✨ ${escHtml(name)}</div>`,
-    iconAnchor: [0, 24],
-  })
-}
-
-function escHtml(s: string) {
-  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-}
-
-function parseAiJson(text: string): AiSuggestion[] {
-  const match = text.match(/\[[\s\S]*\]/)
-  if (!match) return []
-  try { return JSON.parse(match[0]) as AiSuggestion[] } catch { return [] }
-}
-
-function fmt(date: string) {
-  return date ? date.slice(5).replace('-', '.') : ''
-}
-
-// ── Component ─────────────────────────────────────────────────────────────────
 export default function Map() {
   const { id } = useParams<{ id: string }>()
   const trip = useTripStore(s => s.trips.find(t => t.id === id))
   const setCoords = useTripStore(s => s.setCoords)
-  const aiStore = useAiStore()
 
   const { isMobile } = useBreakpoint()
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading')
-  const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [visibleLayers, setVisibleLayers] = useState({ hotels: true, events: true, ai: true })
-  const [aiLoading, setAiLoading] = useState(false)
-  const [aiSuggestions, setAiSuggestions] = useState<AiSuggestion[]>([])
+  const [aiStatus, setAiStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle')
+  const [insights, setInsights] = useState<MapInsightsResponse | null>(null)
   const [aiError, setAiError] = useState<string | null>(null)
-
+  const [pin, setPin] = useState<{ name?: string; address?: string; coords: TripCoords } | null>(null)
+  const [pinResolving, setPinResolving] = useState(false)
   const mapRef = useRef<L.Map | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const initRef = useRef(false)
+  const markersRef = useRef<Map<string, L.Marker>>(new globalThis.Map())
+  const clickPinRef = useRef<L.Marker | null>(null)
 
-  // Layer groups
-  const layersRef = useRef<{ hotels: L.LayerGroup; events: L.LayerGroup; ai: L.LayerGroup } | null>(null)
+  // Build flat list of points + a stable date→color map.
+  const { points, dayColor } = useMemo(() => {
+    const dayColor = new globalThis.Map<string, string>()
+    if (!trip) return { points: [] as MapPoint[], dayColor }
 
-  // Marker refs for sidebar fly-to
-  const hotelMarkersRef = useRef<Record<string, L.Marker>>({})
-  const eventMarkersRef = useRef<Record<string, L.Marker>>({})
-  const aiMarkersRef = useRef<Record<string, L.Marker>>({})
+    const sortedDates = trip.days.map(d => d.date).sort()
+    sortedDates.forEach((date, idx) => {
+      dayColor.set(date, DAY_PALETTE[idx % DAY_PALETTE.length])
+    })
 
-  const missingAddress = trip?.accommodations.filter(a => !a.address).length ?? 0
-  const hasAiKey = aiStore.provider === 'openai' ? !!aiStore.openaiApiKey : true
+    const pts: MapPoint[] = []
 
-  // ── Toggle layer visibility
-  function toggleLayer(layer: keyof typeof visibleLayers) {
-    if (!layersRef.current || !mapRef.current) return
-    const map = mapRef.current
-    const group = layersRef.current[layer]
-    const next = !visibleLayers[layer]
-    if (next) group.addTo(map)
-    else group.remove()
-    setVisibleLayers(v => ({ ...v, [layer]: next }))
-  }
+    // Destination anchor
+    pts.push({
+      id: `dest-${trip.id}`,
+      kind: 'destination',
+      name: trip.destination,
+      address: trip.destination,
+      emoji: trip.coverEmoji || '📍',
+      color: DESTINATION_COLOR,
+    })
 
-  // ── AI suggestions
-  async function handleAiSuggest() {
-    if (!trip || !hasAiKey || aiLoading) return
-    setAiError(null)
-    setAiLoading(true)
-
-    const childCount = trip.family.filter(m => m.emoji && ['👦','👧','🧒','👶'].includes(m.emoji)).length
-    const familyNote = childCount > 0 ? `משפחה עם ${childCount} ילדים` : 'קבוצה משפחתית'
-
-    const prompt = `הצע לי 5 מקומות מעניינים לבקר ב-${trip.destination} המתאימים ל${familyNote}.
-ענה אך ורק ב-JSON תקין (ללא markdown, ללא הסברים לפני או אחרי) בפורמט:
-[{"name":"...","address":"כתובת מלאה כולל עיר","type":"מוזיאון/מסעדה/פארק/אטרקציה","description":"משפט קצר"}]`
-
-    try {
-      const reply = await sendAiMessage(
-        [{ id: 'q', role: 'user', content: prompt, timestamp: new Date().toISOString() }],
-        trip,
-        aiStore
-      )
-      const suggestions = parseAiJson(reply)
-      if (!suggestions.length) { setAiError('לא הצלחתי לקבל המלצות. נסה שוב.'); return }
-
-      const results: AiSuggestion[] = []
-      for (const s of suggestions) {
-        const coords = await geocodeDestination(s.address || `${s.name}, ${trip.destination}`)
-        results.push({ ...s, coords: coords ?? undefined })
-        if (coords && layersRef.current) {
-          const marker = L.marker([coords.lat, coords.lon], { icon: aiIcon(s.name) })
-            .bindPopup(`<div style="direction:rtl;min-width:140px"><b>✨ ${escHtml(s.name)}</b><br/><i>${escHtml(s.type)}</i><br/>${escHtml(s.description)}</div>`)
-          layersRef.current.ai.addLayer(marker)
-          aiMarkersRef.current[s.name] = marker
-        }
-      }
-      setAiSuggestions(results)
-    } catch (e) {
-      setAiError(e instanceof Error ? e.message : 'שגיאה')
-    } finally {
-      setAiLoading(false)
+    // Accommodations
+    for (const acc of trip.accommodations) {
+      if (!acc.address) continue
+      pts.push({
+        id: `acc-${acc.id}`,
+        kind: 'accommodation',
+        name: acc.name,
+        address: acc.address,
+        date: acc.checkIn,
+        emoji: '🏨',
+        color: STAY_COLOR,
+      })
     }
+
+    // Events (color by their day)
+    trip.days.forEach((day, dayIdx) => {
+      for (const ev of day.events) {
+        if (!ev.location) continue
+        pts.push({
+          id: `ev-${ev.id}`,
+          kind: 'event',
+          name: ev.title,
+          address: ev.location,
+          date: day.date,
+          startTime: ev.startTime,
+          category: ev.category,
+          emoji: eventEmoji(ev.category),
+          color: dayColor.get(day.date) ?? DAY_PALETTE[dayIdx % DAY_PALETTE.length],
+          dayIndex: dayIdx,
+        })
+      }
+    })
+
+    return { points: pts, dayColor }
+  }, [trip])
+
+  // Lookup helpers driven by latest insights.
+  const tipsById = useMemo(() => {
+    const m = new globalThis.Map<string, { tips: string[]; nearby: MapInsightsResponse['per_point'][number]['nearby'] }>()
+    if (insights) {
+      for (const p of insights.per_point) m.set(p.id, { tips: p.tips, nearby: p.nearby })
+    }
+    return m
+  }, [insights])
+
+  const connectionsForPoint = useMemo(() => {
+    const m = new globalThis.Map<string, MapInsightsResponse['connections']>()
+    if (insights) {
+      for (const c of insights.connections) {
+        const arr = m.get(c.from_id) ?? []
+        arr.push(c)
+        m.set(c.from_id, arr)
+      }
+    }
+    return m
+  }, [insights])
+
+  // Build popup HTML for a point (used both at init time and on insights update).
+  function buildPopupHtml(p: MapPoint): string {
+    const dateLabel = p.date ? formatDateShort(p.date) : ''
+    const timeLabel = p.startTime ? `🕐 ${p.startTime}` : ''
+    const waze = wazeUrl(p.address)
+    const gmap = googleMapsUrl(p.address)
+
+    const aiBlock = (() => {
+      const data = tipsById.get(p.id)
+      if (!data) return ''
+      const tipsHtml = data.tips.length
+        ? `<div style="margin-top:6px;"><b>טיפים:</b><ul style="margin:4px 0 0 16px;padding:0;">${data.tips
+            .map(t => `<li style="margin:2px 0;">${escapeHtml(t)}</li>`)
+            .join('')}</ul></div>`
+        : ''
+      const nearbyHtml = data.nearby.length
+        ? `<div style="margin-top:6px;"><b>בסביבה:</b><ul style="margin:4px 0 0 16px;padding:0;">${data.nearby
+            .map(
+              n =>
+                `<li style="margin:2px 0;">${n.kid_friendly ? '👶 ' : ''}<a href="${escapeAttr(
+                  n.source_url
+                )}" target="_blank" rel="noopener">${escapeHtml(n.name)}</a> · ${escapeHtml(n.why)} <span style="opacity:.6;">(${n.walking_minutes}′)</span></li>`
+            )
+            .join('')}</ul></div>`
+        : ''
+      const conns = connectionsForPoint.get(p.id) ?? []
+      const connHtml = conns.length
+        ? `<div style="margin-top:6px;"><b>בדרך הלאה:</b><ul style="margin:4px 0 0 16px;padding:0;">${conns
+            .map(
+              c =>
+                `<li style="margin:2px 0;"><a href="${escapeAttr(
+                  c.source_url
+                )}" target="_blank" rel="noopener">${escapeHtml(c.suggestion)}</a></li>`
+            )
+            .join('')}</ul></div>`
+        : ''
+      return tipsHtml + nearbyHtml + connHtml
+    })()
+
+    return `
+      <div style="min-width:220px;max-width:280px;font-size:13px;line-height:1.4;">
+        <div style="font-weight:600;font-size:14px;">${p.emoji} ${escapeHtml(p.name)}</div>
+        ${dateLabel || timeLabel
+          ? `<div style="opacity:.7;font-size:12px;margin-top:2px;">${dateLabel}${dateLabel && timeLabel ? ' · ' : ''}${timeLabel}</div>`
+          : ''
+        }
+        <div style="margin-top:6px;">📍 ${escapeHtml(p.address)}</div>
+        <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;">
+          <a href="${escapeAttr(waze)}" target="_blank" rel="noopener"
+             style="padding:4px 8px;background:#33ccff;color:white;border-radius:4px;text-decoration:none;font-weight:600;">Waze</a>
+          <a href="${escapeAttr(gmap)}" target="_blank" rel="noopener"
+             style="padding:4px 8px;background:#4285f4;color:white;border-radius:4px;text-decoration:none;font-weight:600;">Google Maps</a>
+        </div>
+        ${aiBlock}
+      </div>
+    `
   }
 
-  // ── Map init
+  // Init map once per trip.
   useEffect(() => {
     if (!trip || !containerRef.current || initRef.current) return
     initRef.current = true
+
     let cancelled = false
 
     async function init() {
@@ -335,7 +374,8 @@ export default function Map() {
       }
       if (cancelled || !containerRef.current) return
 
-      const map = L.map(containerRef.current, { zoomControl: true }).setView([coords.lat, coords.lon], 12)
+      const map = L.map(containerRef.current, { zoomControl: true })
+        .setView([coords.lat, coords.lon], 12)
       mapRef.current = map
 
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -343,49 +383,88 @@ export default function Map() {
         maxZoom: 19,
       }).addTo(map)
 
-      // Destination marker
-      L.marker([coords.lat, coords.lon])
-        .addTo(map)
-        .bindPopup(`<b>📍 ${trip.destination}</b>`)
-        .openPopup()
-
-      // Layer groups
-      const hotelLayer = L.layerGroup().addTo(map)
-      const eventLayer = L.layerGroup().addTo(map)
-      const aiLayer = L.layerGroup().addTo(map)
-      layersRef.current = { hotels: hotelLayer, events: eventLayer, ai: aiLayer }
+      // Click-on-empty-spot → reverse geocode → open SmartAddBar with location pinned.
+      map.on('click', async (e: L.LeafletMouseEvent) => {
+        const c: TripCoords = { lat: e.latlng.lat, lon: e.latlng.lng }
+        if (clickPinRef.current) {
+          clickPinRef.current.remove()
+          clickPinRef.current = null
+        }
+        clickPinRef.current = L.marker([c.lat, c.lon], {
+          icon: L.divIcon({
+            className: 'trip-pin-temp',
+            html: pinSvg('#8b5cf6', '✨'),
+            iconSize: [30, 38],
+            iconAnchor: [15, 38],
+          }),
+        }).addTo(map)
+        setPin({ coords: c })
+        setPinResolving(true)
+        const rev = await reverseGeocode(c)
+        setPinResolving(false)
+        setPin(curr => (curr && curr.coords.lat === c.lat && curr.coords.lon === c.lon
+          ? { ...curr, name: rev?.name, address: rev?.address ?? `${c.lat.toFixed(4)}, ${c.lon.toFixed(4)}` }
+          : curr))
+      })
 
       if (!cancelled) setStatus('ready')
 
-      // Hotels
-      for (const acc of trip.accommodations) {
-        if (cancelled || !acc.address) continue
-        const ac = await geocodeDestination(acc.address)
-        if (cancelled || !ac) continue
-        const popup = `<div style="direction:rtl;min-width:160px">
-          <b>🏨 ${escHtml(acc.name)}</b><br/>
-          📅 ${fmt(acc.checkIn)} → ${fmt(acc.checkOut)}<br/>
-          💰 ${acc.cost} ${acc.currency}
-          ${acc.rating ? `<br/>⭐ ${acc.rating}` : ''}
-        </div>`
-        const marker = L.marker([ac.lat, ac.lon], { icon: hotelIcon(acc.name) })
-          .bindPopup(popup)
-        hotelLayer.addLayer(marker)
-        hotelMarkersRef.current[acc.id] = marker
+      // Geocode all points (sequential + small caches via geocodeDestination's network).
+      const located: Array<MapPoint & { lat: number; lon: number }> = []
+
+      // Destination anchor first (we already have its coords).
+      const destPoint = points.find(p => p.kind === 'destination')
+      if (destPoint) {
+        located.push({ ...destPoint, lat: coords.lat, lon: coords.lon })
       }
 
-      // Events
-      for (const day of trip.days) {
-        for (const event of day.events) {
-          if (cancelled || !event.location) continue
-          const ec = await geocodeDestination(event.location)
-          if (cancelled || !ec) continue
-          const popup = `<div style="direction:rtl"><b>📅 ${escHtml(event.title)}</b><br/>🕐 ${event.startTime}<br/>📍 ${escHtml(event.location)}</div>`
-          const marker = L.marker([ec.lat, ec.lon], { icon: eventIcon(event.title) })
-            .bindPopup(popup)
-          eventLayer.addLayer(marker)
-          eventMarkersRef.current[event.id] = marker
-        }
+      for (const p of points) {
+        if (cancelled) return
+        if (p.kind === 'destination') continue
+        const c = await geocodeDestination(p.address)
+        if (cancelled) return
+        if (!c) continue
+        located.push({ ...p, lat: c.lat, lon: c.lon })
+      }
+
+      if (cancelled) return
+
+      // Add markers.
+      const bounds = L.latLngBounds([])
+      for (const p of located) {
+        const marker = L.marker([p.lat, p.lon], {
+          icon: L.divIcon({
+            className: 'trip-pin',
+            html: pinSvg(p.color, p.emoji),
+            iconSize: [30, 38],
+            iconAnchor: [15, 38],
+          }),
+        })
+          .addTo(map)
+          .bindPopup(buildPopupHtml(p), { maxWidth: 300 })
+        markersRef.current.set(p.id, marker)
+        bounds.extend([p.lat, p.lon])
+      }
+
+      // Per-day polylines connecting events in chronological order.
+      const byDate = new globalThis.Map<string, Array<MapPoint & { lat: number; lon: number }>>()
+      for (const p of located) {
+        if (p.kind !== 'event' || !p.date) continue
+        const arr = byDate.get(p.date) ?? []
+        arr.push(p)
+        byDate.set(p.date, arr)
+      }
+      for (const [date, list] of byDate) {
+        if (list.length < 2) continue
+        list.sort((a, b) => (a.startTime ?? '').localeCompare(b.startTime ?? ''))
+        L.polyline(
+          list.map(p => [p.lat, p.lon] as [number, number]),
+          { color: dayColor.get(date) ?? '#888', weight: 3, opacity: 0.6, dashArray: '6 6' }
+        ).addTo(map)
+      }
+
+      if (bounds.isValid()) {
+        map.fitBounds(bounds, { padding: [30, 30], maxZoom: 14 })
       }
     }
 
@@ -394,184 +473,227 @@ export default function Map() {
     return () => {
       cancelled = true
       if (mapRef.current) { mapRef.current.remove(); mapRef.current = null }
-      layersRef.current = null
-      hotelMarkersRef.current = {}
-      eventMarkersRef.current = {}
-      aiMarkersRef.current = {}
+      markersRef.current.clear()
+      clickPinRef.current = null
       initRef.current = false
     }
   }, [trip?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  if (!trip) return null
+  function closePinPanel() {
+    if (clickPinRef.current) {
+      clickPinRef.current.remove()
+      clickPinRef.current = null
+    }
+    setPin(null)
+    setPinResolving(false)
+  }
 
-  const eventsWithLocation = trip.days.flatMap(d => d.events.filter(e => e.location))
+  // Refresh popups when AI insights arrive.
+  useEffect(() => {
+    if (!insights) return
+    for (const p of points) {
+      const marker = markersRef.current.get(p.id)
+      if (marker) marker.setPopupContent(buildPopupHtml(p))
+    }
+  }, [insights]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  async function loadInsights() {
+    if (!trip) return
+    setAiStatus('loading')
+    setAiError(null)
+    try {
+      const adults = trip.family.filter(m => !m.isChild).length
+      const childrenCount = trip.family.filter(m => m.isChild).length
+      const aiPoints = points.map(p => ({
+        id: p.id,
+        kind: p.kind,
+        name: p.name,
+        address: p.address,
+        date: p.date,
+        startTime: p.startTime,
+        category: p.category,
+      }))
+      const res = await fetchMapInsights({
+        destination: trip.destination,
+        startDate: trip.startDate,
+        endDate: trip.endDate,
+        passengers: { adults, children: childrenCount },
+        points: aiPoints,
+      })
+      setInsights(res)
+      setAiStatus('ready')
+    } catch (e) {
+      setAiError(e instanceof Error ? e.message : String(e))
+      setAiStatus('error')
+    }
+  }
+
+  if (!trip) return null
 
   return (
     <PageWrapper>
       <MapHeader $mobile={isMobile}>
-        <Stack direction="row" align="center" spacing="sm" style={{ flexWrap: 'wrap', gap: 6 }}>
+        <Stack direction="row" align="center" spacing="sm" style={{ flexWrap: 'wrap' }}>
           <Typography variant="h5" style={{ margin: 0 }}>🗺️ מפה</Typography>
           <Badge variant="info" size="sm">{trip.destination}</Badge>
-
-          {/* Missing address warning */}
-          {missingAddress > 0 && (
-            <Badge variant="warning" size="sm">⚠️ {missingAddress} לינות ללא כתובת</Badge>
-          )}
-
-          {/* Layer toggles */}
           {trip.accommodations.length > 0 && (
-            <Button
-              size="sm"
-              variant={visibleLayers.hotels ? 'primary' : 'ghost'}
-              onClick={() => toggleLayer('hotels')}
-              title="הצג/הסתר לינות"
-            >
-              🏨 לינות
-            </Button>
+            <Badge size="sm">🏨 {trip.accommodations.length} לינות</Badge>
           )}
-          {eventsWithLocation.length > 0 && (
-            <Button
-              size="sm"
-              variant={visibleLayers.events ? 'primary' : 'ghost'}
-              onClick={() => toggleLayer('events')}
-              title="הצג/הסתר אירועים"
-            >
-              📅 אירועים
-            </Button>
-          )}
-          {aiSuggestions.length > 0 && (
-            <Button
-              size="sm"
-              variant={visibleLayers.ai ? 'primary' : 'ghost'}
-              onClick={() => toggleLayer('ai')}
-              title="הצג/הסתר הצעות AI"
-            >
-              ✨ AI
-            </Button>
-          )}
-
-          {/* Sidebar toggle */}
-          <Button size="sm" variant="ghost" onClick={() => setSidebarOpen(o => !o)} title="רשימת מקומות">
-            <List size={16} />
-          </Button>
-
-          {/* AI suggest button */}
-          {hasAiKey ? (
-            <Button
-              size="sm"
-              variant="secondary"
-              onClick={handleAiSuggest}
-              disabled={aiLoading}
-              startIcon={aiLoading ? <Spinner size="sm" /> : <Sparkles size={14} />}
-            >
-              {aiLoading ? 'טוען...' : 'AI מציע מקומות'}
-            </Button>
-          ) : (
-            <Badge size="sm">🤖 הגדר AI בפרופיל</Badge>
-          )}
-
+          <Badge size="sm">📍 {points.length} נקודות</Badge>
           {status === 'loading' && (
             <Typography variant="caption" style={{ opacity: 0.6 }}>מאתר יעד...</Typography>
           )}
+          <div style={{ marginInlineStart: 'auto' }}>
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={loadInsights}
+              disabled={aiStatus === 'loading' || status !== 'ready'}
+            >
+              {aiStatus === 'loading' ? '⏳ מחפש טיפים…' : '✨ טיפים חכמים מ-AI'}
+            </Button>
+          </div>
         </Stack>
       </MapHeader>
 
-      {status === 'loading' && <LoadingBar />}
+      {(status === 'loading' || aiStatus === 'loading') && <LoadingBar />}
 
       {status === 'error' ? (
         <ErrorBox>
           <Typography variant="body2">לא ניתן למצוא את "{trip.destination}" על המפה</Typography>
         </ErrorBox>
       ) : (
-        <MapArea>
+        <Body $mobile={isMobile}>
           <MapWrapper>
             <div ref={containerRef} style={{ height: '100%', width: '100%' }} />
+            {status === 'ready' && !pin && (
+              <HintBubble>💡 הקליקו על המפה כדי להוסיף ללוז</HintBubble>
+            )}
+            {pin && (
+              <FloatingAddPanel $mobile={isMobile}>
+                <div style={{ padding: 12 }}>
+                  <SmartAddBar
+                    trip={trip}
+                    pinnedLocation={
+                      pinResolving
+                        ? { name: '🔄 מאתר כתובת...', address: undefined, coords: pin.coords }
+                        : pin
+                    }
+                    onCancel={closePinPanel}
+                    onAdded={closePinPanel}
+                  />
+                </div>
+              </FloatingAddPanel>
+            )}
           </MapWrapper>
 
-          {/* Sidebar */}
-          <SidebarPanel $open={sidebarOpen}>
-            <SidebarHeader>
-              <Typography variant="body2" style={{ fontWeight: 700 }}>📍 מקומות</Typography>
-              <button onClick={() => setSidebarOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}>
-                <X size={16} />
-              </button>
-            </SidebarHeader>
+          <Sidebar $mobile={isMobile}>
+            <Typography variant="h6" style={{ margin: '0 0 8px' }}>מקרא תאריכים</Typography>
+            <div style={{ marginBottom: 12, fontSize: 13 }}>
+              <div style={{ marginBottom: 4 }}>
+                <LegendDot $color={DESTINATION_COLOR} /> יעד
+              </div>
+              <div style={{ marginBottom: 4 }}>
+                <LegendDot $color={STAY_COLOR} /> לינות 🏨
+              </div>
+              {trip.days.map(day => (
+                <div key={day.id} style={{ marginBottom: 2 }}>
+                  <LegendDot $color={dayColor.get(day.date) ?? '#888'} />
+                  {formatDateShort(day.date)} {day.label ? `· ${day.label}` : ''}
+                </div>
+              ))}
+            </div>
 
-            {trip.accommodations.some(a => a.address) && (
-              <SidebarSection>
-                <SectionLabel>🏨 לינות</SectionLabel>
-                {trip.accommodations.filter(a => a.address).map(acc => (
-                  <LocationRow
-                    key={acc.id}
-                    onClick={() => {
-                      const m = hotelMarkersRef.current[acc.id]
-                      if (m && mapRef.current) {
-                        const ll = m.getLatLng()
-                        mapRef.current.flyTo(ll, 16)
-                        m.openPopup()
-                      }
-                    }}
-                  >
-                    <span>{acc.name}</span>
-                    <LocationSub>{fmt(acc.checkIn)} → {fmt(acc.checkOut)}</LocationSub>
-                  </LocationRow>
-                ))}
-              </SidebarSection>
-            )}
-
-            {eventsWithLocation.length > 0 && (
-              <SidebarSection>
-                <SectionLabel>📅 אירועים</SectionLabel>
-                {trip.days.flatMap(d => d.events.filter(e => e.location).map(ev => (
-                  <LocationRow
-                    key={ev.id}
-                    onClick={() => {
-                      const m = eventMarkersRef.current[ev.id]
-                      if (m && mapRef.current) {
-                        mapRef.current.flyTo(m.getLatLng(), 16)
-                        m.openPopup()
-                      }
-                    }}
-                  >
-                    <span>{ev.title}</span>
-                    <LocationSub>{d.date.slice(5).replace('-','.')} {ev.startTime}</LocationSub>
-                  </LocationRow>
-                )))}
-              </SidebarSection>
-            )}
-
-            {aiSuggestions.length > 0 && (
-              <SidebarSection>
-                <SectionLabel>✨ הצעות AI</SectionLabel>
-                {aiSuggestions.filter(s => s.coords).map(s => (
-                  <LocationRow
-                    key={s.name}
-                    onClick={() => {
-                      const m = aiMarkersRef.current[s.name]
-                      if (m && mapRef.current) {
-                        mapRef.current.flyTo(m.getLatLng(), 16)
-                        m.openPopup()
-                      }
-                    }}
-                  >
-                    <span>{s.name}</span>
-                    <LocationSub>{s.type} — {s.description}</LocationSub>
-                  </LocationRow>
-                ))}
-              </SidebarSection>
-            )}
-          </SidebarPanel>
-
-          {/* AI error panel */}
-          {aiError && (
-            <AiPanel $visible>
-              <Typography variant="body2" style={{ color: '#ef4444', fontSize: 13 }}>
-                ⚠️ {aiError}
+            <Typography variant="h6" style={{ margin: '12px 0 8px' }}>
+              ✨ טיפים חכמים
+            </Typography>
+            {aiStatus === 'idle' && (
+              <Typography variant="caption" style={{ opacity: 0.7 }}>
+                לחצו "טיפים חכמים מ-AI" למעלה כדי לקבל המלצות אישיות לכל נקודה במפה.
               </Typography>
-            </AiPanel>
-          )}
-        </MapArea>
+            )}
+            {aiStatus === 'error' && (
+              <Typography variant="caption" style={{ color: '#ef4444' }}>
+                שגיאה בקבלת טיפים: {aiError}
+              </Typography>
+            )}
+            {aiStatus === 'ready' && insights && (
+              <>
+                {insights.per_point
+                  .filter(pp => pp.tips.length || pp.nearby.length)
+                  .map(pp => {
+                    const point = points.find(p => p.id === pp.id)
+                    if (!point) return null
+                    return (
+                      <TipCard key={pp.id} $color={point.color}>
+                        <div style={{ fontWeight: 600, marginBottom: 4 }}>
+                          {point.emoji} {point.name}
+                          {point.date && (
+                            <span style={{ opacity: 0.6, fontWeight: 400, marginInlineStart: 6 }}>
+                              · {formatDateShort(point.date)}
+                            </span>
+                          )}
+                        </div>
+                        {pp.tips.map((t, i) => (
+                          <div key={i} style={{ marginBottom: 2 }}>• {t}</div>
+                        ))}
+                        {pp.nearby.length > 0 && (
+                          <div style={{ marginTop: 6, fontSize: 12 }}>
+                            <b>בסביבה:</b>
+                            {pp.nearby.map((n, i) => (
+                              <div key={i} style={{ marginTop: 2 }}>
+                                {n.kid_friendly ? '👶 ' : ''}
+                                <a href={n.source_url} target="_blank" rel="noopener noreferrer">
+                                  {n.name}
+                                </a>{' '}
+                                · {n.why}{' '}
+                                <span style={{ opacity: 0.6 }}>({n.walking_minutes}′)</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </TipCard>
+                    )
+                  })}
+                {insights.connections.length > 0 && (
+                  <>
+                    <Typography variant="h6" style={{ margin: '12px 0 6px' }}>
+                      🔗 חיבורים בין נקודות
+                    </Typography>
+                    {insights.connections.map((c, i) => {
+                      const from = points.find(p => p.id === c.from_id)
+                      const to = points.find(p => p.id === c.to_id)
+                      return (
+                        <TipCard key={i} $color={from?.color ?? '#888'}>
+                          <div style={{ fontSize: 12, opacity: 0.7, marginBottom: 2 }}>
+                            {from?.name ?? '?'} → {to?.name ?? '?'}
+                          </div>
+                          <a href={c.source_url} target="_blank" rel="noopener noreferrer">
+                            {c.suggestion}
+                          </a>
+                        </TipCard>
+                      )
+                    })}
+                  </>
+                )}
+              </>
+            )}
+          </Sidebar>
+        </Body>
       )}
     </PageWrapper>
   )
+}
+
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
+function escapeAttr(s: string): string {
+  return escapeHtml(s)
 }

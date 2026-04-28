@@ -4,19 +4,36 @@ import { Container, Grid, EmptyState, Button, Stack, Typography } from 'myk-libr
 import { useTripStore } from '@/stores/tripStore'
 import TripCard from '@/components/trip/TripCard'
 import TripFormModal from '@/components/trip/TripFormModal'
-import { Plus, Upload } from 'lucide-react'
+import { Plus, Upload, Sparkles } from 'lucide-react'
 import styled from 'styled-components'
 import { importTripFromFile } from '@/utils/export'
 import { generateId } from '@/utils/id'
 import { useBreakpoint } from '@/hooks/useBreakpoint'
+import CloudSyncButton from '@/components/cloud/CloudSyncButton'
+import type { TripPlan } from '@/types/trip-plan'
+import hollandTrip from '@/data/holland-trip.json'
 
 const Header = styled.div<{ $mobile: boolean }>`
-  padding: 32px 0 24px;
+  padding: ${({ $mobile }) => ($mobile ? '16px 0 12px' : '32px 0 24px')};
   display: flex;
-  align-items: ${({ $mobile }) => ($mobile ? 'flex-start' : 'center')};
+  align-items: ${({ $mobile }) => ($mobile ? 'stretch' : 'center')};
   justify-content: space-between;
   flex-direction: ${({ $mobile }) => ($mobile ? 'column' : 'row')};
   gap: ${({ $mobile }) => ($mobile ? '12px' : '0')};
+`
+
+const ButtonRow = styled.div<{ $mobile: boolean }>`
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  & > * {
+    touch-action: manipulation;
+    min-height: 44px; /* Apple HIG touch target */
+  }
+  ${({ $mobile }) => $mobile && `
+    width: 100%;
+    & > * { flex: 1 1 calc(50% - 4px); }
+  `}
 `
 
 export default function Home() {
@@ -37,16 +54,33 @@ export default function Home() {
     }
   }
 
+  const loadHollandSample = () => {
+    const trip = hollandTrip as TripPlan
+    const exists = trips.some(t => t.id === trip.id || t.name === trip.name)
+    if (exists) {
+      alert('הטיול להולנד כבר קיים')
+      return
+    }
+    const now = new Date().toISOString()
+    useTripStore.setState(state => ({
+      trips: [...state.trips, { ...trip, createdAt: now, updatedAt: now }],
+      activeTripId: trip.id,
+    }))
+  }
+
   return (
     <Container size="xl" style={{ padding: `0 ${isMobile ? '12px' : '24px'}` }}>
       <Header $mobile={isMobile}>
         <Stack direction="column" spacing="xs">
-          <Typography variant="h3" style={{ margin: 0 }}>✈️ הטיולים שלנו</Typography>
+          <Typography variant={isMobile ? 'h4' : 'h3'} style={{ margin: 0 }}>
+            ✈️ הטיולים שלנו
+          </Typography>
           <Typography variant="body2" style={{ color: '#6b7280' }}>
             תכנן את הטיול המשפחתי הבא שלך
           </Typography>
         </Stack>
-        <Stack direction="row" spacing="sm">
+        <ButtonRow $mobile={isMobile}>
+          <CloudSyncButton />
           <Button variant="ghost" onClick={() => navigate('/profile')} title="הפרופיל המשפחתי שלנו">
             <Stack direction="row" spacing="xs" align="center">
               <span>🧬</span>
@@ -65,16 +99,24 @@ export default function Home() {
               <span>טיול חדש</span>
             </Stack>
           </Button>
-        </Stack>
+        </ButtonRow>
       </Header>
 
       {trips.length === 0 ? (
-        <EmptyState
-          title="אין טיולים עדיין"
-          description="צור טיול חדש כדי להתחיל לתכנן!"
-          actionText="צור טיול ראשון"
-          onAction={() => setShowCreate(true)}
-        />
+        <Stack direction="column" spacing="md" align="center" style={{ padding: '32px 0' }}>
+          <EmptyState
+            title="אין טיולים עדיין"
+            description="צור טיול חדש או טען את טיול הולנד אוגוסט 2026 שלך"
+            actionText="צור טיול ראשון"
+            onAction={() => setShowCreate(true)}
+          />
+          <Button variant="ghost" onClick={loadHollandSample}>
+            <Stack direction="row" spacing="xs" align="center">
+              <Sparkles size={16} />
+              <span>🌷 טען טיול הולנד אוגוסט 2026</span>
+            </Stack>
+          </Button>
+        </Stack>
       ) : (
         <Grid columns={isMobile ? 1 : isTablet ? 2 : 3} gap="md">
           {trips.map(trip => (

@@ -411,7 +411,12 @@ export const useTripStore = create<TripStore>()(
       onRehydrateStorage: () => (state) => {
         if (!state) return
 
-        if (state.trips.length === 0) {
+        // One-shot migration: drop the legacy non-UUID Italy demo. Its IDs
+        // don't match the Supabase schema (uuid columns), so syncs to cloud
+        // silently fail. Replace it with the real upcoming trip.
+        const onlyItalyDemo =
+          state.trips.length === 1 && state.trips[0]?.id === 'demo-italy-2026'
+        if (state.trips.length === 0 || onlyItalyDemo) {
           state.trips = [DEMO_TRIP]
           state.activeTripId = DEMO_TRIP.id
           return

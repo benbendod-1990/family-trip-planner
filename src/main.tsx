@@ -5,6 +5,7 @@ import { ThemeProvider } from 'styled-components'
 import { GlobalStyles } from 'myk-library'
 import { tripTheme } from './theme/tripTheme'
 import App from './App'
+import { AuthProvider } from './lib/AuthContext'
 import './index.css'
 import 'leaflet/dist/leaflet.css'
 
@@ -13,7 +14,9 @@ createRoot(document.getElementById('root')!).render(
     <ThemeProvider theme={tripTheme}>
       <GlobalStyles theme={tripTheme} />
       <BrowserRouter basename={import.meta.env.BASE_URL}>
-        <App />
+        <AuthProvider>
+          <App />
+        </AuthProvider>
       </BrowserRouter>
     </ThemeProvider>
   </StrictMode>,
