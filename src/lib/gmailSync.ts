@@ -1,9 +1,10 @@
 // Gmail → trips sync.
 //
 // Flow:
-//   1. Get a Gmail access token. Prefer the Supabase Google sign-in's
-//      provider_token (no extra OAuth dance). If missing/expired, ask the
-//      user to sign in again with Gmail scope.
+//   1. Get a Gmail access token from the Worker's token broker. The Worker
+//      holds Google's refresh_token (stored at sign-in) and mints/refreshes
+//      access tokens via Google's OAuth endpoint. We never depend on
+//      Supabase's provider_token (which expires after ~1h and isn't refreshed).
 //   2. Fetch recent travel emails via the existing fetchTravelEmails().
 //   3. Parse each into structured Flight/Accommodation/CarRental.
 //   4. Match each parsed item to a trip by *date inside the booking* (NOT
@@ -22,6 +23,7 @@ import { parseEmails, type ParsedEmail } from '@/services/emailParser'
 import { parseDocument } from './aiClient'
 import { getSinceEpochSec, recordSync } from './gmailSyncState'
 import { supabase } from './supabase'
+import { fetchGmailAccessToken } from './gmailToken'
 import { generateId } from '@/utils/id'
 import {
   createMergeSession, mergeByConfirmation, sameFlightDirection,
@@ -45,13 +47,8 @@ export interface GmailSyncReport {
 
 async function getGmailContext(): Promise<{ token: string; userId?: string }> {
   const { data: sess } = await supabase.auth.getSession()
-  const tok = sess.session?.provider_token
-  if (!tok) {
-    throw new Error(
-      'אין אסימון Gmail. צא והיכנס שוב עם Google — הפעם אבקש גישה ל-Gmail (read-only).'
-    )
-  }
-  return { token: tok, userId: sess.session?.user?.id }
+  const token = await fetchGmailAccessToken()
+  return { token, userId: sess.session?.user?.id }
 }
 
 // Pick the trip whose [startDate, endDate] window covers `iso`. Returns

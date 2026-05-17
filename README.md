@@ -60,16 +60,24 @@ npm run dev
 
 ## Gmail Sync Setup
 
-Gmail sync reuses the Google OAuth token from the Supabase Google sign-in —
-no extra client ID, no extra `.env` var. Setup:
+Gmail sync uses the Google OAuth from Supabase sign-in, plus a Worker-side
+token broker that stores Google's `refresh_token` and mints fresh access
+tokens on demand (Supabase's `provider_token` expires ~1h after sign-in and
+is not refreshed). No extra frontend `.env` var — but the Worker needs the
+Google OAuth credentials so it can refresh.
 
-1. In Supabase → Authentication → Providers → Google: enable Google provider
-   and add the `https://www.googleapis.com/auth/gmail.readonly` scope to the
-   "Additional scopes" field.
-2. In Google Cloud Console → OAuth Consent Screen, ensure the same scope is
-   listed.
-3. Sign out and sign in again from the app — Google's consent screen will
-   show the Gmail read-only permission. Click the "Gmail" button to scan.
+1. In Google Cloud Console → OAuth Consent Screen, add the
+   `https://www.googleapis.com/auth/gmail.readonly` scope.
+2. In Supabase → Authentication → Providers → Google: enable Google, set
+   the OAuth client ID/secret, and add the Gmail read-only scope under
+   "Additional scopes".
+3. Set Worker env vars (via `wrangler secret put` or `.dev.vars`):
+   - `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` (same pair Supabase uses)
+   - `SUPABASE_SERVICE_ROLE_KEY` (to read/write `gmail_credentials`)
+4. Run the `0005_gmail_credentials` migration.
+5. Sign out and sign in again from the app — Google's consent screen will
+   show the Gmail read-only permission, the refresh token is captured at
+   that moment, then click "Gmail" to scan.
 
 Read-only access only — the app never modifies your inbox.
 

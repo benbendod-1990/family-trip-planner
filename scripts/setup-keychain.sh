@@ -7,8 +7,11 @@ set -euo pipefail
 
 KEYS=(
   "anthropic-api-key|ANTHROPIC_API_KEY (sk-ant-...) — same one used in finance-dashboard"
+  "gemini-api-key|GEMINI_API_KEY (AIza... from https://aistudio.google.com/app/api-keys)"
   "supabase-jwt-secret|SUPABASE_JWT_SECRET (Supabase → Settings → API → JWT Settings)"
   "supabase-service-key|SUPABASE_SERVICE_ROLE_KEY (NEW one, after rotating the leaked sb_secret_...)"
+  "google-client-id|GOOGLE_CLIENT_ID (Google Cloud → Credentials → OAuth 2.0 — same client Supabase Auth uses)"
+  "google-client-secret|GOOGLE_CLIENT_SECRET (paired with GOOGLE_CLIENT_ID — Worker uses it to refresh Gmail tokens)"
 )
 
 prompt_and_store() {

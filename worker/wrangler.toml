@@ -7,9 +7,19 @@ compatibility_flags = ["nodejs_compat"]
 workers_dev = true
 
 # Secrets (set via `wrangler secret put <KEY>`):
-#   ANTHROPIC_API_KEY — Claude API key (required)
-#   SUPABASE_JWT_SECRET — only for legacy projects on HS256 (modern Supabase uses ES256/JWKS)
-#   SHARED_API_SECRET — optional fallback shared secret for dev/test
+#   ANTHROPIC_API_KEY         — Claude API key (required for /api/{deals,blog,map,itinerary} routes)
+#   GEMINI_API_KEY            — Gemini API key (required for /api/gemini/* free-tier routes)
+#   SUPABASE_JWT_SECRET       — only for legacy projects on HS256 (modern Supabase uses ES256/JWKS)
+#   SUPABASE_SERVICE_ROLE_KEY — required for /api/gmail/* (reads/writes gmail_credentials)
+#   GOOGLE_CLIENT_ID          — required for /api/gmail/* (refreshes Google access tokens)
+#   GOOGLE_CLIENT_SECRET      — required for /api/gmail/*
+#   SHARED_API_SECRET         — optional fallback shared secret for dev/test
+
+# Cron triggers — disabled until we add Supabase persistence (see roadmap).
+# When enabled, the scheduled handler will call Gemini for the active trip
+# and write findings to the `agent_runs` table.
+# [triggers]
+# crons = ["0 7 * * *"]   # daily 07:00 UTC = 10:00 Israel
 
 # Dev-only config (loaded from .dev.vars; keep it out of git)
 # For local dev, copy .dev.vars.example → .dev.vars and fill in.

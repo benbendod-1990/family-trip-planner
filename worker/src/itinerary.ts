@@ -58,7 +58,7 @@ export async function runItineraryParse(client: Anthropic, req: ItineraryParseRe
 
   const response = await client.messages.create({
     model: 'claude-haiku-4-5-20251001',
-    max_tokens: 1500,
+    max_tokens: 8000,
     system: [
       {
         type: 'text',
@@ -75,6 +75,10 @@ export async function runItineraryParse(client: Anthropic, req: ItineraryParseRe
   return extractJson(response)
 }
 
+// Long pasted text (e.g. an entire blog post) blows the response budget without
+// adding signal — the parser only needs the user's instruction, not the source.
+const MAX_INPUT_CHARS = 30_000
+
 function buildUserMessage(req: ItineraryParseRequest): string {
   const lines: string[] = [
     `Destination: ${req.destination}`,
@@ -90,7 +94,10 @@ function buildUserMessage(req: ItineraryParseRequest): string {
   }
   lines.push('')
   lines.push('User instruction (Hebrew or mixed):')
-  lines.push(req.text)
+  const text = req.text.length > MAX_INPUT_CHARS
+    ? req.text.slice(0, MAX_INPUT_CHARS) + '\n[…truncated]'
+    : req.text
+  lines.push(text)
   lines.push('')
   lines.push(
     'Parse into one or more events that fall inside the trip window. Resolve relative dates ("מחר", "ביום שני", "יום אחרון") relative to "Today". If a date is impossible (outside the window), clamp to the nearest day inside the window and note it. Default duration: meal=60min, activity=90min, tour=180min. If start time is missing, infer from context (e.g. "ארוחת ערב"=19:00). Honor the schema.'
@@ -99,8 +106,10 @@ function buildUserMessage(req: ItineraryParseRequest): string {
 }
 
 function extractJson(response: Anthropic.Message): unknown {
+  let firstText: string | undefined
   for (const block of response.content) {
     if (block.type === 'text') {
+      if (firstText === undefined) firstText = block.text
       try {
         return JSON.parse(block.text)
       } catch {
@@ -108,5 +117,12 @@ function extractJson(response: Anthropic.Message): unknown {
       }
     }
   }
-  throw new Error('Model returned no parseable JSON block')
+  // Surface stop_reason + a snippet so future failures are debuggable from the
+  // client error toast (the worker re-emits this string in `detail`).
+  const reason = response.stop_reason ?? 'unknown'
+  const hint = reason === 'max_tokens'
+    ? 'response was truncated — bump max_tokens or shorten the input'
+    : 'no text block parsed as JSON'
+  const snippet = firstText ? ` | first 200 chars: ${firstText.slice(0, 200)}` : ''
+  throw new Error(`Model returned no parseable JSON block (stop_reason=${reason}; ${hint})${snippet}`)
 }

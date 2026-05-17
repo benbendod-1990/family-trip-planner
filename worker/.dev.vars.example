@@ -4,9 +4,25 @@
 # From https://console.anthropic.com/ — this is what Ben already has.
 ANTHROPIC_API_KEY=sk-ant-...
 
+# From https://aistudio.google.com/app/api-keys — free tier (1500 req/day)
+# Required for /api/gemini/* routes.
+GEMINI_API_KEY=AIza...
+
 # From Supabase → Settings → API → JWT Settings → "JWT Secret"
 # Used to verify the access_token from the browser (RS256 or HS256 depending on project).
 SUPABASE_JWT_SECRET=your-supabase-jwt-secret
+
+# Supabase service-role key (sb_secret_…). Required for /api/gmail/* routes,
+# which read/write public.gmail_credentials on behalf of the signed-in user.
+# Supabase Dashboard → Settings → API → "service_role" (NOT the anon key).
+# NEVER ship this to the browser — Worker-only.
+SUPABASE_SERVICE_ROLE_KEY=sb_secret_...
+
+# Google OAuth client (same one configured in Supabase → Auth → Providers → Google).
+# Google Cloud Console → APIs & Services → Credentials → OAuth 2.0 Client ID.
+# Used by the Worker to refresh Gmail access tokens via Google's token endpoint.
+GOOGLE_CLIENT_ID=...apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=GOCSPX-...
 
 # Optional: simpler auth for dev/testing (client sends `x-api-secret` header).
 # If set, requests can bypass Supabase JWT check with this value.
