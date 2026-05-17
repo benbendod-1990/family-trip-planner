@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Outlet, useParams, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import AiChatDrawer from '@/components/ai/AiChatDrawer'
+import CloudSyncButton from '@/components/cloud/CloudSyncButton'
 import {
   AppShell, Navbar, Sidebar, Drawer,
   SidebarContent, SidebarNavItem, SidebarSection, SidebarSectionTitle,
@@ -8,7 +9,7 @@ import {
 } from 'myk-library'
 import { useTripStore } from '@/stores/tripStore'
 import styled from 'styled-components'
-import { Map, Wallet, Plane, Home, ListTodo, Users, Menu, LayoutDashboard, Backpack, MapPin } from 'lucide-react'
+import { Map, Wallet, Plane, Home, ListTodo, Users, Menu, LayoutDashboard, Backpack, MapPin, User } from 'lucide-react'
 import { useBreakpoint } from '@/hooks/useBreakpoint'
 
 const TripTitle = styled.div`
@@ -160,6 +161,18 @@ export default function AppLayout() {
                 <span>{trip.name}</span>
               </TripTitle>
               <Badge variant="info" size="sm">{trip.destination}</Badge>
+              <Stack direction="row" spacing="xs" align="center" style={{ marginInlineStart: 'auto' }}>
+                <CloudSyncButton />
+                <ActionIcon
+                  onClick={() => navigate('/profile')}
+                  title="פרופיל משפחתי — סיכום טיולים קודמים והעדפות"
+                  aria-label="פרופיל משפחתי"
+                  variant="subtle"
+                  size="sm"
+                >
+                  <User size={18} />
+                </ActionIcon>
+              </Stack>
             </Stack>
           </Navbar>
         }

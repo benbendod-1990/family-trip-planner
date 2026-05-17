@@ -11,7 +11,7 @@ import { generateId } from '@/utils/id'
 import { useBreakpoint } from '@/hooks/useBreakpoint'
 import CloudSyncButton from '@/components/cloud/CloudSyncButton'
 import type { TripPlan } from '@/types/trip-plan'
-import hollandTrip from '@/data/holland-trip.json'
+import { DEMO_TRIPS } from '@/data/demoData'
 
 const Header = styled.div<{ $mobile: boolean }>`
   padding: ${({ $mobile }) => ($mobile ? '16px 0 12px' : '32px 0 24px')};
@@ -54,11 +54,10 @@ export default function Home() {
     }
   }
 
-  const loadHollandSample = () => {
-    const trip = hollandTrip as TripPlan
+  const loadSampleTrip = (trip: TripPlan) => {
     const exists = trips.some(t => t.id === trip.id || t.name === trip.name)
     if (exists) {
-      alert('הטיול להולנד כבר קיים')
+      alert(`הטיול "${trip.name}" כבר קיים`)
       return
     }
     const now = new Date().toISOString()
@@ -106,23 +105,41 @@ export default function Home() {
         <Stack direction="column" spacing="md" align="center" style={{ padding: '32px 0' }}>
           <EmptyState
             title="אין טיולים עדיין"
-            description="צור טיול חדש או טען את טיול הולנד אוגוסט 2026 שלך"
+            description="צור טיול חדש או טען טיול לדוגמה"
             actionText="צור טיול ראשון"
             onAction={() => setShowCreate(true)}
           />
-          <Button variant="ghost" onClick={loadHollandSample}>
-            <Stack direction="row" spacing="xs" align="center">
-              <Sparkles size={16} />
-              <span>🌷 טען טיול הולנד אוגוסט 2026</span>
-            </Stack>
-          </Button>
+          <Stack direction="column" spacing="xs" align="stretch" style={{ width: '100%', maxWidth: 360 }}>
+            {DEMO_TRIPS.map(trip => (
+              <Button key={trip.id} variant="ghost" onClick={() => loadSampleTrip(trip)}>
+                <Stack direction="row" spacing="xs" align="center">
+                  <Sparkles size={16} />
+                  <span>{trip.coverEmoji} טען {trip.name}</span>
+                </Stack>
+              </Button>
+            ))}
+          </Stack>
         </Stack>
       ) : (
-        <Grid columns={isMobile ? 1 : isTablet ? 2 : 3} gap="md">
-          {trips.map(trip => (
-            <TripCard key={trip.id} trip={trip} />
-          ))}
-        </Grid>
+        <>
+          {DEMO_TRIPS.some(d => !trips.some(t => t.id === d.id)) && (
+            <Stack direction="row" spacing="xs" style={{ marginBottom: 12, flexWrap: 'wrap' }}>
+              {DEMO_TRIPS.filter(d => !trips.some(t => t.id === d.id)).map(trip => (
+                <Button key={trip.id} variant="ghost" onClick={() => loadSampleTrip(trip)}>
+                  <Stack direction="row" spacing="xs" align="center">
+                    <Sparkles size={14} />
+                    <span>{trip.coverEmoji} טען {trip.name}</span>
+                  </Stack>
+                </Button>
+              ))}
+            </Stack>
+          )}
+          <Grid columns={isMobile ? 1 : isTablet ? 2 : 3} gap="md">
+            {trips.map(trip => (
+              <TripCard key={trip.id} trip={trip} />
+            ))}
+          </Grid>
+        </>
       )}
 
       <TripFormModal

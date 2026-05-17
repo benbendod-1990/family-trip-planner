@@ -1,0 +1,104 @@
+{
+  "id": "a1f4e9b2-3c8d-4e6a-9b7c-1d5e8f7a2b34",
+  "name": "פריז — אוקטובר 2026 (בן + גל)",
+  "destination": "פריז, צרפת",
+  "startDate": "2026-10-15",
+  "endDate": "2026-10-19",
+  "coverEmoji": "🗼",
+  "createdAt": "2026-05-17T00:00:00.000Z",
+  "updatedAt": "2026-05-17T00:00:00.000Z",
+  "family": [
+    { "id": "87973dde-1f43-4571-862b-5ef5393e1734", "name": "בן", "emoji": "👨", "isChild": false },
+    { "id": "cc9b60f1-4149-4b61-b429-83bb80ddd5e9", "name": "גל", "emoji": "👩", "isChild": false }
+  ],
+  "flights": [
+    {
+      "id": "b8a7c632-5e91-4f73-9d24-7b8e6f3c1a05",
+      "airline": "El Al",
+      "flightNumber": "LY 325",
+      "departureAirport": "TLV",
+      "arrivalAirport": "CDG",
+      "departureTime": "2026-10-15T16:05:00.000Z",
+      "arrivalTime": "2026-10-15T19:55:00.000Z",
+      "cost": 0,
+      "currency": "ILS",
+      "direction": "outbound",
+      "cabinClass": "economy",
+      "confirmationNumber": "ZHU9F6 / ZH8EWV",
+      "baggageIncluded": true,
+      "notes": "Terminal 3 → CDG Terminal 2B (Aerogare 2B). Boeing 777. Ben כרטיס ZH8EWV (1142494664019); Gal Zila כרטיס ZHU9F6 (1142494663921). FF: LY12895589."
+    },
+    {
+      "id": "c5d2e3f1-8a47-4b6e-9c3d-2f1a5b8c7e09",
+      "airline": "El Al",
+      "flightNumber": "LY 328",
+      "departureAirport": "CDG",
+      "arrivalAirport": "TLV",
+      "departureTime": "2026-10-19T17:35:00.000Z",
+      "arrivalTime": "2026-10-19T22:55:00.000Z",
+      "cost": 0,
+      "currency": "ILS",
+      "direction": "return",
+      "cabinClass": "economy",
+      "confirmationNumber": "ZHU9F6 / ZH8EWV",
+      "baggageIncluded": true,
+      "notes": "CDG Terminal 2B → TLV Terminal 3. Boeing 787-9. אותם 2 לוקטור כרטיסים."
+    }
+  ],
+  "accommodations": [],
+  "carRentals": [],
+  "budget": {
+    "currency": "EUR",
+    "totalBudget": 3000,
+    "items": [
+      {
+        "id": "d4e5f6a7-1b2c-3d4e-5f6a-7b8c9d0e1f23",
+        "category": "flights",
+        "label": "אל על TLV-CDG-TLV ×2 (ZHU9F6 + ZH8EWV)",
+        "planned": 0,
+        "date": "2026-05-01",
+        "paidBy": "87973dde-1f43-4571-862b-5ef5393e1734"
+      }
+    ]
+  },
+  "tasks": [
+    {
+      "id": "e1a2b3c4-5d6e-7f80-9a1b-2c3d4e5f6a78",
+      "title": "להזין עלות טיסות אל על מהקבצי PDF (ZHU9F6 + ZH8EWV)",
+      "description": "Booking codes ZHU9F6 (Gל) ו-ZH8EWV (בן). הוזמן 1/5/2026 דרך Call Center. שני כרטיסים נפרדים על אותן טיסות.",
+      "dueDate": "2026-05-31",
+      "assignedTo": "87973dde-1f43-4571-862b-5ef5393e1734",
+      "done": false,
+      "createdAt": "2026-05-17T00:00:00.000Z",
+      "updatedAt": "2026-05-17T00:00:00.000Z"
+    },
+    {
+      "id": "f2b3c4d5-6e7f-8091-a2b3-c4d5e6f70189",
+      "title": "להזמין מלון/Airbnb בפריז (4 לילות)",
+      "description": "15-19/10/2026, 2 מבוגרים. שקול אזורי Le Marais / Saint-Germain / Montmartre.",
+      "dueDate": "2026-07-01",
+      "assignedTo": "cc9b60f1-4149-4b61-b429-83bb80ddd5e9",
+      "done": false,
+      "createdAt": "2026-05-17T00:00:00.000Z",
+      "updatedAt": "2026-05-17T00:00:00.000Z"
+    },
+    {
+      "id": "a3c4d5e6-7f80-9192-b3c4-d5e6f7081923",
+      "title": "להסדיר שמרטף/הורה לילדים בזמן הנסיעה",
+      "description": "הילדים נשארים בארץ. לתאם עם סבא/סבתא או שמרטפית ל-15-19/10.",
+      "dueDate": "2026-09-15",
+      "assignedTo": "cc9b60f1-4149-4b61-b429-83bb80ddd5e9",
+      "done": false,
+      "createdAt": "2026-05-17T00:00:00.000Z",
+      "updatedAt": "2026-05-17T00:00:00.000Z"
+    }
+  ],
+  "packingItems": [],
+  "days": [
+    { "id": "b4d5e6f7-8091-a2b3-c4d5-e6f708192a34", "date": "2026-10-15", "label": "הגעה לפריז", "events": [] },
+    { "id": "c5e6f708-91a2-b3c4-d5e6-f708192a3b45", "date": "2026-10-16", "events": [] },
+    { "id": "d6f70819-2a3b-c4d5-e6f7-08192a3b4c56", "date": "2026-10-17", "events": [] },
+    { "id": "e708192a-3b4c-5d6e-7f80-91a2b3c4d5e6", "date": "2026-10-18", "events": [] },
+    { "id": "f8192a3b-4c5d-6e7f-8091-a2b3c4d5e6f7", "date": "2026-10-19", "label": "טיסת חזור", "events": [] }
+  ]
+}

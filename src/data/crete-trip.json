@@ -1,0 +1,133 @@
+{
+  "id": "b2c5f8a3-4d9e-4f1b-8c6a-7e2d5b9f3a18",
+  "name": "כרתים — מאי 2026",
+  "destination": "רתימנו, כרתים, יוון",
+  "startDate": "2026-05-21",
+  "endDate": "2026-05-28",
+  "coverEmoji": "🏖️",
+  "createdAt": "2026-05-17T00:00:00.000Z",
+  "updatedAt": "2026-05-17T00:00:00.000Z",
+  "family": [
+    { "id": "87973dde-1f43-4571-862b-5ef5393e1734", "name": "בן", "emoji": "👨", "isChild": false },
+    { "id": "cc9b60f1-4149-4b61-b429-83bb80ddd5e9", "name": "גל", "emoji": "👩", "isChild": false },
+    { "id": "17c85afc-3e0a-447b-b913-04931a0a4d13", "name": "עומר", "emoji": "👦", "isChild": true },
+    { "id": "c7251151-bcac-4eea-8b32-7d1c93e1de3a", "name": "ארי", "emoji": "👶", "isChild": true }
+  ],
+  "flights": [
+    {
+      "id": "c3d4e5f6-7a8b-9c0d-1e2f-3a4b5c6d7e80",
+      "airline": "Bluebird",
+      "flightNumber": "BZ 748",
+      "departureAirport": "TLV",
+      "arrivalAirport": "HER",
+      "departureTime": "2026-05-21T13:55:00.000Z",
+      "arrivalTime": "2026-05-21T15:45:00.000Z",
+      "cost": 0,
+      "currency": "EUR",
+      "direction": "outbound",
+      "cabinClass": "economy",
+      "notes": "טיסת הלוך כרתים. נשאב מתכתובת המלון (Aquila). מספר הזמנה וכרטיס — בקובץ Voucher.pdf שהועבר ב-17/5."
+    },
+    {
+      "id": "d4e5f607-8b9c-0d1e-2f3a-4b5c6d7e8091",
+      "airline": "Bluebird",
+      "flightNumber": "",
+      "departureAirport": "HER",
+      "arrivalAirport": "TLV",
+      "departureTime": "",
+      "arrivalTime": "",
+      "cost": 0,
+      "currency": "EUR",
+      "direction": "return",
+      "cabinClass": "economy",
+      "notes": "⚠️ פרטי טיסת חזור — לעדכן מתוך Voucher.pdf (תאריך, שעה, מספר טיסה). הנחתי 28/5 אבל לא מאומת."
+    }
+  ],
+  "accommodations": [
+    {
+      "id": "e5f70819-9c0d-1e2f-3a4b-5c6d7e8091a2",
+      "name": "Aquila Rithymna Beach Hotel",
+      "type": "hotel",
+      "address": "Adelianos Kampos, Rethymno 74100, Crete, Greece",
+      "checkIn": "2026-05-21",
+      "checkOut": "2026-05-28",
+      "cost": 0,
+      "currency": "EUR",
+      "notes": "Pre check-in: https://myhotel-wallet.com:22350/precheckin/barcode?h=24dbbfd45a · טל' מלון: +30 2831 200 300 · 2 מבוגרים + 2 ילדים (3 ו-4)."
+    }
+  ],
+  "carRentals": [],
+  "budget": {
+    "currency": "EUR",
+    "totalBudget": 4000,
+    "items": [
+      {
+        "id": "f6a70819-0d1e-2f3a-4b5c-6d7e8091a2b3",
+        "category": "other",
+        "label": "Taxi מלון↔HER ×2 (€98 כל כיוון)",
+        "planned": 196,
+        "date": "2026-05-21",
+        "paidBy": "87973dde-1f43-4571-862b-5ef5393e1734"
+      },
+      {
+        "id": "a7b80920-1e2f-3a4b-5c6d-7e8091a2b3c4",
+        "category": "other",
+        "label": "ביטוח נסיעות PassportCard (פוליסה 310370687)",
+        "planned": 0
+      }
+    ]
+  },
+  "tasks": [
+    {
+      "id": "b8c90a21-2f3a-4b5c-6d7e-8091a2b3c4d5",
+      "title": "🚖 לאשר טרנספר Aquila מהשדה (€98)",
+      "description": "להחזיר תשובה ל-info.rb@aquilahotels.com שהמחיר €98 בסדר. תשלום במזומן ישירות במלון. הנהג יחכה עם שלט.",
+      "dueDate": "2026-05-19",
+      "assignedTo": "87973dde-1f43-4571-862b-5ef5393e1734",
+      "done": false,
+      "createdAt": "2026-05-17T00:00:00.000Z",
+      "updatedAt": "2026-05-17T00:00:00.000Z"
+    },
+    {
+      "id": "c9d0ab22-3a4b-5c6d-7e80-91a2b3c4d5e6",
+      "title": "📋 לבצע Pre check-in למלון",
+      "description": "https://myhotel-wallet.com:22350/precheckin/barcode?h=24dbbfd45a — מאפשר שיוך חדר מהיר בהגעה.",
+      "dueDate": "2026-05-20",
+      "assignedTo": "cc9b60f1-4149-4b61-b429-83bb80ddd5e9",
+      "done": false,
+      "createdAt": "2026-05-17T00:00:00.000Z",
+      "updatedAt": "2026-05-17T00:00:00.000Z"
+    },
+    {
+      "id": "d0e1bc23-4b5c-6d7e-8091-a2b3c4d5e6f7",
+      "title": "✈️ להזין פרטי טיסת חזור + עלויות מתוך Voucher.pdf",
+      "description": "ה-Voucher PDF שהועבר אליך 17/5 מכיל: מספר הזמנה, פרטי טיסת חזור (תאריך/שעה/מספר), עלות חבילה כוללת.",
+      "dueDate": "2026-05-19",
+      "assignedTo": "87973dde-1f43-4571-862b-5ef5393e1734",
+      "done": false,
+      "createdAt": "2026-05-17T00:00:00.000Z",
+      "updatedAt": "2026-05-17T00:00:00.000Z"
+    },
+    {
+      "id": "e1f2cd24-5c6d-7e80-91a2-b3c4d5e6f708",
+      "title": "💺 להזמין כיסאות תינוק לטקסי (גילאי 3 ו-4)",
+      "description": "המלון מודיע שדורש Baby seats — לוודא שמוזמן מראש.",
+      "dueDate": "2026-05-19",
+      "assignedTo": "87973dde-1f43-4571-862b-5ef5393e1734",
+      "done": false,
+      "createdAt": "2026-05-17T00:00:00.000Z",
+      "updatedAt": "2026-05-17T00:00:00.000Z"
+    }
+  ],
+  "packingItems": [],
+  "days": [
+    { "id": "f2a3de25-6d7e-8091-a2b3-c4d5e6f70819", "date": "2026-05-21", "label": "הגעה לכרתים (BZ748, מלון Aquila)", "events": [] },
+    { "id": "a3b4ef26-7e80-91a2-b3c4-d5e6f7081920", "date": "2026-05-22", "events": [] },
+    { "id": "b4c5f027-8091-a2b3-c4d5-e6f708192031", "date": "2026-05-23", "events": [] },
+    { "id": "c5d60128-91a2-b3c4-d5e6-f70819203142", "date": "2026-05-24", "events": [] },
+    { "id": "d6e71229-a2b3-c4d5-e6f7-081920314253", "date": "2026-05-25", "events": [] },
+    { "id": "e7f8232a-b3c4-d5e6-f708-192031425364", "date": "2026-05-26", "events": [] },
+    { "id": "f809342b-c4d5-e6f7-0819-203142536475", "date": "2026-05-27", "events": [] },
+    { "id": "0910452c-d5e6-f708-1920-314253647586", "date": "2026-05-28", "label": "טיסת חזור (לאמת!)", "events": [] }
+  ]
+}

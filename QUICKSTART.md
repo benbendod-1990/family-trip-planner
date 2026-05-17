@@ -23,7 +23,8 @@ Permanent reference. Bookmark this file. Updated as the system evolves.
 | Supabase publishable key | `sb_publishable_vmVd1BccNla7ykG4SZZ3AQ_oGAcYGK1` (in client, OK to be public) |
 | Supabase secret key | macOS Keychain: `service=family-trip-planner/supabase-service-key, account=benbendod@gmail.com` |
 | Anthropic API key | macOS Keychain: `service=finance-dashboard, account=ANTHROPIC_API_KEY` |
-| Worker secrets (set) | `ANTHROPIC_API_KEY`, `SUPABASE_JWT_SECRET` |
+| Gemini API key | macOS Keychain: `service=family-trip-planner/gemini-api-key, account=$USER` (Google Cloud project `956360985712`, free tier — 1,500 req/day) |
+| Worker secrets (set) | `ANTHROPIC_API_KEY`, `SUPABASE_JWT_SECRET` (יתווסף `GEMINI_API_KEY` כשנפעיל Deals Agent) |
 | workers.dev subdomain | `bendod-family` |
 
 לרענן secret ב-Worker:
@@ -99,6 +100,19 @@ echo -n "<value>" | npx wrangler secret put ANTHROPIC_API_KEY
 curl https://family-trip-planner-api.bendod-family.workers.dev/health
 # {"ok":true}
 ```
+ÏÔ
+### AI endpoints
+
+| נתיב | מודל | חינם? |
+|---|---|---|
+| `POST /api/deals/scan` | Claude Opus 4.7 + web_search | לא — לפי שימוש |
+| `POST /api/blog/digest` | Claude Opus 4.7 + web_search | לא |
+| `POST /api/map/insights` | Claude Opus 4.7 + web_search | לא |
+| `POST /api/itinerary/parse` | Claude Haiku 4.5 | לא (זול) |
+| **`POST /api/gemini/deals`** | Gemini 2.5 Flash + Google Search grounding | ✅ 1500/יום |
+| **`POST /api/gemini/blog`** | Gemini 2.5 Flash + Google Search grounding | ✅ 1500/יום |
+
+ה-Gemini routes זהים ב-input/output ל-Claude variants — אפשר להחליף את ה-fetch בלקוח בלי שום שינוי במבנה הנתונים.
 
 ---
 
@@ -216,6 +230,7 @@ family-trip-planner/
 6. Auth → URL Configuration → הוספת ה-Pages URL
 7. `cp .env.example .env.local`, מילוי URL+anon key
 8. `cp worker/.dev.vars.example worker/.dev.vars`, מילוי secrets
-9. `wrangler secret put` לכל secret ב-Worker (ANTHROPIC_API_KEY, SUPABASE_JWT_SECRET)
+9. `wrangler secret put` לכל secret ב-Worker (ANTHROPIC_API_KEY, SUPABASE_JWT_SECRET; כש-Deals Agent יופעל — גם GEMINI_API_KEY)
 10. `npm run build && wrangler pages deploy dist --project-name=...`
 11. `cd worker && wrangler deploy`
+ÏÔ

@@ -65,7 +65,7 @@ function find(src: string, re: RegExp): string {
 // ── Flight Parsers ────────────────────────────────────────────────────────────
 
 const IATA_RE = /\b([A-Z]{3})\b/g
-const FLIGHT_NUM_RE = /\b(LY|FR|U2|W6|LH|IZ|TK|AY|BA)\s*(\d{1,4})\b/i
+const FLIGHT_NUM_RE = /\b(LY|FR|U2|EJU|W6|LH|IZ|TK|AY|BA|A3|KL|AF|EI|SN|TP|OS|LX|VY|FZ|XQ|BZ)\s*(\d{1,4})\b/i
 const DATETIME_RE = /(\d{1,2}[-/.]\d{1,2}[-/.]\d{2,4})[^\d]*(\d{2}:\d{2})/g
 const PRICE_RE = /(?:ILS|₪|EUR|€|USD|\$)\s*([\d,]+)|(\d[\d,]+)\s*(?:ILS|₪|EUR|€|USD|\$)/
 
@@ -179,13 +179,21 @@ function parseFlightFromText(txt: string, from: string): Omit<Flight, 'id'> | nu
 
 function resolveAirline(iata: string, fromEmail: string): string {
   const map: Record<string, string> = {
-    LY: 'El Al', FR: 'Ryanair', U2: 'EasyJet',
+    LY: 'El Al', FR: 'Ryanair', U2: 'easyJet', EJU: 'easyJet',
     W6: 'Wizz Air', LH: 'Lufthansa', IZ: 'Arkia', TK: 'Turkish Airlines',
+    A3: 'Aegean Airlines', KL: 'KLM', AF: 'Air France', EI: 'Aer Lingus',
+    SN: 'Brussels Airlines', TP: 'TAP Portugal', OS: 'Austrian Airlines',
+    LX: 'Swiss', VY: 'Vueling', FZ: 'flydubai', XQ: 'SunExpress', BZ: 'Bluebird',
+    AY: 'Finnair', BA: 'British Airways',
   }
   if (map[iata]) return map[iata]
-  if (/elal/i.test(fromEmail)) return 'El Al'
-  if (/ryanair/i.test(fromEmail)) return 'Ryanair'
-  if (/easyjet/i.test(fromEmail)) return 'EasyJet'
+  const f = fromEmail.toLowerCase()
+  if (f.includes('elal')) return 'El Al'
+  if (f.includes('ryanair')) return 'Ryanair'
+  if (f.includes('easyjet')) return 'easyJet'
+  if (f.includes('aegean')) return 'Aegean Airlines'
+  if (f.includes('klm')) return 'KLM'
+  if (f.includes('airfrance')) return 'Air France'
   return iata
 }
 

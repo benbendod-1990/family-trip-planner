@@ -22,7 +22,7 @@
       "arrivalAirport": "AMS",
       "departureTime": "2026-08-20T00:00:00.000Z",
       "arrivalTime": "2026-08-20T00:00:00.000Z",
-      "cost": 0,
+      "cost": 1463.78,
       "currency": "EUR",
       "direction": "outbound",
       "cabinClass": "economy",
@@ -30,18 +30,19 @@
     },
     {
       "id": "8d76808e-bedc-4dd3-ae11-b520aac10c51",
-      "airline": "easyJet",
-      "flightNumber": "EJU7971",
+      "airline": "SKY express",
+      "flightNumber": "GQ791",
       "departureAirport": "AMS",
       "arrivalAirport": "TLV",
-      "departureTime": "2026-08-27T07:20:00.000Z",
-      "arrivalTime": "2026-08-27T12:00:00.000Z",
+      "departureTime": "2026-08-27T14:10:00.000Z",
+      "arrivalTime": "2026-08-28T05:30:00.000Z",
       "cost": 0,
       "currency": "EUR",
       "direction": "return",
       "cabinClass": "economy",
-      "confirmationNumber": "KBFMXH5",
-      "baggageIncluded": false
+      "confirmationNumber": "UX5PXG",
+      "baggageIncluded": false,
+      "notes": "החלפת easyJet EJU7971 שבוטלה. עצירה באתונה (ATH): AMS→ATH 14:10→18:20 GQ791; ATH→TLV נחיתה 05:30 ב-28/8."
     }
   ],
   "accommodations": [
@@ -84,6 +85,15 @@
         "paidBy": "87973dde-1f43-4571-862b-5ef5393e1734"
       },
       {
+        "id": "9a3f4c12-7e8b-4d51-9f23-c8a5b6e1d402",
+        "category": "flights",
+        "label": "Aegean TLV→AMS (89G5SO)",
+        "planned": 1463.78,
+        "actual": 1463.78,
+        "date": "2026-04-29",
+        "paidBy": "87973dde-1f43-4571-862b-5ef5393e1734"
+      },
+      {
         "id": "50b4b0b8-7fae-4180-bc35-dc98ddc07e76",
         "category": "other",
         "label": "ביטוח נסיעות PassportCard",
@@ -94,11 +104,11 @@
   "tasks": [
     {
       "id": "bf92f72b-9259-4215-8ebc-cb50e1449733",
-      "title": "🚨 לטפל בביטול easyJet EJU7971",
-      "description": "טיסת חזור AMS→TLV 27/8 07:20 בוטלה. 3 אפשרויות: החלפה חינם / שובר 12 חודשים / החזר מלא תוך 7 ימים. הזמנה KBFMXH5.",
+      "title": "✅ הוחלפה: SKY express UX5PXG במקום easyJet EJU7971",
+      "description": "טיסת חזור הוחלפה ל-SKY express GQ791 ב-27/8 14:10 AMS→ATH→TLV (נחיתה 28/8 05:30). אישור UX5PXG. הוזמן 29/4/2026. החזר/שובר easyJet — לעקוב בנפרד.",
       "dueDate": "2026-05-01",
       "assignedTo": "87973dde-1f43-4571-862b-5ef5393e1734",
-      "done": false,
+      "done": true,
       "createdAt": "2026-04-24T15:40:00.000Z",
       "updatedAt": "2026-04-24T15:40:00.000Z"
     },
@@ -131,6 +141,16 @@
       "done": false,
       "createdAt": "2026-04-24T15:40:00.000Z",
       "updatedAt": "2026-04-24T15:40:00.000Z"
+    },
+    {
+      "id": "f1d3c9b4-7e2a-4a18-8f7e-9c12e6a2d501",
+      "title": "💸 לעקוב אחר החזר/שובר easyJet (KBFMXH5)",
+      "description": "EasyJet ביטלה את EJU7971 AMS→TLV 27/8/2026. הוזמנה חלופה עצמאית (SKY express UX5PXG). דרוש להגיש בקשת החזר / שובר 12 חודשים מ-easyJet עבור ההזמנה הישנה KBFMXH5. החזר אמור להתקבל תוך 7 ימים מהבקשה.",
+      "dueDate": "2026-05-25",
+      "assignedTo": "87973dde-1f43-4571-862b-5ef5393e1734",
+      "done": false,
+      "createdAt": "2026-05-17T00:00:00.000Z",
+      "updatedAt": "2026-05-17T00:00:00.000Z"
     }
   ],
   "packingItems": [],

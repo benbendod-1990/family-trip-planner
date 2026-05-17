@@ -30,9 +30,21 @@ function scheduleRefetch() {
   pending = setTimeout(async () => {
     pending = null
     try {
-      const trips = await listTrips()
+      const remote = await listTrips()
+      const localTrips = useTripStore.getState().trips
+      const remoteById = new Map(remote.map(t => [t.id, t]))
+      // Merge by updatedAt — preserve unsynced local edits when the cloud
+      // changes (auto-push is off; only pushed-or-newer cloud rows should
+      // overwrite local ones).
+      const merged = localTrips.map(local => {
+        const r = remoteById.get(local.id)
+        return r && new Date(r.updatedAt) > new Date(local.updatedAt) ? r : local
+      })
+      for (const r of remote) {
+        if (!merged.some(t => t.id === r.id)) merged.push(r)
+      }
       suppressNextPush()
-      useTripStore.setState({ trips })
+      useTripStore.setState({ trips: merged })
     } catch (e) {
       console.error('realtime refetch failed:', e)
     }

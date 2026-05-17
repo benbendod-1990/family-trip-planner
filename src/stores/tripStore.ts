@@ -10,7 +10,7 @@ import type { PackingItem } from '@/types/packing'
 import type { TripCoords } from '@/types/trip-plan'
 import { generateId } from '@/utils/id'
 import { getDaysBetween } from '@/utils/date'
-import { DEMO_TRIP } from '@/data/demoData'
+import { DEMO_TRIP, DEMO_TRIPS } from '@/data/demoData'
 
 interface TripStore {
   trips: TripPlan[]
@@ -417,9 +417,17 @@ export const useTripStore = create<TripStore>()(
         const onlyItalyDemo =
           state.trips.length === 1 && state.trips[0]?.id === 'demo-italy-2026'
         if (state.trips.length === 0 || onlyItalyDemo) {
-          state.trips = [DEMO_TRIP]
+          state.trips = [...DEMO_TRIPS]
           state.activeTripId = DEMO_TRIP.id
           return
+        }
+
+        // Seed any known upcoming trips that aren't in the store yet (idempotent
+        // by trip id). Lets us ship new sample trips without resetting localStorage.
+        const haveIds = new Set(state.trips.map(t => t.id))
+        const missingDemos = DEMO_TRIPS.filter(t => !haveIds.has(t.id))
+        if (missingDemos.length) {
+          state.trips = [...state.trips, ...missingDemos]
         }
 
         state.trips = state.trips.map(t => ({

@@ -151,7 +151,93 @@ export interface ItineraryParseResponse {
 }
 
 export function parseItineraryText(req: ItineraryParseRequest): Promise<ItineraryParseResponse> {
-  return callAi('/api/itinerary/parse', req)
+  return callAi('/api/gemini/itinerary/parse', req)
+}
+
+// ── AI document import (PDF/email/text → bookings) ──────────────────────────
+
+export interface ParseDocumentRequest {
+  text: string
+  hint?: {
+    today?: string
+    tripStart?: string
+    tripEnd?: string
+    destination?: string
+    sourceFilename?: string
+  }
+}
+
+export interface ParsedDocFlight {
+  airline: string
+  flightNumber: string
+  departureAirport: string
+  arrivalAirport: string
+  departureTime: string
+  arrivalTime: string
+  cost?: number
+  currency?: string
+  direction: 'outbound' | 'return'
+  cabinClass?: 'economy' | 'business' | 'first'
+  confirmationNumber?: string
+  baggageIncluded?: boolean
+  ticketUrl?: string
+  confidence?: number
+}
+
+export interface ParsedDocAccommodation {
+  name: string
+  type: 'hotel' | 'airbnb' | 'hostel' | 'villa' | 'other'
+  address?: string
+  checkIn: string
+  checkOut: string
+  cost?: number
+  currency?: string
+  confirmationNumber?: string
+  notes?: string
+  confidence?: number
+}
+
+export interface ParsedDocCarRental {
+  company: string
+  carModel?: string
+  carCategory: 'economy' | 'compact' | 'midsize' | 'full-size' | 'suv' | 'van' | 'luxury'
+  pickupLocation: string
+  dropoffLocation?: string
+  pickupDate: string
+  dropoffDate: string
+  cost?: number
+  currency?: string
+  confirmationNumber?: string
+  driverName?: string
+  includesInsurance?: boolean
+  confidence?: number
+}
+
+export interface ParsedDocEvent {
+  title: string
+  date: string
+  startTime: string
+  endTime?: string
+  location?: string
+  category: 'activity' | 'meal' | 'transport' | 'rest' | 'tour'
+  cost?: number
+  currency?: string
+  confidence?: number
+}
+
+export interface ParseDocumentResponse {
+  documentType: 'flight' | 'hotel' | 'car_rental' | 'event' | 'mixed' | 'unknown'
+  language?: string
+  timesAreLocal?: boolean
+  flights?: ParsedDocFlight[]
+  accommodations?: ParsedDocAccommodation[]
+  carRentals?: ParsedDocCarRental[]
+  events?: ParsedDocEvent[]
+  warnings?: string[]
+}
+
+export function parseDocument(req: ParseDocumentRequest): Promise<ParseDocumentResponse> {
+  return callAi('/api/gemini/parse-document', req)
 }
 
 // Convenience: derive a DealsRequest from a TripPlan.
