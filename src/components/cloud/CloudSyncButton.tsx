@@ -5,9 +5,29 @@ import { CloudOff, Loader2, Check, AlertCircle, RefreshCw, Mail } from 'lucide-r
 import styled from 'styled-components'
 import { useAuth } from '@/lib/AuthContext'
 import { useTripStore } from '@/stores/tripStore'
-import { pushLocalToRemote, listTrips } from '@/lib/tripRepo'
+import { pushLocalToRemote, listTrips, deleteTrip } from '@/lib/tripRepo'
 import { suppressNextPush } from '@/lib/tripAutoSync'
 import { syncFromGmail, type GmailSyncReport } from '@/lib/gmailSync'
+import { getLastSync } from '@/lib/gmailSyncState'
+import { tripHasPlaceholders } from '@/lib/tripMerge'
+import type { TripPlan } from '@/types/trip-plan'
+
+// Auto-generated trips from the legacy Gmail-sync code (before we removed
+// auto-create). The old code generated names like:
+//   - "טיול AMS"   (flight arrivalAirport — IATA 3-letter)
+//   - "טיול חדש" / "טיול לא ידוע"  (no destination)
+//   - "טיול " (trailing space) — destinationOf() returned undefined
+//   - "טיול {hotel-name-junk}" — when destinationOf returned address tail
+// All bogus instances share these signals: single day (start === end),
+// default ✈️ emoji, and name starts with "טיול ". The strict checks below
+// avoid touching real trips the user named themselves.
+const isLegacyAutoTrip = (t: TripPlan): boolean => {
+  const name = (t.name ?? '').trim()
+  if (/^טיול [A-Z]{3}$/.test(name)) return true
+  if (name === 'טיול' || name === 'טיול חדש' || name === 'טיול לא ידוע') return true
+  if (name.startsWith('טיול ') && t.coverEmoji === '✈️' && t.startDate === t.endDate) return true
+  return false
+}
 
 const Toast = styled.div<{ $kind: 'ok' | 'err' | 'info' }>`
   position: fixed;
@@ -37,6 +57,18 @@ const Toast = styled.div<{ $kind: 'ok' | 'err' | 'info' }>`
 type Mode = 'idle' | 'syncing' | 'gmail'
 type ToastState = { kind: 'ok' | 'err' | 'info'; text: string } | null
 
+function formatRelative(iso: string): string {
+  const ms = Date.now() - new Date(iso).getTime()
+  if (!Number.isFinite(ms) || ms < 0) return iso
+  const min = Math.floor(ms / 60000)
+  if (min < 1) return 'הרגע'
+  if (min < 60) return `לפני ${min} דק׳`
+  const hr = Math.floor(min / 60)
+  if (hr < 24) return `לפני ${hr} ש׳`
+  const days = Math.floor(hr / 24)
+  return `לפני ${days} ימים`
+}
+
 export default function CloudSyncButton() {
   const navigate = useNavigate()
   const { session, user, signOut } = useAuth()
@@ -49,6 +81,106 @@ export default function CloudSyncButton() {
     const t = setTimeout(() => setToast(null), 4000)
     return () => clearTimeout(t)
   }, [toast])
+
+  // One-shot cleanup of auto-generated trips from the legacy Gmail-sync code.
+  // Old code created a new trip for any booking date outside existing trips;
+  // this bloated the list with junk. Delete from cloud + local once, then
+  // mark done so we never run again.
+  useEffect(() => {
+    if (!session) return
+    if (localStorage.getItem('legacy-auto-trip-cleanup-v2')) return
+    let cancelled = false
+    void (async () => {
+      try {
+        const remote = await listTrips()
+        const bogusIds = new Set<string>()
+        for (const t of remote) if (isLegacyAutoTrip(t)) bogusIds.add(t.id)
+        for (const t of useTripStore.getState().trips) if (isLegacyAutoTrip(t)) bogusIds.add(t.id)
+        if (bogusIds.size === 0) {
+          localStorage.setItem('legacy-auto-trip-cleanup-v2', '1')
+          return
+        }
+        for (const id of bogusIds) {
+          try { await deleteTrip(id) } catch (e) { console.warn('cleanup: cloud delete failed', id, e) }
+        }
+        if (cancelled) return
+        suppressNextPush()
+        useTripStore.setState({
+          trips: useTripStore.getState().trips.filter(t => !bogusIds.has(t.id)),
+        })
+        localStorage.setItem('legacy-auto-trip-cleanup-v2', '1')
+        setToast({ kind: 'ok', text: `🧹 נוקו ${bogusIds.size} טיולים אוטומטיים שנוצרו בטעות` })
+      } catch (e) {
+        console.warn('legacy-auto-trip cleanup failed:', e)
+        // Don't set the done flag — retry next mount.
+      }
+    })()
+    return () => { cancelled = true }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session?.user?.id])
+
+  // Auto-rescan: if any trip has placeholder bookings, do a full sweep:
+  //   1. Pull from cloud first — direct DB edits (e.g. Aegean date fix) live
+  //      only in cloud until something pulls; without this the local stub
+  //      keeps masquerading as fresh.
+  //   2. Force-full Gmail sweep — bypass incremental checkpoint because the
+  //      source emails are usually older than the window.
+  //   3. Only mark "done" AFTER success. If the rescan throws or no
+  //      placeholder gets fixed, the next refresh tries again.
+  useEffect(() => {
+    if (!session) return
+    if (!trips.some(tripHasPlaceholders)) return
+    if (sessionStorage.getItem('auto-placeholder-rescan-done')) return
+    let cancelled = false
+    void (async () => {
+      setMode('gmail')
+      setToast({ kind: 'info', text: '🤖 מזהה הזמנות חסרות — מושך מהענן ומפעיל AI…' })
+      try {
+        // Step 1 — pull from cloud first. The cloud may already have fresher
+        // data (admin edits, other devices) that supersedes local stubs.
+        const remote = await listTrips()
+        const remoteById = new Map(remote.map(t => [t.id, t]))
+        const merged = trips.map(local => {
+          const r = remoteById.get(local.id)
+          if (!r) return local
+          return new Date(r.updatedAt).getTime() > new Date(local.updatedAt).getTime() ? r : local
+        })
+        for (const r of remote) {
+          if (!merged.some(t => t.id === r.id)) merged.push(r)
+        }
+        suppressNextPush()
+        useTripStore.setState({ trips: merged })
+        if (cancelled) return
+
+        // Step 2 — if cloud pull alone resolved the placeholders, skip Gmail.
+        const stillNeedsAi = merged.some(tripHasPlaceholders)
+        if (!stillNeedsAi) {
+          setToast({ kind: 'ok', text: '✓ נמשכו פרטים מעודכנים מהענן' })
+          sessionStorage.setItem('auto-placeholder-rescan-done', '1')
+          setMode('idle')
+          return
+        }
+
+        const report = await syncFromGmail({ forceFull: true })
+        if (cancelled) return
+        const fixed = report.aiAugmented
+        if (fixed) {
+          setToast({ kind: 'ok', text: `✓ AI שיחזר ${fixed} פרטים חסרים מהמיילים שלך` })
+          sessionStorage.setItem('auto-placeholder-rescan-done', '1')
+        } else {
+          setToast({ kind: 'info', text: 'לא נמצאו פרטים נוספים בג׳מייל. תוכל לייבא PDF/טקסט דרך "ייבוא חכם (AI)".' })
+          // don't set the done flag — let next refresh retry
+        }
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : 'שגיאה'
+        setToast({ kind: 'err', text: `סנכרון אוטומטי נכשל: ${msg.slice(0, 150)}` })
+        // don't set done flag — retry on next refresh
+      }
+      setMode('idle')
+    })()
+    return () => { cancelled = true }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session?.user?.id, trips.length])
 
   if (!session) {
     return (
@@ -110,17 +242,33 @@ export default function CloudSyncButton() {
       if (report.flightsAdded) parts.push(`${report.flightsAdded} טיסות`)
       if (report.hotelsAdded) parts.push(`${report.hotelsAdded} מלונות`)
       if (report.carsAdded) parts.push(`${report.carsAdded} רכבים`)
-      if (report.tripsCreated) parts.push(`${report.tripsCreated} טיולים חדשים`)
       const summary = parts.length ? `הוסף: ${parts.join(', ')}` : 'לא נמצאו הזמנות חדשות'
-      setToast({ kind: 'ok', text: `📧 ${summary} (סרקתי ${report.scanned} מיילים)` })
+      const ai = report.aiAugmented ? ` · 🤖 ${report.aiAugmented} שוחזרו ע״י AI` : ''
+      const skipped = report.unmatched ? ` · דולגו ${report.unmatched} הזמנות שלא תאמו טיול קיים` : ''
+      if (report.aiQuotaExceeded) {
+        const more = report.aiSkipped ? ` · ${report.aiSkipped} לא נסרקו ע״י AI` : ''
+        setToast({ kind: 'err', text: `⚠️ מכסת Gemini החינמית הסתיימה — נסה שוב בעוד דקה־שתיים. ${summary}${more}` })
+      } else {
+        setToast({ kind: 'ok', text: `📧 ${summary} (סרקתי ${report.scanned} מיילים${ai}${skipped})` })
+      }
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'שגיאה'
-      setToast({ kind: 'err', text: msg.slice(0, 200) })
+      const isQuota = /\b429\b|quota|rate.?limit/i.test(msg)
+      setToast({
+        kind: 'err',
+        text: isQuota
+          ? '⚠️ מכסת Gemini החינמית (15/דקה או 1500/יום) הסתיימה. נסה שוב בעוד דקה־שתיים, או מחר אם זו המכסה היומית.'
+          : msg.slice(0, 200),
+      })
     }
     setMode('idle')
   }
 
   const busy = mode !== 'idle'
+  const lastSync = getLastSync(user?.id)
+  const gmailTooltip = lastSync
+    ? `סורק רק מיילים חדשים מאז ${formatRelative(lastSync.lastSyncIso)}. בסנכרון הקודם: ${lastSync.lastScanned} מיילים, ${lastSync.lastAdded} נוספו לטיולים.`
+    : 'סורק את הGmail שלך לאישורי הזמנות (טיסות, מלונות, רכבים) ומשייך לטיולים לפי תאריכים. הסנכרון הראשון יקח קצת יותר.'
 
   return (
     <>
@@ -131,7 +279,7 @@ export default function CloudSyncButton() {
             <span>סנכרן</span>
           </Stack>
         </Button>
-        <Button variant="ghost" onClick={syncGmail} disabled={busy} title="סורק את ה-Gmail שלך לאישורי הזמנות (טיסות, מלונות, רכבים) ומשייך לטיולים לפי תאריכים">
+        <Button variant="ghost" onClick={syncGmail} disabled={busy} title={gmailTooltip}>
           <Stack direction="row" spacing="xs" align="center">
             {mode === 'gmail' ? <Loader2 size={16} className="spin" /> : <Mail size={16} />}
             <span>Gmail</span>

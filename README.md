@@ -51,12 +51,7 @@ cd myk-trip-plan
 # 2. Install dependencies
 npm install
 
-# 3. (Optional) Enable Gmail sync
-cp .env.example .env.local
-# Edit .env.local and add your Google OAuth Client ID
-# See Gmail Sync Setup below
-
-# 4. Start development server
+# 3. Start development server
 npm run dev
 # → http://localhost:3001
 ```
@@ -65,19 +60,18 @@ npm run dev
 
 ## Gmail Sync Setup
 
-To enable Gmail sync, you need a Google Cloud OAuth 2.0 Client ID:
+Gmail sync reuses the Google OAuth token from the Supabase Google sign-in —
+no extra client ID, no extra `.env` var. Setup:
 
-1. Go to [Google Cloud Console](https://console.cloud.google.com/)
-2. Create a new project (or use an existing one)
-3. Enable **Gmail API** under APIs & Services
-4. Create **OAuth 2.0 Client ID** (Web application type)
-5. Add authorized origins: `http://localhost:3001` (dev) and your deployed URL
-6. Copy the Client ID to `.env.local`:
-   ```
-   VITE_GOOGLE_CLIENT_ID=your_client_id_here
-   ```
+1. In Supabase → Authentication → Providers → Google: enable Google provider
+   and add the `https://www.googleapis.com/auth/gmail.readonly` scope to the
+   "Additional scopes" field.
+2. In Google Cloud Console → OAuth Consent Screen, ensure the same scope is
+   listed.
+3. Sign out and sign in again from the app — Google's consent screen will
+   show the Gmail read-only permission. Click the "Gmail" button to scan.
 
-The app only requests **read-only** Gmail access (`gmail.readonly` scope).
+Read-only access only — the app never modifies your inbox.
 
 ---
 

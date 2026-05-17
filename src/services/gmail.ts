@@ -1,8 +1,8 @@
-const CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined
-const SCOPE = 'https://www.googleapis.com/auth/gmail.readonly'
-const GMAIL_API = 'https://gmail.googleapis.com/gmail/v1/users/me'
+// Gmail HTTP helpers. The access token comes from the Supabase Google OAuth
+// session (see lib/gmailSync.ts → getGmailContext), so there's no separate
+// Google client ID configured here — Supabase provider handles OAuth.
 
-export const isGmailEnabled = (): boolean => !!CLIENT_ID
+const GMAIL_API = 'https://gmail.googleapis.com/gmail/v1/users/me'
 
 export interface GmailMessage {
   id: string
@@ -11,46 +11,6 @@ export interface GmailMessage {
   date: string
   body: string
   snippet: string
-}
-
-function buildOAuthUrl(): string {
-  const params = new URLSearchParams({
-    client_id: CLIENT_ID!,
-    redirect_uri: window.location.origin,
-    response_type: 'token',
-    scope: SCOPE,
-    prompt: 'select_account',
-  })
-  return `https://accounts.google.com/o/oauth2/v2/auth?${params}`
-}
-
-export function authorizeGmail(): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const url = buildOAuthUrl()
-    const popup = window.open(url, 'gmail-auth', 'width=500,height=600,left=200,top=100')
-    if (!popup) return reject(new Error('Popup blocked'))
-
-    const interval = setInterval(() => {
-      try {
-        const hash = popup.location.hash
-        if (hash) {
-          const params = new URLSearchParams(hash.slice(1))
-          const token = params.get('access_token')
-          const error = params.get('error')
-          clearInterval(interval)
-          popup.close()
-          if (token) resolve(token)
-          else reject(new Error(error ?? 'OAuth failed'))
-        }
-      } catch {
-        // cross-origin — still loading
-      }
-      if (popup.closed) {
-        clearInterval(interval)
-        reject(new Error('Popup closed'))
-      }
-    }, 500)
-  })
 }
 
 async function gmailFetch(token: string, path: string): Promise<unknown> {
@@ -93,15 +53,36 @@ function getHeader(headers: Array<{ name: string; value: string }>, name: string
   return headers.find(h => h.name.toLowerCase() === name.toLowerCase())?.value ?? ''
 }
 
-export async function fetchTravelEmails(token: string): Promise<GmailMessage[]> {
-  const query = [
+export interface FetchTravelEmailsOptions {
+  // If set, only fetch messages received AFTER this Unix epoch (seconds).
+  // Falls back to "newer_than:2y" when undefined — used for the very first sync.
+  sinceEpochSec?: number
+  maxResults?: number
+}
+
+export async function fetchTravelEmails(token: string, opts: FetchTravelEmailsOptions = {}): Promise<GmailMessage[]> {
+  // Two-pronged query: explicit airline/hotel/car senders OR generic
+  // booking-confirmation subjects. The generic prong catches small-chain hotels
+  // (e.g. guesthousehotels.nl, libemafunfactory.nl) that no allowlist will cover.
+  const senders = [
     // Airlines
     'from:elal-ticketing.com', 'from:elal.co.il', 'from:israir.co.il',
     'from:ryanair.com', 'from:easyjet.com', 'from:wizzair.com', 'from:lufthansa.com',
-    // Accommodations
-    'from:booking.com', 'from:airbnb.com', 'from:hotels.com',
+    'from:aegeanair.com', 'from:klm.com', 'from:airfrance.com', 'from:aerlingus.com',
+    'from:swiss.com', 'from:austrian.com', 'from:tap.com', 'from:vueling.com',
+    'from:flydubai.com', 'from:turkishairlines.com', 'from:bluebirdairways.com',
+    'from:arkia.com',
+    // Accommodations — chains + aggregators
+    'from:booking.com', 'from:airbnb.com', 'from:hotels.com', 'from:expedia.com',
+    'from:agoda.com', 'from:trivago.com', 'from:vrbo.com', 'from:tripadvisor.com',
+    'from:marriott.com', 'from:hilton.com', 'from:ihg.com', 'from:accor.com',
+    'from:hyatt.com', 'from:radisson.com', 'from:bestwestern.com', 'from:nh-hotels.com',
+    // Accommodations — Dutch / European small chains Ben uses
+    'from:guesthousehotels.nl', 'from:libemafunfactory.nl', 'from:beeksebergen.nl',
+    'from:efteling.com',
     // Activities
-    'from:getyourguide.com', 'from:viator.com', 'from:arbitrip.com',
+    'from:getyourguide.com', 'from:viator.com', 'from:arbitrip.com', 'from:klook.com',
+    'from:tiqets.com',
     // Car rentals — international
     'from:hertz.com', 'from:avis.com', 'from:budget.com', 'from:europcar.com',
     'from:sixt.com', 'from:alamo.com', 'from:enterprise.com', 'from:nationalcar.com',
@@ -112,7 +93,22 @@ export async function fetchTravelEmails(token: string): Promise<GmailMessage[]> 
     'from:avis.co.il', 'from:budget.co.il', 'from:europcar.co.il',
   ].join(' OR ')
 
-  const listRes = await gmailFetch(token, `/messages?q=(${query}) newer_than:2y&maxResults=30`) as { messages?: Array<{ id: string }> }
+  // Generic confirmation subjects — catches anything we don't have on the allowlist.
+  // Restrictive enough to avoid newsletters: requires a confirmation-style word AND
+  // a travel/booking word in the subject.
+  const subjectFallback =
+    '(subject:(confirmation OR booking OR reservation OR itinerary OR ticket OR אישור OR הזמנה) ' +
+    'AND subject:(hotel OR flight OR car OR rental OR stay OR check-in OR resort OR ' +
+    'מלון OR טיסה OR רכב OR לינה OR דירה))'
+
+  const baseQuery = `((${senders}) OR ${subjectFallback})`
+  // Incremental: prefer `after:<epoch>` (precise) over the broad `newer_than:2y`.
+  // Gmail's `after:` is INCLUSIVE — overlap is harmless because we dedupe by
+  // confirmation number downstream.
+  const timeFilter = opts.sinceEpochSec ? `after:${opts.sinceEpochSec}` : 'newer_than:2y'
+  const query = `${baseQuery} ${timeFilter}`
+  const max = opts.maxResults ?? 100
+  const listRes = await gmailFetch(token, `/messages?q=${encodeURIComponent(query)}&maxResults=${max}`) as { messages?: Array<{ id: string }> }
   const ids = listRes.messages ?? []
 
   const messages = await Promise.all(

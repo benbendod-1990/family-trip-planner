@@ -5,12 +5,12 @@ import { useBreakpoint } from '@/hooks/useBreakpoint'
 import { useWeather } from '@/hooks/useWeather'
 import DayColumn from '@/components/itinerary/DayColumn'
 import SmartAddBar from '@/components/itinerary/SmartAddBar'
-import GmailSyncModal from '@/components/gmail/GmailSyncModal'
+import GmailSyncInlineButton from '@/components/gmail/GmailSyncInlineButton'
 import AiItineraryModal from '@/components/ai/AiItineraryModal'
 import { Stack, Typography, Badge, Button, Grid } from 'myk-library'
 import { getTripDuration } from '@/utils/date'
 import { formatDateShort } from '@/utils/date'
-import { Mail, History, Sparkles } from 'lucide-react'
+import { History, Sparkles } from 'lucide-react'
 import styled from 'styled-components'
 import { useDestinationCacheStore } from '@/stores/destinationCacheStore'
 
@@ -37,7 +37,6 @@ const PageHeaderRow = styled.div<{ $mobile: boolean }>`
 export default function Itinerary() {
   const { id } = useParams<{ id: string }>()
   const trip = useTripStore(s => s.trips.find(t => t.id === id))
-  const [showGmail, setShowGmail] = useState(false)
   const [showAiBuilder, setShowAiBuilder] = useState(false)
 
   const { isMobile } = useBreakpoint()
@@ -68,15 +67,10 @@ export default function Itinerary() {
                 <Sparkles size={14} /><span>בנה לי מסלול עם AI</span>
               </Stack>
             </Button>
-            <Button size="sm" variant="ghost" onClick={() => setShowGmail(true)}>
-              <Stack direction="row" spacing="xs" align="center">
-                <Mail size={14} /><span>סנכרן מ-Gmail</span>
-              </Stack>
-            </Button>
+            <GmailSyncInlineButton />
           </Stack>
         </PageHeaderRow>
       </PageHeader>
-      {showGmail && <GmailSyncModal open={showGmail} onClose={() => setShowGmail(false)} tripId={trip.id} />}
       {showAiBuilder && (
         <AiItineraryModal open={showAiBuilder} onClose={() => setShowAiBuilder(false)} tripId={trip.id} />
       )}

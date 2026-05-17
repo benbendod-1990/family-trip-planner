@@ -8,9 +8,10 @@ import { formatCurrency } from '@/utils/currency'
 import FlightFormModal from '@/components/travel/FlightFormModal'
 import AccommodationFormModal from '@/components/travel/AccommodationFormModal'
 import CarRentalFormModal from '@/components/travel/CarRentalFormModal'
-import GmailSyncModal from '@/components/gmail/GmailSyncModal'
+import GmailSyncInlineButton from '@/components/gmail/GmailSyncInlineButton'
+import SmartImportModal from '@/components/import/SmartImportModal'
 import type { Flight, Accommodation, CarRental, CarCategory } from '@/types/accommodation'
-import { Plus, Pencil, Trash2, Plane, Hotel, Car, Mail, Navigation, Ticket } from 'lucide-react'
+import { Plus, Pencil, Trash2, Plane, Hotel, Car, Navigation, Ticket, Sparkles } from 'lucide-react'
 import styled from 'styled-components'
 import { parseISO, format } from 'date-fns'
 import { he } from 'date-fns/locale'
@@ -48,7 +49,7 @@ export default function Travel() {
   const [editAcc, setEditAcc] = useState<Accommodation | undefined>()
   const [showAddCar, setShowAddCar] = useState(false)
   const [editCar, setEditCar] = useState<CarRental | undefined>()
-  const [showGmail, setShowGmail] = useState(false)
+  const [showImport, setShowImport] = useState(false)
 
   const { isMobile } = useBreakpoint()
 
@@ -149,12 +150,13 @@ export default function Travel() {
 
   return (
     <PageWrapper $mobile={isMobile}>
-      <Stack direction="row" justify="end" style={{ marginBottom: 8 }}>
-        <Button size="sm" variant="ghost" onClick={() => setShowGmail(true)}>
+      <Stack direction="row" justify="end" spacing="xs" style={{ marginBottom: 8 }}>
+        <Button size="sm" variant="ghost" onClick={() => setShowImport(true)}>
           <Stack direction="row" spacing="xs" align="center">
-            <Mail size={14} /><span>סנכרן מ-Gmail</span>
+            <Sparkles size={14} /><span>ייבוא חכם (AI)</span>
           </Stack>
         </Button>
+        <GmailSyncInlineButton />
       </Stack>
       <Tabs items={tabs} variant="enclosed" />
 
@@ -170,7 +172,7 @@ export default function Travel() {
       {editCar && (
         <CarRentalFormModal open={!!editCar} onClose={() => setEditCar(undefined)} tripId={trip.id} editRental={editCar} />
       )}
-      <GmailSyncModal open={showGmail} onClose={() => setShowGmail(false)} tripId={trip.id} />
+      <SmartImportModal isOpen={showImport} onClose={() => setShowImport(false)} trip={trip} />
     </PageWrapper>
   )
 }
@@ -185,12 +187,12 @@ function FlightCard({ flight, tripId, onEdit, onDelete, isMobile }: { flight: Fl
             <Typography variant="body1" style={{ fontWeight: 600 }}>{flight.airline} {flight.flightNumber}</Typography>
             <Badge size="sm" variant="info">{CABIN_LABEL[flight.cabinClass]}</Badge>
           </Stack>
-          <Stack direction="row" spacing="md">
+          <Stack direction="row" spacing="md" style={{ direction: 'ltr' }}>
             <Typography variant="h6" style={{ margin: 0 }}>{flight.departureAirport}</Typography>
             <span style={{ color: '#6b7280' }}>→</span>
             <Typography variant="h6" style={{ margin: 0 }}>{flight.arrivalAirport}</Typography>
           </Stack>
-          <Typography variant="body2" style={{ color: '#6b7280' }}>
+          <Typography variant="body2" style={{ color: '#6b7280', direction: 'ltr', textAlign: 'right' }}>
             {formatDT(flight.departureTime)} – {formatDT(flight.arrivalTime)}
           </Typography>
           <Stack direction="row" spacing="sm">
