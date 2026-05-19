@@ -430,6 +430,16 @@ export const useTripStore = create<TripStore>()(
           state.trips = [...state.trips, ...missingDemos]
         }
 
+        // One-shot: replace stale Holland trip (start 20.8) with refreshed seed
+        // (start 18.8, full doc-sourced itinerary). Detect by id + old startDate.
+        const HOLLAND_ID = '34980c90-bd66-4270-8d45-3e96787b07ef'
+        const freshHolland = DEMO_TRIPS.find(t => t.id === HOLLAND_ID)
+        if (freshHolland) {
+          state.trips = state.trips.map(t =>
+            t.id === HOLLAND_ID && t.startDate === '2026-08-20' ? freshHolland : t
+          )
+        }
+
         state.trips = state.trips.map(t => ({
           ...t,
           tasks: t.tasks ?? [],

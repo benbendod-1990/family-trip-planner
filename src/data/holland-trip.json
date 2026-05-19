@@ -2,11 +2,11 @@
   "id": "34980c90-bd66-4270-8d45-3e96787b07ef",
   "name": "הולנד — אוגוסט 2026",
   "destination": "הולנד",
-  "startDate": "2026-08-20",
+  "startDate": "2026-08-18",
   "endDate": "2026-08-27",
   "coverEmoji": "🌷",
   "createdAt": "2026-04-24T15:40:00.000Z",
-  "updatedAt": "2026-04-24T15:40:00.000Z",
+  "updatedAt": "2026-05-19T00:00:00.000Z",
   "family": [
     { "id": "87973dde-1f43-4571-862b-5ef5393e1734", "name": "בן", "emoji": "👨", "isChild": false },
     { "id": "cc9b60f1-4149-4b61-b429-83bb80ddd5e9", "name": "גל", "emoji": "👩", "isChild": false },
@@ -17,32 +17,33 @@
     {
       "id": "94092b7b-998a-4ee2-985e-dc015df15872",
       "airline": "Aegean Airlines",
-      "flightNumber": "89G5SO",
+      "flightNumber": "A3929 / A3624",
       "departureAirport": "TLV",
       "arrivalAirport": "AMS",
-      "departureTime": "2026-08-20T00:00:00.000Z",
-      "arrivalTime": "2026-08-20T00:00:00.000Z",
+      "departureTime": "2026-08-18T05:00:00.000Z",
+      "arrivalTime": "2026-08-18T11:20:00.000Z",
       "cost": 1463.78,
       "currency": "EUR",
       "direction": "outbound",
       "cabinClass": "economy",
-      "confirmationNumber": "89G5SO"
+      "confirmationNumber": "89G5SO",
+      "notes": "הוקדם מ-20.8 ל-18.8 (אימייל Aegean 9/3). עצירה באתונה: A3929 TLV→ATH 05:00→07:10 (טרמינל 3) | A3624 ATH→AMS 08:40→11:20."
     },
     {
       "id": "8d76808e-bedc-4dd3-ae11-b520aac10c51",
       "airline": "SKY express",
-      "flightNumber": "GQ791",
+      "flightNumber": "GQ791 / GQ720",
       "departureAirport": "AMS",
       "arrivalAirport": "TLV",
       "departureTime": "2026-08-27T14:10:00.000Z",
-      "arrivalTime": "2026-08-28T05:30:00.000Z",
+      "arrivalTime": "2026-08-27T22:30:00.000Z",
       "cost": 0,
       "currency": "EUR",
       "direction": "return",
       "cabinClass": "economy",
       "confirmationNumber": "UX5PXG",
-      "baggageIncluded": false,
-      "notes": "החלפת easyJet EJU7971 שבוטלה. עצירה באתונה (ATH): AMS→ATH 14:10→18:20 GQ791; ATH→TLV נחיתה 05:30 ב-28/8."
+      "baggageIncluded": true,
+      "notes": "החלפת easyJet EJU7971 שבוטלה. שני סקטורים באותו יום: GQ791 AMS 14:10 → ATH 18:20 | GQ720 ATH 20:30 → TLV 22:30. כבודה: 23 ק\"ג איש + 8 ק\"ג יד."
     }
   ],
   "accommodations": [
@@ -51,23 +52,23 @@
       "name": "GuestHouse Hotel Kaatsheuvel",
       "type": "hotel",
       "address": "Kaatsheuvel, Netherlands",
-      "checkIn": "2026-08-20",
-      "checkOut": "2026-08-23",
+      "checkIn": "2026-08-18",
+      "checkOut": "2026-08-20",
       "cost": 0,
       "currency": "EUR",
-      "notes": "ליד Efteling — בדוק תאריכי check-in/out בהזמנה."
+      "notes": "ליד Efteling — 2 לילות (18-20.8). 5 דק׳ נסיעה לדיונות Loonse en Drunense. בדוק תאריכי check-in/out בהזמנה."
     },
     {
       "id": "c17816ec-a714-40b1-8cc3-f1abfcb694cc",
       "name": "Lake Resort Beekse Bergen — Safari Hotel",
       "type": "hotel",
       "address": "Hilvarenbeek, Netherlands",
-      "checkIn": "2026-08-23",
+      "checkIn": "2026-08-20",
       "checkOut": "2026-08-27",
       "cost": 1558.55,
       "currency": "EUR",
       "confirmationNumber": "09526000923",
-      "notes": "שולם במלואו 22/10/2025. סאפרי + מלון."
+      "notes": "שולם 22/10/2025. סאפרי + מלון, 7 לילות (20-27.8). ⚠️ מחיר 1558€ צריך אימות — לפי ה-confirmation זה ל-7 לילות או רק חלק?"
     }
   ],
   "carRentals": [],
@@ -78,7 +79,7 @@
       {
         "id": "1dc96dcb-28cc-4bce-95b7-3f9bdbc6fddb",
         "category": "accommodation",
-        "label": "Beekse Bergen Safari Hotel",
+        "label": "Beekse Bergen Safari Hotel (7 לילות)",
         "planned": 1558.55,
         "actual": 1558.55,
         "date": "2025-10-22",
@@ -105,7 +106,7 @@
     {
       "id": "bf92f72b-9259-4215-8ebc-cb50e1449733",
       "title": "✅ הוחלפה: SKY express UX5PXG במקום easyJet EJU7971",
-      "description": "טיסת חזור הוחלפה ל-SKY express GQ791 ב-27/8 14:10 AMS→ATH→TLV (נחיתה 28/8 05:30). אישור UX5PXG. הוזמן 29/4/2026. החזר/שובר easyJet — לעקוב בנפרד.",
+      "description": "טיסת חזור הוחלפה ל-SKY express: GQ791 AMS 14:10 → ATH 18:20 ו-GQ720 ATH 20:30 → TLV 22:30 (כולן ב-27/8). אישור UX5PXG. הוזמן 29/4/2026. החזר/שובר easyJet — לעקוב בנפרד.",
       "dueDate": "2026-05-01",
       "assignedTo": "87973dde-1f43-4571-862b-5ef5393e1734",
       "done": true,
@@ -115,7 +116,7 @@
     {
       "id": "52489398-f1b1-4d25-b419-9e5c1780ee16",
       "title": "להזמין רכב שכור לאמסטרדם",
-      "description": "איסוף בשדה Schiphol, החזרה ב-27/8. SUV/van עבור 2 מבוגרים + 2 ילדים + כבודה. בדוק Sixt/Europcar/Hertz.",
+      "description": "איסוף בשדה Schiphol ב-18.8 11:20, החזרה ב-27/8 לפני 14:10. SUV/van עבור 2 מבוגרים + 2 ילדים + כבודה. בדוק Sixt/Europcar/Hertz.",
       "dueDate": "2026-06-01",
       "assignedTo": "87973dde-1f43-4571-862b-5ef5393e1734",
       "done": false,
@@ -124,23 +125,23 @@
     },
     {
       "id": "64277dc5-0ac6-47de-bf0c-d06e28da0f4e",
-      "title": "לאשר תאריך ושעת טיסת Aegean הלוך",
-      "description": "הזמנה 89G5SO — היה עדכון זמן ב-9/3. לוודא שעת המראה עדכנית ולעדכן במערכת.",
+      "title": "✅ הטיסה הוקדמה ל-18.8 (אימייל Aegean 9/3)",
+      "description": "Aegean 89G5SO — חיבור חדש: A3929 TLV 05:00 → ATH 07:10, A3624 ATH 08:40 → AMS 11:20. כל הפרטים מעודכנים באפליקציה.",
       "dueDate": "2026-05-15",
       "assignedTo": "87973dde-1f43-4571-862b-5ef5393e1734",
-      "done": false,
+      "done": true,
       "createdAt": "2026-04-24T15:40:00.000Z",
-      "updatedAt": "2026-04-24T15:40:00.000Z"
+      "updatedAt": "2026-05-19T00:00:00.000Z"
     },
     {
       "id": "077ef4ad-0283-4d32-8788-2f4e033b8c92",
       "title": "לאשר תאריכי check-in/out במלונות",
-      "description": "GuestHouse Kaatsheuvel + Beekse Bergen — לבדוק אימיילים ולעדכן.",
-      "dueDate": "2026-05-10",
+      "description": "GuestHouse Kaatsheuvel (18-20.8, 2 לילות) + Beekse Bergen (20-27.8, 7 לילות) — לבדוק אימיילים ולעדכן.",
+      "dueDate": "2026-05-25",
       "assignedTo": "cc9b60f1-4149-4b61-b429-83bb80ddd5e9",
       "done": false,
       "createdAt": "2026-04-24T15:40:00.000Z",
-      "updatedAt": "2026-04-24T15:40:00.000Z"
+      "updatedAt": "2026-05-19T00:00:00.000Z"
     },
     {
       "id": "f1d3c9b4-7e2a-4a18-8f7e-9c12e6a2d501",
@@ -151,17 +152,205 @@
       "done": false,
       "createdAt": "2026-05-17T00:00:00.000Z",
       "updatedAt": "2026-05-17T00:00:00.000Z"
+    },
+    {
+      "id": "a1b2c3d4-e5f6-4001-8001-100000000001",
+      "title": "🚨 קריטי: להזמין מקום ב-Hans en Grietje (עמי ותמי) ל-24.8",
+      "description": "מסעדת עמי ותמי ב-Zeewolde — שולחנות זזים ופארק עץ בחוץ. המקומות נחטפים חודשים מראש. להזמין לארוחת ערב 24.8.",
+      "dueDate": "2026-06-01",
+      "assignedTo": "cc9b60f1-4149-4b61-b429-83bb80ddd5e9",
+      "done": false,
+      "createdAt": "2026-05-19T00:00:00.000Z",
+      "updatedAt": "2026-05-19T00:00:00.000Z"
+    },
+    {
+      "id": "a1b2c3d4-e5f6-4001-8001-100000000002",
+      "title": "🚨 קריטי: כרטיסי שייט Binnendieze בדן בוש ל-23.8",
+      "description": "מסלול Historical route (45 דקות). הסירות קטנות ומתמלאות מהר — להזמין שבועיים מראש.",
+      "dueDate": "2026-08-09",
+      "assignedTo": "87973dde-1f43-4571-862b-5ef5393e1734",
+      "done": false,
+      "createdAt": "2026-05-19T00:00:00.000Z",
+      "updatedAt": "2026-05-19T00:00:00.000Z"
+    },
+    {
+      "id": "a1b2c3d4-e5f6-4001-8001-100000000003",
+      "title": "🚨 קריטי: כרטיסי Efteling ל-19.8",
+      "description": "לקנות כרטיסים לפארק מראש. שולחן ל-Polles Keuken מזמינים דרך האפליקציה ב-09:00 בבוקר יום הביקור (19.8).",
+      "dueDate": "2026-07-01",
+      "assignedTo": "87973dde-1f43-4571-862b-5ef5393e1734",
+      "done": false,
+      "createdAt": "2026-05-19T00:00:00.000Z",
+      "updatedAt": "2026-05-19T00:00:00.000Z"
+    },
+    {
+      "id": "a1b2c3d4-e5f6-4001-8001-100000000004",
+      "title": "כרטיסים מקוונים: Toverland + Julianatoren",
+      "description": "Toverland ל-21.8, Julianatoren ל-24.8. לקנות מראש כדי לחסוך תורים בקופות וכסף.",
+      "dueDate": "2026-07-15",
+      "assignedTo": "87973dde-1f43-4571-862b-5ef5393e1734",
+      "done": false,
+      "createdAt": "2026-05-19T00:00:00.000Z",
+      "updatedAt": "2026-05-19T00:00:00.000Z"
+    },
+    {
+      "id": "a1b2c3d4-e5f6-4001-8001-100000000005",
+      "title": "להזמין שולחן ב-Juffrouw van Zanten (רוטרדם) ל-22.8",
+      "description": "מסעדה מותאמת לילדים ולהורים, משחקי עץ. להזמין יומיים-שלושה מראש.",
+      "dueDate": "2026-08-19",
+      "assignedTo": "cc9b60f1-4149-4b61-b429-83bb80ddd5e9",
+      "done": false,
+      "createdAt": "2026-05-19T00:00:00.000Z",
+      "updatedAt": "2026-05-19T00:00:00.000Z"
+    },
+    {
+      "id": "a1b2c3d4-e5f6-4001-8001-100000000006",
+      "title": "כרטיסים: Spoorwegmuseum אוטרכט ל-25.8 + שריון חניה",
+      "description": "מוזיאון הרכבות באוטרכט. לקנות כרטיסים מראש ולשריין מקום חניה.",
+      "dueDate": "2026-08-01",
+      "assignedTo": "87973dde-1f43-4571-862b-5ef5393e1734",
+      "done": false,
+      "createdAt": "2026-05-19T00:00:00.000Z",
+      "updatedAt": "2026-05-19T00:00:00.000Z"
+    },
+    {
+      "id": "a1b2c3d4-e5f6-4001-8001-100000000007",
+      "title": "כרטיסים: Plaswijckpark רוטרדם + Pukkemuk דונגן",
+      "description": "Plaswijckpark ל-22.8, Pukkemuk ל-26.8. כרטיסים מקוונים מומלצים.",
+      "dueDate": "2026-08-15",
+      "assignedTo": "87973dde-1f43-4571-862b-5ef5393e1734",
+      "done": false,
+      "createdAt": "2026-05-19T00:00:00.000Z",
+      "updatedAt": "2026-05-19T00:00:00.000Z"
     }
   ],
   "packingItems": [],
   "days": [
-    { "id": "c2918440-9a34-4573-b19c-d87878f51cb7", "date": "2026-08-20", "label": "הגעה לאמסטרדם", "events": [] },
-    { "id": "1bd3a225-3778-4608-9377-5db2d6fdbb9d", "date": "2026-08-21", "events": [] },
-    { "id": "d7714e41-57b5-4d50-af04-6d9dc340b753", "date": "2026-08-22", "events": [] },
-    { "id": "15241df6-7033-4615-85d9-4ecf71b5b3eb", "date": "2026-08-23", "label": "מעבר ל-Beekse Bergen", "events": [] },
-    { "id": "60aa816c-a870-4480-b936-5de9f799422a", "date": "2026-08-24", "events": [] },
-    { "id": "dd54898c-0d21-4db9-8af4-cfee4d20d32d", "date": "2026-08-25", "events": [] },
-    { "id": "25db279f-20c1-4a6f-b21b-b688e9602874", "date": "2026-08-26", "events": [] },
-    { "id": "b76c90f9-f78a-454e-952c-28e164e149c8", "date": "2026-08-27", "label": "טיסת חזור", "events": [] }
+    {
+      "id": "d1000000-0000-4000-8000-000000000818",
+      "date": "2026-08-18",
+      "label": "נחיתה ופריקת אנרגיה",
+      "events": [
+        { "id": "e1818-0001-4000-8000-000000000001", "dayId": "d1000000-0000-4000-8000-000000000818", "startTime": "05:00", "endTime": "07:10", "title": "✈️ Aegean A3929 TLV→ATH", "description": "טרמינל 3. הזמנה 89G5SO.", "location": "Ben Gurion T3", "category": "transport" },
+        { "id": "e1818-0002-4000-8000-000000000002", "dayId": "d1000000-0000-4000-8000-000000000818", "startTime": "08:40", "endTime": "11:20", "title": "✈️ Aegean A3624 ATH→AMS", "description": "חיבור באתונה.", "location": "Athens (ATH)", "category": "transport" },
+        { "id": "e1818-0003-4000-8000-000000000003", "dayId": "d1000000-0000-4000-8000-000000000818", "startTime": "11:20", "endTime": "13:30", "title": "🛬 נחיתה בסכיפהול + איסוף רכב ומזוודות", "location": "Schiphol Airport", "category": "transport" },
+        { "id": "e1818-0004-4000-8000-000000000004", "dayId": "d1000000-0000-4000-8000-000000000818", "startTime": "13:30", "endTime": "14:45", "title": "🚗 נסיעה ל-GuestHouse Kaatsheuvel", "description": "1:15 שעות נסיעה מהשדה למלון.", "category": "transport" },
+        { "id": "e1818-0005-4000-8000-000000000005", "dayId": "d1000000-0000-4000-8000-000000000818", "startTime": "14:45", "endTime": "16:00", "title": "🏨 צ׳ק-אין GuestHouse Hotel + התארגנות", "location": "GuestHouse Hotel, Kaatsheuvel", "category": "rest" },
+        { "id": "e1818-0006-4000-8000-000000000006", "dayId": "d1000000-0000-4000-8000-000000000818", "startTime": "16:00", "endTime": "18:30", "title": "🏜️ דיונות Loonse en Drunense Duinen", "description": "\"הסהרה של ברבנט\" — דיונות חול עצומות, הילדים רצים יחפים ופורקים אנרגיה. 5 ד׳ נסיעה מהמלון.", "location": "Loonse en Drunense Duinen", "category": "activity" },
+        { "id": "e1818-0007-4000-8000-000000000007", "dayId": "d1000000-0000-4000-8000-000000000818", "startTime": "19:00", "title": "🍽️ ארוחת ערב — De Rustende Jager / GuestHouse Kitchen", "description": "קפה De Rustende Jager בכניסה לדיונות, או חזרה למסעדת המלון.", "category": "meal" }
+      ]
+    },
+    {
+      "id": "d2000000-0000-4000-8000-000000000819",
+      "date": "2026-08-19",
+      "label": "Efteling — קסם של פארק אגדות",
+      "events": [
+        { "id": "e1819-0001-4000-8000-000000000001", "dayId": "d2000000-0000-4000-8000-000000000819", "startTime": "09:00", "title": "📱 09:00 בדיוק — הזמנת שולחן Polles Keuken באפליקציית Efteling", "description": "חובה! חלון הזמנות נפתח בדיוק ב-09:00, שולחנות נחטפים תוך דקות.", "category": "activity" },
+        { "id": "e1819-0002-4000-8000-000000000002", "dayId": "d2000000-0000-4000-8000-000000000819", "startTime": "10:00", "endTime": "12:30", "title": "🎢 Efteling — Sprookjesbos (יער האגדות)", "description": "5 ד׳ הליכה מהמלון. התחלה ב-יער האגדות — קסם לקטנטנים. שכרו Bolderkar (עגלת עץ) בכניסה.", "location": "Efteling, Kaatsheuvel", "category": "activity" },
+        { "id": "e1819-0003-4000-8000-000000000003", "dayId": "d2000000-0000-4000-8000-000000000819", "startTime": "12:30", "endTime": "14:00", "title": "🥞 Polles Keuken — מסעדת פנקייקים בפארק", "description": "מטבח \"חי\" ומסתובב. רק עם הזמנה מהאפליקציה.", "category": "meal" },
+        { "id": "e1819-0004-4000-8000-000000000004", "dayId": "d2000000-0000-4000-8000-000000000819", "startTime": "14:00", "endTime": "17:00", "title": "🎠 מתקנים: Carnaval Festival, Symbolica, רכבת קיטור", "description": "מתקנים רגועים מותאמים לגילאי 3-4.", "category": "activity" },
+        { "id": "e1819-0005-4000-8000-000000000005", "dayId": "d2000000-0000-4000-8000-000000000819", "startTime": "17:00", "title": "😴 חזרה רגועה למלון למנוחה", "category": "rest" }
+      ]
+    },
+    {
+      "id": "d3000000-0000-4000-8000-000000000820",
+      "date": "2026-08-20",
+      "label": "ספארי + מעבר ל-Beekse Bergen",
+      "events": [
+        { "id": "e1820-0001-4000-8000-000000000001", "dayId": "d3000000-0000-4000-8000-000000000820", "startTime": "10:00", "endTime": "10:30", "title": "🧳 צ׳ק-אאוט GuestHouse + נסיעה ל-Beekse Bergen", "description": "25 דקות נסיעה.", "category": "transport" },
+        { "id": "e1820-0002-4000-8000-000000000002", "dayId": "d3000000-0000-4000-8000-000000000820", "startTime": "10:30", "endTime": "13:00", "title": "🦒 ספארי רכב — Beekse Bergen", "description": "נסיעה עם הרכב שלכם דרך הספארי. ג׳ירפות, זברות, אריות מהאוטו.", "location": "Safaripark Beekse Bergen", "category": "activity" },
+        { "id": "e1820-0003-4000-8000-000000000003", "dayId": "d3000000-0000-4000-8000-000000000820", "startTime": "13:00", "endTime": "15:00", "title": "🏨 צ׳ק-אין לווילה Safari Resort", "location": "Lake Resort Beekse Bergen", "category": "rest" },
+        { "id": "e1820-0004-4000-8000-000000000004", "dayId": "d3000000-0000-4000-8000-000000000820", "startTime": "15:00", "endTime": "18:30", "title": "💦 Speelland — פארק מים ומשחקים", "description": "כלול לאורחי הריזורט. מתקני מים רדודים, חוף, מתנפחים.", "location": "Speelland Beekse Bergen", "category": "activity" },
+        { "id": "e1820-0005-4000-8000-000000000005", "dayId": "d3000000-0000-4000-8000-000000000820", "startTime": "19:00", "title": "🥞 De Pannenkoekenbakker — הילברנבק", "description": "מסעדת פנקייקים בעיירה הסמוכה Hilvarenbeek.", "location": "Hilvarenbeek", "category": "meal" }
+      ]
+    },
+    {
+      "id": "d4000000-0000-4000-8000-000000000821",
+      "date": "2026-08-21",
+      "label": "Toverland — גן עדן לפעוטות",
+      "events": [
+        { "id": "e1821-0001-4000-8000-000000000001", "dayId": "d4000000-0000-4000-8000-000000000821", "startTime": "09:00", "endTime": "09:45", "title": "🚗 נסיעה ל-Toverland", "description": "45 ד׳ לכיוון.", "category": "transport" },
+        { "id": "e1821-0002-4000-8000-000000000002", "dayId": "d4000000-0000-4000-8000-000000000821", "startTime": "10:00", "endTime": "13:00", "title": "🎡 Toverland — Land van Toos", "description": "האזור המקורה והקסום, מושלם לקטנים. פחות עמוס מאפטלינג.", "location": "Toverland, Sevenum", "category": "activity" },
+        { "id": "e1821-0003-4000-8000-000000000003", "dayId": "d4000000-0000-4000-8000-000000000821", "startTime": "13:00", "endTime": "14:00", "title": "🍕 צהריים בפארק", "category": "meal" },
+        { "id": "e1821-0004-4000-8000-000000000004", "dayId": "d4000000-0000-4000-8000-000000000821", "startTime": "14:00", "endTime": "16:30", "title": "🎢 המשך מתקנים ב-Toverland", "category": "activity" },
+        { "id": "e1821-0005-4000-8000-000000000005", "dayId": "d4000000-0000-4000-8000-000000000821", "startTime": "16:30", "endTime": "17:15", "title": "🚗 חזרה לריזורט", "category": "transport" },
+        { "id": "e1821-0006-4000-8000-000000000006", "dayId": "d4000000-0000-4000-8000-000000000821", "startTime": "18:30", "title": "🥗 ארוחת ערב קלה בווילה", "category": "meal" }
+      ]
+    },
+    {
+      "id": "d5000000-0000-4000-8000-000000000822",
+      "date": "2026-08-22",
+      "label": "רוטרדם של המקומיים",
+      "events": [
+        { "id": "e1822-0001-4000-8000-000000000001", "dayId": "d5000000-0000-4000-8000-000000000822", "startTime": "09:00", "endTime": "09:55", "title": "🚗 נסיעה לרוטרדם", "description": "55 דקות לכיוון.", "category": "transport" },
+        { "id": "e1822-0002-4000-8000-000000000002", "dayId": "d5000000-0000-4000-8000-000000000822", "startTime": "10:00", "endTime": "13:00", "title": "🦆 Plaswijckpark — גן חיות ומתקנים", "description": "פארק מקומי קסום: גן חיות קטן, סירות, מתקנים אקטיביים ומשחקייה פנימית ענקית.", "location": "Plaswijckpark, Rotterdam", "category": "activity" },
+        { "id": "e1822-0003-4000-8000-000000000003", "dayId": "d5000000-0000-4000-8000-000000000822", "startTime": "13:00", "endTime": "14:00", "title": "🥪 צהריים בפארק", "category": "meal" },
+        { "id": "e1822-0004-4000-8000-000000000004", "dayId": "d5000000-0000-4000-8000-000000000822", "startTime": "14:00", "endTime": "16:00", "title": "💦 פארק המים של Plaswijckpark", "description": "להביא בגדי ים! יש גם משחקייה פנימית למקרה של גשם.", "category": "activity" },
+        { "id": "e1822-0005-4000-8000-000000000005", "dayId": "d5000000-0000-4000-8000-000000000822", "startTime": "16:00", "endTime": "17:00", "title": "🚗 חזרה לכיוון הריזורט", "category": "transport" },
+        { "id": "e1822-0006-4000-8000-000000000006", "dayId": "d5000000-0000-4000-8000-000000000822", "startTime": "19:00", "title": "🍽️ Juffrouw van Zanten — אוכל מעולה + פינת צעצועי עץ", "description": "מסעדה מוכוונת הורים. חובה הזמנה מראש (2-3 ימים).", "location": "Juffrouw van Zanten, Rotterdam", "category": "meal" }
+      ]
+    },
+    {
+      "id": "d6000000-0000-4000-8000-000000000823",
+      "date": "2026-08-23",
+      "label": "יער הקסמים של דוקוס + שייט בדן בוש",
+      "events": [
+        { "id": "e1823-0001-4000-8000-000000000001", "dayId": "d6000000-0000-4000-8000-000000000823", "startTime": "10:00", "endTime": "10:40", "title": "🚗 נסיעה ל-Docus de Das Avonturenpad ב-Schaijk", "description": "40 דקות לכיוון.", "category": "transport" },
+        { "id": "e1823-0002-4000-8000-000000000002", "dayId": "d6000000-0000-4000-8000-000000000823", "startTime": "10:45", "endTime": "12:15", "title": "🌲 שביל היער Docus de Das (חינמי)", "description": "מסלול 1.5 ק\"מ מעוצב לפעוטות עם תחנות משחק בטבע, אגם ומסלול גמדים.", "location": "Schaijk", "category": "activity" },
+        { "id": "e1823-0003-4000-8000-000000000003", "dayId": "d6000000-0000-4000-8000-000000000823", "startTime": "12:15", "endTime": "13:00", "title": "🚗 נסיעה ל-Den Bosch", "category": "transport" },
+        { "id": "e1823-0004-4000-8000-000000000004", "dayId": "d6000000-0000-4000-8000-000000000823", "startTime": "13:00", "endTime": "14:00", "title": "🥮 Jan de Groot — פחזניות Bossche Bol המפורסמות", "location": "Jan de Groot, Den Bosch", "category": "meal" },
+        { "id": "e1823-0005-4000-8000-000000000005", "dayId": "d6000000-0000-4000-8000-000000000823", "startTime": "14:30", "endTime": "15:30", "title": "⛵ שייט Binnendieze (45 דקות) — מסלול היסטורי", "description": "סירות מתחת לבתי העיר העתיקה. חוויה רגועה ומרתקת. חובה הזמנה מראש.", "location": "Binnendieze, Den Bosch", "category": "tour" },
+        { "id": "e1823-0006-4000-8000-000000000006", "dayId": "d6000000-0000-4000-8000-000000000823", "startTime": "18:00", "title": "🍽️ ארוחת ערב בדן בוש או חזרה לריזורט", "category": "meal" }
+      ]
+    },
+    {
+      "id": "d7000000-0000-4000-8000-000000000824",
+      "date": "2026-08-24",
+      "label": "Julianatoren + עמי ותמי 🎉",
+      "events": [
+        { "id": "e1824-0001-4000-8000-000000000001", "dayId": "d7000000-0000-4000-8000-000000000824", "startTime": "09:00", "endTime": "10:15", "title": "🚗 נסיעה לאפלדורן", "description": "1:15 שעות לפארק Julianatoren.", "category": "transport" },
+        { "id": "e1824-0002-4000-8000-000000000002", "dayId": "d7000000-0000-4000-8000-000000000824", "startTime": "10:30", "endTime": "15:30", "title": "🎠 Julianatoren — \"ה-פארק לישראלים בגיל הזה\"", "description": "פארק קומפקטי מושלם לגילאי 3-5. בלי הליכות ארוכות, בלי תורים מוגזמים.", "location": "Julianatoren, Apeldoorn", "category": "activity" },
+        { "id": "e1824-0003-4000-8000-000000000003", "dayId": "d7000000-0000-4000-8000-000000000824", "startTime": "15:30", "endTime": "16:00", "title": "🚗 נסיעה ל-Zeewolde", "description": "30 דקות למסעדה.", "category": "transport" },
+        { "id": "e1824-0004-4000-8000-000000000004", "dayId": "d7000000-0000-4000-8000-000000000824", "startTime": "17:00", "endTime": "19:30", "title": "✨ Hans en Grietje (עמי ותמי) — מסעדה-אטרקציה", "description": "שולחנות זזים, מגלשות, קירות מכושפים ופארק עץ בחוץ. חובה קריטית — להזמין חודשים מראש!", "location": "Hans en Grietje, Zeewolde", "category": "meal" },
+        { "id": "e1824-0005-4000-8000-000000000005", "dayId": "d7000000-0000-4000-8000-000000000824", "startTime": "19:30", "endTime": "20:45", "title": "🚗 חזרה לריזורט", "description": "1:15 שעות.", "category": "transport" }
+      ]
+    },
+    {
+      "id": "d8000000-0000-4000-8000-000000000825",
+      "date": "2026-08-25",
+      "label": "אוטרכט — מוזיאון הרכבות",
+      "events": [
+        { "id": "e1825-0001-4000-8000-000000000001", "dayId": "d8000000-0000-4000-8000-000000000825", "startTime": "09:30", "endTime": "10:20", "title": "🚗 נסיעה לאוטרכט", "description": "50 דקות לכיוון.", "category": "transport" },
+        { "id": "e1825-0002-4000-8000-000000000002", "dayId": "d8000000-0000-4000-8000-000000000825", "startTime": "10:30", "endTime": "14:30", "title": "🚂 Spoorwegmuseum — מוזיאון הרכבות", "description": "אינטראקטיבי לחלוטין, כולל רכבת \"ג׳מבו אקספרס\" לקטנים ואזור משחקים.", "location": "Spoorwegmuseum, Utrecht", "category": "activity" },
+        { "id": "e1825-0003-4000-8000-000000000003", "dayId": "d8000000-0000-4000-8000-000000000825", "startTime": "14:30", "endTime": "16:30", "title": "🚶‍♀️ הליכה לאורך תעלת Oudegracht", "description": "התעלה המיוחדת של אוטרכט עם המסעדות והקפה לאורך הגדה התחתונה.", "location": "Oudegracht, Utrecht", "category": "tour" },
+        { "id": "e1825-0004-4000-8000-000000000004", "dayId": "d8000000-0000-4000-8000-000000000825", "startTime": "18:00", "title": "🏭 Buurten in de Fabriek — אוכל בבניין תעשייתי + חדר משחקים ענק", "location": "Buurten in de Fabriek, Utrecht", "category": "meal" }
+      ]
+    },
+    {
+      "id": "d9000000-0000-4000-8000-000000000826",
+      "date": "2026-08-26",
+      "label": "יום רגוע — Pukkemuk",
+      "events": [
+        { "id": "e1826-0001-4000-8000-000000000001", "dayId": "d9000000-0000-4000-8000-000000000826", "startTime": "10:00", "endTime": "10:20", "title": "🚗 נסיעה ל-Pukkemuk בדונגן", "description": "20 דקות בלבד.", "category": "transport" },
+        { "id": "e1826-0002-4000-8000-000000000002", "dayId": "d9000000-0000-4000-8000-000000000826", "startTime": "10:30", "endTime": "16:00", "title": "🚜 Pukkemuk — חוות משחקים בדונגן", "description": "מתואם בול לגילאי 2-6. טרקטורים קטנים, מתנפחים, חיות ליטוף ואווירה משפחתית ללא לחץ.", "location": "Pukkemuk, Dongen", "category": "activity" },
+        { "id": "e1826-0003-4000-8000-000000000003", "dayId": "d9000000-0000-4000-8000-000000000826", "startTime": "12:30", "endTime": "13:30", "title": "🥪 צהריים קליל בחווה", "description": "מתחם סגור ובטוח לילדים בגילם.", "category": "meal" },
+        { "id": "e1826-0004-4000-8000-000000000004", "dayId": "d9000000-0000-4000-8000-000000000826", "startTime": "16:30", "endTime": "18:30", "title": "🧳 חזרה לריזורט + אריזות", "category": "rest" },
+        { "id": "e1826-0005-4000-8000-000000000005", "dayId": "d9000000-0000-4000-8000-000000000826", "startTime": "19:00", "title": "🍽️ ארוחת ערב אחרונה באזור הילברנבק", "category": "meal" }
+      ]
+    },
+    {
+      "id": "d0000000-0000-4000-8000-000000000827",
+      "date": "2026-08-27",
+      "label": "חוות עיזים + טיסת חזור",
+      "events": [
+        { "id": "e1827-0001-4000-8000-000000000001", "dayId": "d0000000-0000-4000-8000-000000000827", "startTime": "08:30", "endTime": "09:00", "title": "🧳 צ׳ק-אאוט Beekse Bergen + אריזות סופיות", "category": "rest" },
+        { "id": "e1827-0002-4000-8000-000000000002", "dayId": "d0000000-0000-4000-8000-000000000827", "startTime": "09:00", "endTime": "10:15", "title": "🚗 נסיעה צפונה לכיוון אמסטרדם", "description": "1:15 שעות.", "category": "transport" },
+        { "id": "e1827-0003-4000-8000-000000000003", "dayId": "d0000000-0000-4000-8000-000000000827", "startTime": "10:30", "endTime": "12:30", "title": "🐐 חוות העיזים Ridammerhoeve — יער אמסטרדם", "description": "הילדים מאכילים גדיים בבקבוקי חלב. אורגני, נחמד, ללא צורך בהזמנה.", "location": "Geitenboerderij Ridammerhoeve, Amstelveen", "category": "activity" },
+        { "id": "e1827-0004-4000-8000-000000000004", "dayId": "d0000000-0000-4000-8000-000000000827", "startTime": "12:30", "endTime": "13:30", "title": "🥗 ארוחת צהריים אורגנית בחווה", "category": "meal" },
+        { "id": "e1827-0005-4000-8000-000000000005", "dayId": "d0000000-0000-4000-8000-000000000827", "startTime": "13:30", "endTime": "14:00", "title": "🚗 החזרת רכב בסכיפהול", "category": "transport" },
+        { "id": "e1827-0006-4000-8000-000000000006", "dayId": "d0000000-0000-4000-8000-000000000827", "startTime": "14:10", "endTime": "18:20", "title": "✈️ SKY express GQ791 AMS→ATH", "description": "אישור UX5PXG. עצירה באתונה ~2 שעות.", "location": "Schiphol Airport", "category": "transport" },
+        { "id": "e1827-0007-4000-8000-000000000007", "dayId": "d0000000-0000-4000-8000-000000000827", "startTime": "20:30", "endTime": "22:30", "title": "🛬 SKY express GQ720 ATH→TLV (נחיתה 27/8 22:30)", "description": "מושבים 17E + 17F, כבודה 23 ק\"ג איש + 8 ק\"ג יד.", "location": "Athens (ATH)", "category": "transport" }
+      ]
+    }
   ]
 }
