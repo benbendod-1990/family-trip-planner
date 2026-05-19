@@ -430,14 +430,22 @@ export const useTripStore = create<TripStore>()(
           state.trips = [...state.trips, ...missingDemos]
         }
 
-        // One-shot: replace stale Holland trip (start 20.8) with refreshed seed
-        // (start 18.8, full doc-sourced itinerary). Detect by id + old startDate.
+        // One-shot: replace stale Holland trip with refreshed seed (start 18.8,
+        // full doc-sourced itinerary, SKY express return flight). Detect stale
+        // copy by content markers — old startDate, leftover easyJet flight, or
+        // empty itinerary — so users on any historical version get refreshed.
         const HOLLAND_ID = '34980c90-bd66-4270-8d45-3e96787b07ef'
         const freshHolland = DEMO_TRIPS.find(t => t.id === HOLLAND_ID)
         if (freshHolland) {
-          state.trips = state.trips.map(t =>
-            t.id === HOLLAND_ID && t.startDate === '2026-08-20' ? freshHolland : t
-          )
+          state.trips = state.trips.map(t => {
+            if (t.id !== HOLLAND_ID) return t
+            const hasEasyJet = (t.flights ?? []).some(f =>
+              /easyjet|EJU/i.test(`${f.airline ?? ''} ${f.flightNumber ?? ''}`)
+            )
+            const isEmptyItinerary = (t.days ?? []).every(d => (d.events ?? []).length === 0)
+            const oldStart = t.startDate === '2026-08-20'
+            return (hasEasyJet || isEmptyItinerary || oldStart) ? freshHolland : t
+          })
         }
 
         state.trips = state.trips.map(t => ({
