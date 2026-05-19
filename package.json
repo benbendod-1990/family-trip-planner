@@ -8,7 +8,8 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "deploy": "npm run build && cd worker && ./node_modules/.bin/wrangler pages deploy ../dist --project-name=family-trip-planner --branch=main --commit-dirty=true"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.104.1",
