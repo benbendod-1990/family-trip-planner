@@ -444,7 +444,12 @@ export const useTripStore = create<TripStore>()(
             )
             const isEmptyItinerary = (t.days ?? []).every(d => (d.events ?? []).length === 0)
             const oldStart = t.startDate === '2026-08-20'
-            return (hasEasyJet || isEmptyItinerary || oldStart) ? freshHolland : t
+            // Flight times stored as UTC (Z-suffixed) shift +3h on display in
+            // Israel TZ — they should be stored as local airport time (no Z).
+            const hasUtcFlightTimes = (t.flights ?? []).some(f =>
+              (f.departureTime ?? '').endsWith('Z') || (f.arrivalTime ?? '').endsWith('Z')
+            )
+            return (hasEasyJet || isEmptyItinerary || oldStart || hasUtcFlightTimes) ? freshHolland : t
           })
         }
 
