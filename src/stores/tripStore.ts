@@ -52,6 +52,8 @@ interface TripStore {
   removeTask: (tripId: string, taskId: string) => void
 
   setCoords: (tripId: string, coords: TripCoords) => void
+  setEventCoords: (tripId: string, eventId: string, coords: TripCoords) => void
+  setAccommodationCoords: (tripId: string, accId: string, coords: TripCoords) => void
 
   addPackingItem: (tripId: string, item: Omit<PackingItem, 'id'>) => void
   updatePackingItem: (tripId: string, itemId: string, patch: Partial<Omit<PackingItem, 'id'>>) => void
@@ -362,6 +364,28 @@ export const useTripStore = create<TripStore>()(
           trips: updateTrip(state.trips, tripId, t => ({ ...t, coords })),
         })),
 
+      // Bypass `touch` — pure geocode hydration shouldn't bump updatedAt and trigger cloud sync.
+      setEventCoords: (tripId, eventId, coords) =>
+        set(state => ({
+          trips: updateTrip(state.trips, tripId, t => ({
+            ...t,
+            days: t.days.map(d => ({
+              ...d,
+              events: d.events.map(e => (e.id === eventId ? { ...e, coords } : e)),
+            })),
+          })),
+        })),
+
+      setAccommodationCoords: (tripId, accId, coords) =>
+        set(state => ({
+          trips: updateTrip(state.trips, tripId, t => ({
+            ...t,
+            accommodations: t.accommodations.map(a =>
+              a.id === accId ? { ...a, coords } : a
+            ),
+          })),
+        })),
+
       addPackingItem: (tripId, item) =>
         set(state => ({
           trips: updateTrip(state.trips, tripId, t => touch({
@@ -450,6 +474,19 @@ export const useTripStore = create<TripStore>()(
               (f.departureTime ?? '').endsWith('Z') || (f.arrivalTime ?? '').endsWith('Z')
             )
             return (hasEasyJet || isEmptyItinerary || oldStart || hasUtcFlightTimes) ? freshHolland : t
+          })
+        }
+
+        // One-shot: replace stale Crete trip — original seed assumed a 7-night
+        // stay (21–28/5) based on partial Aquila correspondence; actual trip
+        // was 21–24/5. Detect stale by old endDate.
+        const CRETE_ID = 'b2c5f8a3-4d9e-4f1b-8c6a-7e2d5b9f3a18'
+        const freshCrete = DEMO_TRIPS.find(t => t.id === CRETE_ID)
+        if (freshCrete) {
+          state.trips = state.trips.map(t => {
+            if (t.id !== CRETE_ID) return t
+            const oldEnd = t.endDate === '2026-05-28'
+            return oldEnd ? freshCrete : t
           })
         }
 
