@@ -22,7 +22,11 @@ const PageWrapper = styled.div<{ $mobile: boolean }>`
 `
 
 const formatDT = (dt: string) => {
-  try { return format(parseISO(dt), 'd MMM HH:mm', { locale: he }) } catch { return dt }
+  // Legacy seed/Gmail-imported flight times were tagged `Z` (UTC) but actually
+  // represented local airport clock-time. Strip the tz suffix so parseISO
+  // treats them as local and we don't shift +3h in Israel TZ.
+  const local = dt.replace(/Z$|[+-]\d{2}:?\d{2}$/, '')
+  try { return format(parseISO(local), 'd MMM HH:mm', { locale: he }) } catch { return dt }
 }
 
 const formatDateOnly = (d: string) => {
@@ -192,8 +196,10 @@ function FlightCard({ flight, tripId, onEdit, onDelete, isMobile }: { flight: Fl
             <span style={{ color: '#6b7280' }}>→</span>
             <Typography variant="h6" style={{ margin: 0 }}>{flight.arrivalAirport}</Typography>
           </Stack>
-          <Typography variant="body2" style={{ color: '#6b7280', direction: 'ltr', textAlign: 'right' }}>
-            {formatDT(flight.departureTime)} – {formatDT(flight.arrivalTime)}
+          <Typography variant="body2" style={{ color: '#6b7280', textAlign: 'right' }}>
+            <span style={{ unicodeBidi: 'isolate', direction: 'ltr' }}>{formatDT(flight.departureTime)}</span>
+            {' – '}
+            <span style={{ unicodeBidi: 'isolate', direction: 'ltr' }}>{formatDT(flight.arrivalTime)}</span>
           </Typography>
           <Stack direction="row" spacing="sm">
             {flight.baggageIncluded && <Chip size="sm" variant="success">כבודה כלולה</Chip>}
