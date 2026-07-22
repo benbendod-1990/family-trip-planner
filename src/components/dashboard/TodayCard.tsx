@@ -37,11 +37,11 @@ const WeatherPill = styled.div`
   align-items: center;
   gap: 6px;
   padding: 4px 10px;
-  background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.08);
+  background: ${({ theme }) => theme.colors.gray[100]};
+  border: 1px solid ${({ theme }) => theme.colors.gray[200]};
   border-radius: 999px;
   font-size: 12px;
-  color: #f0f6fc;
+  color: ${({ theme }) => theme.colors.gray[900]};
 `
 
 const Now = styled.div`
@@ -64,7 +64,7 @@ const NowTag = styled.div`
 const EventTitle = styled.div`
   font-size: 16px;
   font-weight: 700;
-  color: #f0f6fc;
+  color: ${({ theme }) => theme.colors.gray[900]};
   margin-bottom: 4px;
 `
 
@@ -73,7 +73,7 @@ const EventMeta = styled.div`
   flex-wrap: wrap;
   gap: 6px 12px;
   font-size: 12px;
-  color: #8b949e;
+  color: ${({ theme }) => theme.colors.gray[500]};
 `
 
 const NextRow = styled.button`
@@ -82,8 +82,8 @@ const NextRow = styled.button`
   gap: 10px;
   padding: 10px 12px;
   border-radius: 10px;
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.06);
+  background: ${({ theme }) => theme.colors.gray[100]};
+  border: 1px solid ${({ theme }) => theme.colors.gray[200]};
   width: 100%;
   text-align: right;
   cursor: pointer;
@@ -91,14 +91,14 @@ const NextRow = styled.button`
   color: inherit;
   min-height: 44px;
   transition: background 120ms ease;
-  &:hover { background: rgba(255,255,255,0.06); }
+  &:hover { background: ${({ theme }) => theme.colors.gray[200]}; }
   & + & { margin-top: 6px; }
 `
 
 const Time = styled.span`
   font-size: 12px;
   font-weight: 700;
-  color: #f59e0b;
+  color: ${({ theme }) => theme.colors.primary[600]};
   min-width: 44px;
   font-variant-numeric: tabular-nums;
 `
@@ -114,7 +114,7 @@ const Title2 = styled.span`
 const Empty = styled.div`
   text-align: center;
   padding: 12px;
-  color: #8b949e;
+  color: ${({ theme }) => theme.colors.gray[500]};
   font-size: 13px;
 `
 

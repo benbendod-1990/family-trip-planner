@@ -18,7 +18,7 @@ const Wrap = styled(Card)`
 const Title = styled.div`
   font-size: 12px;
   font-weight: 600;
-  color: #8b949e;
+  color: ${({ theme }) => theme.colors.gray[500]};
   text-transform: uppercase;
   letter-spacing: 0.05em;
   margin-bottom: 10px;
@@ -32,21 +32,21 @@ const Row = styled.div`
 
 const Cell = styled.div`
   padding: 10px 12px;
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.06);
+  background: ${({ theme }) => theme.colors.gray[100]};
+  border: 1px solid ${({ theme }) => theme.colors.gray[200]};
   border-radius: 10px;
 `
 
 const Label = styled.div`
   font-size: 11px;
-  color: #8b949e;
+  color: ${({ theme }) => theme.colors.gray[500]};
   margin-bottom: 4px;
 `
 
 const Value = styled.div<{ $color?: string }>`
   font-size: 18px;
   font-weight: 800;
-  color: ${({ $color }) => $color ?? '#f0f6fc'};
+  color: ${({ $color, theme }) => $color ?? theme.colors.gray[900]};
   font-variant-numeric: tabular-nums;
   line-height: 1.1;
 `
@@ -54,7 +54,7 @@ const Value = styled.div<{ $color?: string }>`
 const Hint = styled.div`
   margin-top: 8px;
   font-size: 12px;
-  color: #8b949e;
+  color: ${({ theme }) => theme.colors.gray[500]};
   line-height: 1.5;
 `
 
@@ -91,7 +91,7 @@ export default function SpendingInsight({ trip, todayISO, phase }: Props) {
       <Row>
         <Cell>
           <Label>נשאר תקציב</Label>
-          <Value $color={overBudget ? '#ef4444' : remaining < total * 0.2 ? '#f59e0b' : '#10b981'}>
+          <Value $color={overBudget ? '#ef4444' : remaining < total * 0.2 ? '#D67A1F' : '#10b981'}>
             {formatCurrency(remaining, currency)}
           </Value>
         </Cell>

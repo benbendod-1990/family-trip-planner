@@ -28,15 +28,15 @@ const Pill = styled.div<{ $tone: TripPhase }>`
         `
       case 'soon':
         return `
-          background: linear-gradient(135deg, rgba(245,158,11,0.18), rgba(245,158,11,0.08));
-          color: #f59e0b;
-          border: 1px solid rgba(245,158,11,0.35);
+          background: linear-gradient(135deg, rgba(214,122,31,0.18), rgba(214,122,31,0.08));
+          color: #D67A1F;
+          border: 1px solid rgba(214,122,31,0.35);
         `
       case 'done':
         return `
-          background: rgba(139,148,158,0.15);
-          color: #8b949e;
-          border: 1px solid rgba(139,148,158,0.3);
+          background: rgba(143,123,92,0.15);
+          color: #8F7B5C;
+          border: 1px solid rgba(143,123,92,0.3);
         `
       default:
         return `

@@ -23,7 +23,7 @@ const Header = styled.div`
 const Title = styled.div`
   font-size: 12px;
   font-weight: 600;
-  color: #8b949e;
+  color: ${({ theme }) => theme.colors.gray[500]};
   text-transform: uppercase;
   letter-spacing: 0.05em;
 `
@@ -34,14 +34,14 @@ const ViewAll = styled.button`
   gap: 2px;
   background: none;
   border: none;
-  color: #f59e0b;
+  color: ${({ theme }) => theme.colors.primary[600]};
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
   padding: 4px 8px;
   border-radius: 6px;
   font-family: inherit;
-  &:hover { background: rgba(245,158,11,0.1); }
+  &:hover { background: ${({ theme }) => theme.colors.primary[50]}; }
 `
 
 const List = styled.div`
@@ -56,15 +56,15 @@ const Row = styled.button`
   gap: 10px;
   padding: 10px 12px;
   border-radius: 10px;
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.06);
+  background: ${({ theme }) => theme.colors.gray[100]};
+  border: 1px solid ${({ theme }) => theme.colors.gray[200]};
   text-align: right;
   cursor: pointer;
   font-family: inherit;
   color: inherit;
   min-height: 44px;
   transition: background 120ms ease;
-  &:hover { background: rgba(255,255,255,0.06); }
+  &:hover { background: ${({ theme }) => theme.colors.gray[200]}; }
 `
 
 const DueBadge = styled.span<{ $tone: 'overdue' | 'soon' | 'later' }>`
@@ -74,16 +74,16 @@ const DueBadge = styled.span<{ $tone: 'overdue' | 'soon' | 'later' }>`
   padding: 4px 8px;
   border-radius: 6px;
   ${({ $tone }) => {
-    if ($tone === 'overdue') return 'background: rgba(239,68,68,0.18); color: #f87171;'
-    if ($tone === 'soon') return 'background: rgba(245,158,11,0.18); color: #fbbf24;'
-    return 'background: rgba(139,148,158,0.18); color: #8b949e;'
+    if ($tone === 'overdue') return 'background: rgba(239,68,68,0.14); color: #dc2626;'
+    if ($tone === 'soon') return 'background: rgba(214,122,31,0.16); color: #B5630F;'
+    return 'background: rgba(143,123,92,0.16); color: #8F7B5C;'
   }}
 `
 
 const TaskTitle = styled.span`
   flex: 1;
   font-size: 14px;
-  color: #f0f6fc;
+  color: ${({ theme }) => theme.colors.gray[900]};
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -92,7 +92,7 @@ const TaskTitle = styled.span`
 const Empty = styled.div`
   text-align: center;
   padding: 16px;
-  color: #8b949e;
+  color: ${({ theme }) => theme.colors.gray[500]};
   font-size: 13px;
 `
 

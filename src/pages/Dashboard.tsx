@@ -1,12 +1,13 @@
-import { useParams } from 'react-router-dom'
-import { Card, Typography } from 'myk-library'
+import { useParams, useNavigate, useLocation } from 'react-router-dom'
+import { Card } from 'myk-library'
+import { ThemeProvider } from 'styled-components'
 import styled from 'styled-components'
 import { useTripStore, getTotalSpent } from '@/stores/tripStore'
 import { formatCurrency } from '@/utils/currency'
 import { formatDateShort, getTripDuration } from '@/utils/date'
 import { useBreakpoint } from '@/hooks/useBreakpoint'
-import CountdownTimer from '@/components/dashboard/CountdownTimer'
-import PhaseBadge, { type TripPhase } from '@/components/dashboard/PhaseBadge'
+import { warmTheme, warmDisplayFont, warmPageBackground } from '@/theme/warmTheme'
+import TripMascot from '@/components/dashboard/TripMascot'
 import ReadinessCard from '@/components/dashboard/ReadinessCard'
 import WeatherPreview from '@/components/dashboard/WeatherPreview'
 import BookingsCard from '@/components/dashboard/BookingsCard'
@@ -15,11 +16,13 @@ import TodayCard from '@/components/dashboard/TodayCard'
 import SpendingInsight from '@/components/dashboard/SpendingInsight'
 import QuickActions from '@/components/dashboard/QuickActions'
 import MiniStat from '@/components/dashboard/MiniStat'
-import { Wallet, ListTodo, CalendarDays, Backpack } from 'lucide-react'
+import { Wallet, ListTodo, CalendarDays, Backpack, Menu, Map as MapIcon, Compass, CalendarRange, Sun } from 'lucide-react'
 import { differenceInCalendarDays, parseISO } from 'date-fns'
 
 const PageWrapper = styled.div<{ $mobile: boolean }>`
-  padding: ${({ $mobile }) => ($mobile ? '12px 12px 32px' : '24px')};
+  background: ${warmPageBackground};
+  min-height: 100%;
+  padding: ${({ $mobile }) => ($mobile ? '12px 12px 96px' : '24px')};
   display: flex;
   flex-direction: column;
   gap: ${({ $mobile }) => ($mobile ? '14px' : '20px')};
@@ -31,51 +34,53 @@ const PageWrapper = styled.div<{ $mobile: boolean }>`
   box-sizing: border-box;
 `
 
-const HeroCard = styled(Card)<{ $mobile: boolean }>`
-  padding: ${({ $mobile }) => ($mobile ? '20px 16px' : '32px 24px')};
+const HeroCard = styled.div<{ $mobile: boolean }>`
+  padding: ${({ $mobile }) => ($mobile ? '28px 20px 24px' : '40px 32px 32px')};
   text-align: center;
-  background: linear-gradient(135deg, rgba(245,158,11,0.08), rgba(245,158,11,0.02));
-  border: 1px solid rgba(245,158,11,0.18);
-  position: relative;
-  overflow: hidden;
+  background: ${({ theme }) => theme.colors.gray[100]};
+  border-radius: 28px;
+  box-shadow: ${({ theme }) => theme.shadows.sm};
 `
 
-const HeroEmoji = styled.div<{ $mobile: boolean }>`
-  font-size: ${({ $mobile }) => ($mobile ? '44px' : '64px')};
-  line-height: 1;
-  margin-bottom: 8px;
+const MascotWrap = styled.div`
+  display: flex;
+  justify-content: center;
+  margin-bottom: 12px;
 `
 
 const HeroTitle = styled.h2<{ $mobile: boolean }>`
-  font-size: ${({ $mobile }) => ($mobile ? '20px' : '28px')};
-  font-weight: 800;
+  font-family: ${warmDisplayFont};
+  font-size: ${({ $mobile }) => ($mobile ? '24px' : '32px')};
+  font-weight: 500;
   margin: 0 0 6px;
-  letter-spacing: -0.01em;
-  word-break: break-word;
+  color: ${({ theme }) => theme.colors.gray[900]};
 `
 
-const HeroMeta = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 6px 14px;
+const HeroSub = styled.div`
   font-size: 13px;
-  color: #c9d1d9;
-  margin-bottom: 10px;
+  color: ${({ theme }) => theme.colors.gray[500]};
+  margin-bottom: 20px;
 `
 
-const HeroMetaItem = styled.span`
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
+const HeroCaption = styled.div`
+  font-size: 13px;
+  color: ${({ theme }) => theme.colors.gray[500]};
+  margin-bottom: 4px;
+`
+
+const HeroCountdown = styled.div<{ $mobile: boolean }>`
+  font-family: ${warmDisplayFont};
+  font-size: ${({ $mobile }) => ($mobile ? '40px' : '52px')};
+  font-weight: 500;
+  color: ${({ theme }) => theme.colors.gray[900]};
+  line-height: 1.1;
 `
 
 const SectionLabel = styled.div`
-  font-size: 11px;
-  font-weight: 700;
-  color: #8b949e;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
+  font-family: ${warmDisplayFont};
+  font-size: 16px;
+  font-weight: 500;
+  color: ${({ theme }) => theme.colors.gray[900]};
   margin-bottom: 8px;
   padding: 0 4px;
 `
@@ -94,7 +99,7 @@ const FamilyCard = styled(Card)`
 const FamilyTitle = styled.div`
   font-size: 12px;
   font-weight: 600;
-  color: #8b949e;
+  color: ${({ theme }) => theme.colors.gray[500]};
   text-transform: uppercase;
   letter-spacing: 0.05em;
   margin-bottom: 10px;
@@ -121,7 +126,7 @@ const Emoji = styled.div`
 
 const MemberName = styled.div`
   font-size: 11px;
-  color: #c9d1d9;
+  color: ${({ theme }) => theme.colors.gray[600]};
   text-align: center;
   max-width: 64px;
   overflow: hidden;
@@ -134,11 +139,11 @@ const Tip = styled.div`
   gap: 10px;
   padding: 12px 14px;
   border-radius: 12px;
-  background: rgba(96,165,250,0.08);
-  border: 1px solid rgba(96,165,250,0.2);
+  background: ${({ theme }) => theme.colors.primary[50]};
+  border: 1px solid ${({ theme }) => theme.colors.primary[200]};
   font-size: 13px;
   line-height: 1.5;
-  color: #c9d1d9;
+  color: ${({ theme }) => theme.colors.gray[700]};
 `
 
 const TipIcon = styled.div`
@@ -147,7 +152,37 @@ const TipIcon = styled.div`
   line-height: 1.2;
 `
 
-function determinePhase(startDate: string, endDate: string, todayISO: string): { phase: TripPhase; daysToStart: number; dayOfTrip: number } {
+const BottomNav = styled.nav`
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  padding: 8px 4px calc(8px + env(safe-area-inset-bottom));
+  background: ${({ theme }) => theme.colors.white};
+  border-top: 1px solid ${({ theme }) => theme.colors.gray[200]};
+  z-index: 50;
+`
+
+const NavBtn = styled.button<{ $active?: boolean; $disabled?: boolean }>`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  background: none;
+  border: none;
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 4px 8px;
+  cursor: ${({ $disabled }) => ($disabled ? 'default' : 'pointer')};
+  opacity: ${({ $disabled }) => ($disabled ? 0.4 : 1)};
+  color: ${({ theme, $active }) => ($active ? '#D9607E' : theme.colors.gray[500])};
+`
+
+function determinePhase(startDate: string, endDate: string, todayISO: string): { phase: 'planning' | 'soon' | 'live' | 'done'; daysToStart: number; dayOfTrip: number } {
   const today = parseISO(todayISO)
   const start = parseISO(startDate)
   const end = parseISO(endDate)
@@ -160,7 +195,7 @@ function determinePhase(startDate: string, endDate: string, todayISO: string): {
   return { phase: 'planning', daysToStart, dayOfTrip }
 }
 
-function pickTip(phase: TripPhase, daysToStart: number): { icon: string; text: string } | null {
+function pickTip(phase: string, daysToStart: number): { icon: string; text: string } | null {
   if (phase === 'planning' && daysToStart > 60) {
     return { icon: '✈️', text: 'מומלץ להזמין טיסות 60-90 יום מראש לחיסכון משמעותי במחיר.' }
   }
@@ -179,8 +214,10 @@ function pickTip(phase: TripPhase, daysToStart: number): { icon: string; text: s
   return null
 }
 
-export default function Dashboard() {
+function DashboardContent() {
   const { id } = useParams<{ id: string }>()
+  const navigate = useNavigate()
+  const location = useLocation()
   const trip = useTripStore(s => s.trips.find(t => t.id === id))
   const { isMobile } = useBreakpoint()
 
@@ -205,63 +242,66 @@ export default function Dashboard() {
 
   const { phase, daysToStart, dayOfTrip } = determinePhase(trip.startDate, trip.endDate, todayISO)
   const tip = pickTip(phase, daysToStart)
+  const currentPath = location.pathname.split('/').pop()
+  const shortDestination = trip.destination.split(',').pop()?.trim() || trip.destination
 
   return (
     <PageWrapper $mobile={isMobile}>
       {/* Hero — phase-aware */}
-      <HeroCard $mobile={isMobile} variant="elevated">
-        <HeroEmoji $mobile={isMobile}>{trip.coverEmoji}</HeroEmoji>
-        <HeroTitle $mobile={isMobile}>{trip.name}</HeroTitle>
-        <HeroMeta>
-          <HeroMetaItem>📍 {trip.destination}</HeroMetaItem>
-          <HeroMetaItem>🗓 {formatDateShort(trip.startDate)} – {formatDateShort(trip.endDate)}</HeroMetaItem>
-          <HeroMetaItem>⏱ {duration} ימים</HeroMetaItem>
-        </HeroMeta>
-        <PhaseBadge phase={phase} daysToStart={daysToStart} dayOfTrip={dayOfTrip} totalDays={duration} />
-      </HeroCard>
+      <HeroCard $mobile={isMobile}>
+        <MascotWrap><TripMascot size={isMobile ? 100 : 130} /></MascotWrap>
+        <HeroTitle $mobile={isMobile}>{shortDestination} מחכה לנו</HeroTitle>
+        <HeroSub>📍 {trip.destination} · 🗓 {formatDateShort(trip.startDate)} – {formatDateShort(trip.endDate)} · ⏱ {duration} ימים</HeroSub>
 
-      {/* Countdown — only when there's something to count */}
-      {phase !== 'done' && (
-        <Card variant="outlined" padding="md">
-          <SectionLabel>{phase === 'live' ? '🔥 הטיול בעיצומו' : '⏳ עוד כמה עד הטיול'}</SectionLabel>
-          <CountdownTimer startDate={trip.startDate} endDate={trip.endDate} />
-        </Card>
-      )}
+        {phase === 'done' ? (
+          <HeroCountdown $mobile={isMobile}>🎉 טיול נהדר!</HeroCountdown>
+        ) : phase === 'live' ? (
+          <>
+            <HeroCaption>יום {dayOfTrip} מתוך {duration} · הטיול בעיצומו</HeroCaption>
+            <HeroCountdown $mobile={isMobile}>✈️ עכשיו</HeroCountdown>
+          </>
+        ) : (
+          <>
+            <HeroCaption>עד ההמראה · {formatDateShort(trip.startDate)}</HeroCaption>
+            <HeroCountdown $mobile={isMobile}>{daysToStart} ימים</HeroCountdown>
+          </>
+        )}
+      </HeroCard>
 
       {/* Today (during-trip) */}
       {phase === 'live' && <TodayCard trip={trip} todayISO={todayISO} />}
 
       {/* Stats grid */}
       <div>
-        <SectionLabel>📊 סקירה מהירה</SectionLabel>
+        <SectionLabel>סקירה מהירה</SectionLabel>
         <StatsGrid $mobile={isMobile}>
           <MiniStat
             title="תקציב"
             value={formatCurrency(totalSpent, currency)}
             description={totalBudget > 0 ? `מתוך ${formatCurrency(totalBudget, currency)}` : 'לא הוגדר'}
             icon={<Wallet size={16} />}
-            color={budgetPct > 90 ? '#ef4444' : '#f59e0b'}
+            color={budgetPct > 90 ? '#ef4444' : '#D67A1F'}
           />
           <MiniStat
             title="משימות"
             value={`${doneTasks}/${tasks.length}`}
             description={tasks.length > 0 ? `${taskPct}% הושלמו` : 'אין משימות'}
             icon={<ListTodo size={16} />}
-            color={taskPct === 100 && tasks.length > 0 ? '#10b981' : '#f59e0b'}
+            color={taskPct === 100 && tasks.length > 0 ? '#10b981' : '#D67A1F'}
           />
           <MiniStat
             title="ימי טיול"
             value={duration}
             description={`${totalEvents} אירועים`}
             icon={<CalendarDays size={16} />}
-            color="#60a5fa"
+            color="#8F6FC2"
           />
           <MiniStat
             title="ציוד"
             value={packingItems.length > 0 ? `${packedItems}/${packingItems.length}` : '—'}
             description={packingItems.length > 0 ? `${packingPct}% ארוז` : 'לא הוגדר'}
             icon={<Backpack size={16} />}
-            color={packingPct === 100 && packingItems.length > 0 ? '#10b981' : '#f59e0b'}
+            color={packingPct === 100 && packingItems.length > 0 ? '#10b981' : '#D67A1F'}
           />
         </StatsGrid>
       </div>
@@ -306,20 +346,37 @@ export default function Dashboard() {
 
       {/* Quick navigation */}
       <div>
-        <SectionLabel>🚀 קיצורי דרך</SectionLabel>
+        <SectionLabel>קיצורי דרך</SectionLabel>
         <QuickActions tripId={trip.id} />
       </div>
 
-      {phase === 'done' && (
-        <Card variant="outlined" padding="md">
-          <Typography variant="h5" style={{ textAlign: 'center', margin: 0 }}>
-            🎉 איזה כיף שהיה!
-          </Typography>
-          <Typography variant="body2" style={{ textAlign: 'center', color: '#8b949e', marginTop: 8 }}>
-            הוצאתם {formatCurrency(totalSpent, currency)} ב-{duration} ימים. עברתם {totalEvents} חוויות יחד.
-          </Typography>
-        </Card>
+      {isMobile && (
+        <BottomNav>
+          <NavBtn onClick={() => navigate(`/trip/${trip.id}/travel`)}>
+            <Menu size={20} /> עוד
+          </NavBtn>
+          <NavBtn onClick={() => navigate(`/trip/${trip.id}/map`)}>
+            <MapIcon size={20} /> מפה
+          </NavBtn>
+          <NavBtn $disabled title="בקרוב">
+            <Compass size={20} /> מה עושים?
+          </NavBtn>
+          <NavBtn onClick={() => navigate(`/trip/${trip.id}/itinerary`)}>
+            <CalendarRange size={20} /> ימים
+          </NavBtn>
+          <NavBtn $active={currentPath === 'dashboard'} onClick={() => navigate(`/trip/${trip.id}/dashboard`)}>
+            <Sun size={20} /> היום
+          </NavBtn>
+        </BottomNav>
       )}
     </PageWrapper>
+  )
+}
+
+export default function Dashboard() {
+  return (
+    <ThemeProvider theme={warmTheme}>
+      <DashboardContent />
+    </ThemeProvider>
   )
 }

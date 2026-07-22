@@ -16,7 +16,7 @@ const Wrap = styled(Card)`
 const Title = styled.div`
   font-size: 12px;
   font-weight: 600;
-  color: #8b949e;
+  color: ${({ theme }) => theme.colors.gray[500]};
   text-transform: uppercase;
   letter-spacing: 0.05em;
   margin-bottom: 12px;
@@ -55,20 +55,20 @@ const Top = styled.div`
 
 const Label = styled.span`
   font-size: 12px;
-  color: #8b949e;
+  color: ${({ theme }) => theme.colors.gray[500]};
   font-weight: 600;
 `
 
 const Value = styled.div`
   font-size: 18px;
   font-weight: 800;
-  color: #f0f6fc;
+  color: ${({ theme }) => theme.colors.gray[900]};
   line-height: 1.1;
 `
 
 const Sub = styled.div`
   font-size: 11px;
-  color: #8b949e;
+  color: ${({ theme }) => theme.colors.gray[500]};
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -82,7 +82,7 @@ const IconWrap = styled.div<{ $ok: boolean }>`
   align-items: center;
   justify-content: center;
   background: ${({ $ok }) => $ok ? 'rgba(16,185,129,0.18)' : 'rgba(245,158,11,0.18)'};
-  color: ${({ $ok }) => $ok ? '#10b981' : '#f59e0b'};
+  color: ${({ $ok, theme }) => $ok ? '#10b981' : theme.colors.primary[500]};
 `
 
 export default function BookingsCard({ trip }: Props) {

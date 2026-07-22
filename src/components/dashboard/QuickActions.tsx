@@ -23,8 +23,8 @@ const Btn = styled.button`
   gap: 6px;
   padding: 14px 8px;
   border-radius: 14px;
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.06);
+  background: ${({ theme }) => theme.colors.white};
+  border: 1px solid ${({ theme }) => theme.colors.gray[200]};
   color: inherit;
   cursor: pointer;
   font-family: inherit;
@@ -33,8 +33,8 @@ const Btn = styled.button`
   min-height: 72px;
   transition: transform 120ms ease, background 120ms ease, border-color 120ms ease;
   &:hover {
-    background: rgba(245,158,11,0.08);
-    border-color: rgba(245,158,11,0.25);
+    background: ${({ theme }) => theme.colors.gray[100]};
+    border-color: ${({ theme }) => theme.colors.primary[300]};
   }
   &:active { transform: scale(0.96); }
 `
@@ -46,8 +46,8 @@ const IconBox = styled.div`
   width: 32px;
   height: 32px;
   border-radius: 10px;
-  background: rgba(245,158,11,0.12);
-  color: #f59e0b;
+  background: ${({ theme }) => theme.colors.primary[100]};
+  color: ${({ theme }) => theme.colors.primary[600]};
 `
 
 interface Action {

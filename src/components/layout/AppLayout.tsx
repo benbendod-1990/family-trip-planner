@@ -8,9 +8,10 @@ import {
   Stack, Badge, Typography, ActionIcon,
 } from 'myk-library'
 import { useTripStore } from '@/stores/tripStore'
-import styled from 'styled-components'
+import styled, { ThemeProvider } from 'styled-components'
 import { Map, Wallet, Plane, Home, ListTodo, Users, Menu, LayoutDashboard, Backpack, MapPin, User } from 'lucide-react'
 import { useBreakpoint } from '@/hooks/useBreakpoint'
+import { warmTheme } from '@/theme/warmTheme'
 
 const TripTitle = styled.div`
   font-weight: 600;
@@ -93,6 +94,8 @@ export default function AppLayout() {
   if (!trip) return <Navigate to="/" replace />
 
   const currentPath = location.pathname.split('/').pop()
+  const isWarmPage = currentPath === 'dashboard'
+  const shellTheme = isWarmPage ? warmTheme : undefined
 
   const sidebarContent = (
     <SidebarContent>
@@ -127,7 +130,7 @@ export default function AppLayout() {
     </SidebarContent>
   )
 
-  return (
+  const shellTree = (
     <>
       <AppShell
         fixedNavbar
@@ -223,8 +226,6 @@ export default function AppLayout() {
         <Outlet />
       </AppShell>
 
-      <AiChatDrawer />
-
       {isTablet && (
         <Drawer
           isOpen={drawerOpen}
@@ -241,6 +242,13 @@ export default function AppLayout() {
           <DrawerNav>{sidebarContent}</DrawerNav>
         </Drawer>
       )}
+    </>
+  )
+
+  return (
+    <>
+      {shellTheme ? <ThemeProvider theme={shellTheme}>{shellTree}</ThemeProvider> : shellTree}
+      <AiChatDrawer />
     </>
   )
 }

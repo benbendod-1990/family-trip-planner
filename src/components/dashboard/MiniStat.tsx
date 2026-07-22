@@ -12,8 +12,8 @@ interface Props {
 const Wrap = styled.div<{ $color: string }>`
   position: relative;
   min-width: 0;
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.06);
+  background: ${({ theme }) => theme.colors.white};
+  border: 1px solid ${({ theme }) => theme.colors.gray[200]};
   border-radius: 14px;
   padding: 12px;
   display: flex;
@@ -33,7 +33,7 @@ const TopRow = styled.div`
 
 const Title = styled.div`
   font-size: 11px;
-  color: #8b949e;
+  color: ${({ theme }) => theme.colors.gray[500]};
   font-weight: 600;
   letter-spacing: 0.03em;
   text-transform: uppercase;
@@ -71,14 +71,14 @@ const Value = styled.div<{ $color: string }>`
 
 const Desc = styled.div`
   font-size: 11px;
-  color: #8b949e;
+  color: ${({ theme }) => theme.colors.gray[500]};
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   min-width: 0;
 `
 
-export default function MiniStat({ title, value, description, icon, color = '#f59e0b' }: Props) {
+export default function MiniStat({ title, value, description, icon, color = '#D67A1F' }: Props) {
   return (
     <Wrap $color={color}>
       <TopRow>

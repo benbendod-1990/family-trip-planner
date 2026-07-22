@@ -36,7 +36,7 @@ const Score = styled.div<{ $color: string }>`
 
 const Bar = styled.div`
   height: 8px;
-  background: rgba(255,255,255,0.06);
+  background: ${({ theme }) => theme.colors.gray[100]};
   border-radius: 999px;
   overflow: hidden;
   margin-bottom: 14px;
@@ -82,12 +82,12 @@ const CheckText = styled.div`
 
 const CheckLabel = styled.span`
   font-weight: 600;
-  color: #f0f6fc;
+  color: ${({ theme }) => theme.colors.gray[900]};
 `
 
 const CheckDetail = styled.span`
   font-size: 11px;
-  color: #8b949e;
+  color: ${({ theme }) => theme.colors.gray[500]};
 `
 
 export default function ReadinessCard({ trip }: Props) {
@@ -155,14 +155,14 @@ export default function ReadinessCard({ trip }: Props) {
 
   const okCount = checks.filter(c => c.ok).length
   const score = Math.round((okCount / checks.length) * 100)
-  const color = score >= 85 ? '#10b981' : score >= 50 ? '#f59e0b' : '#ef4444'
+  const color = score >= 85 ? '#10b981' : score >= 50 ? '#D67A1F' : '#ef4444'
   const verdict = score >= 85 ? 'מוכנים לטיול 🎉' : score >= 50 ? 'בדרך הנכונה' : 'יש עוד עבודה'
 
   return (
     <Wrap variant="outlined">
       <Header>
         <div>
-          <Typography variant="caption" style={{ color: '#8b949e', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>
+          <Typography variant="caption" style={{ color: '#8F7B5C', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>
             מדד מוכנות לטיול
           </Typography>
           <Typography variant="h6" style={{ margin: '4px 0 0' }}>{verdict}</Typography>

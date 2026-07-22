@@ -23,7 +23,7 @@ const Title = styled.div`
 `
 
 const Caption = styled(Typography)`
-  color: #8b949e !important;
+  color: ${({ theme }) => theme.colors.gray[500]} !important;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   font-weight: 600;
@@ -35,7 +35,7 @@ const Avg = styled.div`
   gap: 8px;
   align-items: baseline;
   font-size: 13px;
-  color: #8b949e;
+  color: ${({ theme }) => theme.colors.gray[500]};
 `
 
 const Strip = styled.div`
@@ -55,14 +55,14 @@ const Day = styled.div`
   gap: 2px;
   padding: 10px 4px;
   border-radius: 12px;
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.05);
+  background: ${({ theme }) => theme.colors.gray[100]};
+  border: 1px solid ${({ theme }) => theme.colors.gray[200]};
   min-width: 56px;
 `
 
 const DayName = styled.div`
   font-size: 11px;
-  color: #8b949e;
+  color: ${({ theme }) => theme.colors.gray[500]};
   font-weight: 600;
 `
 
@@ -75,23 +75,23 @@ const DayEmoji = styled.div`
 const Temp = styled.div`
   font-size: 12px;
   font-weight: 700;
-  color: #f0f6fc;
+  color: ${({ theme }) => theme.colors.gray[900]};
   font-variant-numeric: tabular-nums;
 `
 
 const TempMin = styled.span`
-  color: #8b949e;
+  color: ${({ theme }) => theme.colors.gray[500]};
   font-weight: 500;
 `
 
 const Skel = styled.div`
   height: 92px;
-  background: rgba(255,255,255,0.03);
+  background: ${({ theme }) => theme.colors.gray[100]};
   border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #8b949e;
+  color: ${({ theme }) => theme.colors.gray[500]};
   font-size: 13px;
 `
 
