@@ -94,8 +94,6 @@ export default function AppLayout() {
   if (!trip) return <Navigate to="/" replace />
 
   const currentPath = location.pathname.split('/').pop()
-  const isWarmPage = currentPath === 'dashboard'
-  const shellTheme = isWarmPage ? warmTheme : undefined
 
   const sidebarContent = (
     <SidebarContent>
@@ -247,7 +245,9 @@ export default function AppLayout() {
 
   return (
     <>
-      {shellTheme ? <ThemeProvider theme={shellTheme}>{shellTree}</ThemeProvider> : shellTree}
+      <ThemeProvider theme={warmTheme}>
+        <div className="warm-shell">{shellTree}</div>
+      </ThemeProvider>
       <AiChatDrawer />
     </>
   )

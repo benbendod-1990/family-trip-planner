@@ -58,3 +58,20 @@ p, span, div, label {
 [class*="SectionTitle"], [class*="section-title"] {
   color: #8b949e !important;
 }
+
+/*
+ * The trip app shell (AppLayout) renders on a warm/cream theme, not the dark
+ * app-wide default above — those rules force near-white text (#f0f6fc) via
+ * body/h1-h6, which is invisible on a cream background. Rescope to dark text
+ * inside .warm-shell with higher specificity so it wins over the dark rules
+ * above (same !important weight, but class+element beats plain element).
+ */
+.warm-shell,
+.warm-shell h1, .warm-shell h2, .warm-shell h3,
+.warm-shell h4, .warm-shell h5, .warm-shell h6 {
+  color: #2A2013 !important;
+}
+
+.warm-shell [class*="SectionTitle"], .warm-shell [class*="section-title"] {
+  color: #8F7B5C !important;
+}
