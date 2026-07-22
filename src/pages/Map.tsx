@@ -368,6 +368,15 @@ export default function Map() {
       let coords = trip.coords ?? null
       if (!coords) {
         coords = await geocodeDestination(trip.destination)
+        // The bare destination name (e.g. a Hebrew country name like "הולנד") often
+        // doesn't resolve — geocoders expect a specific place. Fall back to the first
+        // real address we have (accommodation, then any event) before giving up.
+        if (!coords) {
+          const fallbackAddress =
+            trip.accommodations[0]?.address ??
+            trip.days.flatMap(d => d.events).find(e => e.location)?.location
+          if (fallbackAddress) coords = await geocodeDestination(fallbackAddress)
+        }
         if (cancelled) return
         if (!coords) { setStatus('error'); return }
         if (id) setCoords(id, coords)
@@ -409,7 +418,7 @@ export default function Map() {
 
       if (!cancelled) setStatus('ready')
 
-      // Geocode all points (sequential + small caches via geocodeDestination's network).
+      // Geocode all points in parallel (each result is cached — see geocodeDestination).
       const located: Array<MapPoint & { lat: number; lon: number }> = []
 
       // Destination anchor first (we already have its coords).
@@ -418,16 +427,15 @@ export default function Map() {
         located.push({ ...destPoint, lat: coords.lat, lon: coords.lon })
       }
 
-      for (const p of points) {
-        if (cancelled) return
-        if (p.kind === 'destination') continue
-        const c = await geocodeDestination(p.address)
-        if (cancelled) return
+      const otherPoints = points.filter(p => p.kind !== 'destination')
+      const resolved = await Promise.all(
+        otherPoints.map(async p => ({ p, c: await geocodeDestination(p.address) }))
+      )
+      if (cancelled) return
+      for (const { p, c } of resolved) {
         if (!c) continue
         located.push({ ...p, lat: c.lat, lon: c.lon })
       }
-
-      if (cancelled) return
 
       // Add markers.
       const bounds = L.latLngBounds([])

@@ -26,32 +26,68 @@ export async function reverseGeocode(coords: TripCoords): Promise<{ name?: strin
   }
 }
 
+const GEOCODE_CACHE_KEY = 'geocode-cache-v1'
+
+function loadGeocodeCache(): Map<string, TripCoords | null> {
+  try {
+    const raw = localStorage.getItem(GEOCODE_CACHE_KEY)
+    if (!raw) return new Map()
+    return new Map(Object.entries(JSON.parse(raw)))
+  } catch {
+    return new Map()
+  }
+}
+
+function saveGeocodeCache(cache: Map<string, TripCoords | null>) {
+  try {
+    localStorage.setItem(GEOCODE_CACHE_KEY, JSON.stringify(Object.fromEntries(cache)))
+  } catch { /* storage unavailable/full — cache just won't persist */ }
+}
+
+const geocodeCache = typeof localStorage !== 'undefined' ? loadGeocodeCache() : new Map<string, TripCoords | null>()
+
 export async function geocodeDestination(destination: string): Promise<TripCoords | null> {
-  // Nominatim (OpenStreetMap) — supports Hebrew and all languages
+  if (geocodeCache.has(destination)) return geocodeCache.get(destination) ?? null
+
+  // Open-Meteo first — Nominatim never actually succeeds here: browsers block it via
+  // CORS (no Access-Control-Allow-Origin from nominatim.openstreetmap.org), so trying
+  // it first just wastes a full failed round-trip on every single geocode call.
+  let result: TripCoords | null = null
+
+  // Open-Meteo's `name` param wants a single place token — "Kaatsheuvel, Netherlands"
+  // returns nothing while "Kaatsheuvel" alone resolves fine, so only send the part
+  // before the first comma (still the full string if there's no comma to strip).
+  const placeToken = destination.split(',')[0].trim()
+
   try {
     const res = await fetch(
-      `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(destination)}&format=json&limit=1`,
-      { headers: { 'Accept-Language': 'he,en', 'User-Agent': 'myk-trip-plan/1.0' } }
+      `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(placeToken)}&count=1&language=en&format=json`
     )
     if (res.ok) {
       const data = await res.json()
-      if (data[0]) return { lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon) }
+      const point = data.results?.[0]
+      if (point) result = { lat: point.latitude, lon: point.longitude }
     }
   } catch { /* fallthrough */ }
 
-  // Fallback: Open-Meteo geocoding (Latin script only)
-  try {
-    const res = await fetch(
-      `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(destination)}&count=1&language=en&format=json`
-    )
-    if (res.ok) {
-      const data = await res.json()
-      const result = data.results?.[0]
-      if (result) return { lat: result.latitude, lon: result.longitude }
-    }
-  } catch { /* ignore */ }
+  // Fallback: Nominatim — supports Hebrew and all languages, kept in case it's ever
+  // reachable (e.g. run through a proxy in the future).
+  if (!result) {
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(destination)}&format=json&limit=1`,
+        { headers: { 'Accept-Language': 'he,en', 'User-Agent': 'myk-trip-plan/1.0' } }
+      )
+      if (res.ok) {
+        const data = await res.json()
+        if (data[0]) result = { lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon) }
+      }
+    } catch { /* ignore */ }
+  }
 
-  return null
+  geocodeCache.set(destination, result)
+  saveGeocodeCache(geocodeCache)
+  return result
 }
 
 export async function fetchWeatherForecast(
