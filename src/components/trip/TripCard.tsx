@@ -11,6 +11,7 @@ import PostTripDebriefModal from '@/components/archive/PostTripDebriefModal'
 import { useArchiveStore } from '@/stores/archiveStore'
 import InviteMemberModal from '@/components/cloud/InviteMemberModal'
 import { useAuth } from '@/lib/AuthContext'
+import { destinationColor, warmDisplayFont } from '@/theme/warmTheme'
 
 const Emoji = styled.div`
   font-size: 48px;
@@ -18,11 +19,27 @@ const Emoji = styled.div`
   margin-bottom: 8px;
 `
 
+const AccentBar = styled.div<{ $color: string }>`
+  height: 6px;
+  margin: -16px -16px 12px;
+  border-radius: 14px 14px 0 0;
+  background: ${({ $color }) => $color};
+`
+
+const Name = styled.div`
+  font-family: ${warmDisplayFont};
+  font-size: 20px;
+  font-weight: 500;
+  text-align: center;
+  color: ${({ theme }) => theme.colors.gray[900]};
+`
+
 interface Props {
   trip: TripPlan
+  index?: number
 }
 
-export default function TripCard({ trip }: Props) {
+export default function TripCard({ trip, index = 0 }: Props) {
   const navigate = useNavigate()
   const deleteTrip = useTripStore(s => s.deleteTrip)
   const archivedTrips = useArchiveStore(s => s.archivedTrips)
@@ -31,6 +48,7 @@ export default function TripCard({ trip }: Props) {
   const [showInvite, setShowInvite] = useState(false)
   const { session } = useAuth()
   const isArchived = archivedTrips.some(a => a.id === trip.id)
+  const accent = destinationColor(index)
 
   const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -48,7 +66,8 @@ export default function TripCard({ trip }: Props) {
       onClick={() => navigate(`/trip/${trip.id}/dashboard`)}
       style={{ cursor: 'pointer', position: 'relative' }}
     >
-      <div style={{ position: 'absolute', top: 12, left: 12 }}>
+      <AccentBar $color={accent.fg} />
+      <div style={{ position: 'absolute', top: 18, left: 12 }}>
         <Stack direction="row" spacing="xs">
           {session && (
             <ActionIcon
@@ -81,17 +100,17 @@ export default function TripCard({ trip }: Props) {
 
       <Stack direction="column" spacing="sm" align="center">
         <Emoji>{trip.coverEmoji}</Emoji>
-        <Typography variant="h5" style={{ textAlign: 'center', margin: 0 }}>{trip.name}</Typography>
-        <Badge variant="info">{trip.destination}</Badge>
+        <Name>{trip.name}</Name>
+        <Badge style={{ background: accent.bg, color: accent.fg }}>{trip.destination}</Badge>
         <Stack direction="row" spacing="xs" align="center">
           <Calendar size={14} />
-          <Typography variant="body2" style={{ color: '#6b7280' }}>
+          <Typography variant="body2" style={{ color: '#8F7B5C' }}>
             {formatDateShort(trip.startDate)} – {formatDateShort(trip.endDate)}
           </Typography>
         </Stack>
         <Chip size="sm" variant="default">{duration} ימים</Chip>
         {trip.family.length > 0 && (
-          <Typography variant="body2" style={{ color: '#9ca3af' }}>
+          <Typography variant="body2" style={{ color: '#8F7B5C' }}>
             {trip.family.map(m => m.emoji).join(' ')} {trip.family.length} נוסעים
           </Typography>
         )}

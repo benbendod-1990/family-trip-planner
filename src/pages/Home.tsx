@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Container, Grid, EmptyState, Button, Stack, Typography } from 'myk-library'
+import { ThemeProvider } from 'styled-components'
 import { useTripStore } from '@/stores/tripStore'
 import TripCard from '@/components/trip/TripCard'
 import TripFormModal from '@/components/trip/TripFormModal'
@@ -12,6 +13,12 @@ import { useBreakpoint } from '@/hooks/useBreakpoint'
 import CloudSyncButton from '@/components/cloud/CloudSyncButton'
 import type { TripPlan } from '@/types/trip-plan'
 import { DEMO_TRIPS } from '@/data/demoData'
+import { warmTheme, warmDisplayFont, warmPageBackground } from '@/theme/warmTheme'
+
+const PageBg = styled.div`
+  min-height: 100vh;
+  background: ${warmPageBackground};
+`
 
 const Header = styled.div<{ $mobile: boolean }>`
   padding: ${({ $mobile }) => ($mobile ? '16px 0 12px' : '32px 0 24px')};
@@ -20,6 +27,14 @@ const Header = styled.div<{ $mobile: boolean }>`
   justify-content: space-between;
   flex-direction: ${({ $mobile }) => ($mobile ? 'column' : 'row')};
   gap: ${({ $mobile }) => ($mobile ? '12px' : '0')};
+`
+
+const Title = styled.h1<{ $mobile: boolean }>`
+  font-family: ${warmDisplayFont};
+  font-weight: 500;
+  font-size: ${({ $mobile }) => ($mobile ? '26px' : '34px')};
+  margin: 0;
+  color: ${({ theme }) => theme.colors.gray[900]};
 `
 
 const ButtonRow = styled.div<{ $mobile: boolean }>`
@@ -68,13 +83,13 @@ export default function Home() {
   }
 
   return (
+    <ThemeProvider theme={warmTheme}>
+    <PageBg className="warm-shell">
     <Container size="xl" style={{ padding: `0 ${isMobile ? '12px' : '24px'}` }}>
       <Header $mobile={isMobile}>
         <Stack direction="column" spacing="xs">
-          <Typography variant={isMobile ? 'h4' : 'h3'} style={{ margin: 0 }}>
-            ✈️ הטיולים שלנו
-          </Typography>
-          <Typography variant="body2" style={{ color: '#6b7280' }}>
+          <Title $mobile={isMobile}>✈️ הטיולים שלנו</Title>
+          <Typography variant="body2" style={{ color: '#8F7B5C' }}>
             תכנן את הטיול המשפחתי הבא שלך
           </Typography>
         </Stack>
@@ -135,8 +150,8 @@ export default function Home() {
             </Stack>
           )}
           <Grid columns={isMobile ? 1 : isTablet ? 2 : 3} gap="md">
-            {trips.map(trip => (
-              <TripCard key={trip.id} trip={trip} />
+            {trips.map((trip, i) => (
+              <TripCard key={trip.id} trip={trip} index={i} />
             ))}
           </Grid>
         </>
@@ -148,5 +163,7 @@ export default function Home() {
         onCreated={id => navigate(`/trip/${id}/dashboard`)}
       />
     </Container>
+    </PageBg>
+    </ThemeProvider>
   )
 }
