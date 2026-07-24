@@ -169,7 +169,6 @@ function pinSvg(color: string, emoji: string): string {
       position: relative;
       width: 30px;
       height: 38px;
-      transform: translate(-15px, -38px);
       filter: drop-shadow(0 2px 2px rgba(0,0,0,0.35));
     ">
       <svg viewBox="0 0 30 38" width="30" height="38" xmlns="http://www.w3.org/2000/svg">
