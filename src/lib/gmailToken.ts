@@ -9,6 +9,20 @@ import { supabase } from './supabase'
 
 const AI_BASE = import.meta.env.VITE_AI_BASE_URL ?? 'http://localhost:8787'
 
+/**
+ * Thrown when there's no usable Gmail refresh token on file — either the user
+ * never granted Gmail access, or Google revoked the token (apps in "Testing"
+ * OAuth status have their refresh tokens expire after 7 days). Recoverable by
+ * re-signing in with Google, so the UI surfaces a "reconnect" action instead
+ * of a generic failure.
+ */
+export class GmailAuthError extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = 'GmailAuthError'
+  }
+}
+
 async function authHeaders(): Promise<Record<string, string>> {
   const { data } = await supabase.auth.getSession()
   const token = data.session?.access_token
@@ -55,8 +69,8 @@ export async function fetchGmailAccessToken(): Promise<string> {
     headers: await authHeaders(),
   })
   if (res.status === 412) {
-    throw new Error(
-      'אין הרשאת Gmail. צא והיכנס שוב עם Google כדי לתת גישה ל-Gmail (read-only).'
+    throw new GmailAuthError(
+      'החיבור ל-Gmail פג. התחבר מחדש עם Google כדי לחדש את גישת הקריאה למיילים.'
     )
   }
   if (!res.ok) {

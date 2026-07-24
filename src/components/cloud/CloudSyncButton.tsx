@@ -8,6 +8,7 @@ import { useTripStore } from '@/stores/tripStore'
 import { pushLocalToRemote, listTrips, deleteTrip } from '@/lib/tripRepo'
 import { suppressNextPush } from '@/lib/tripAutoSync'
 import { syncFromGmail, type GmailSyncReport } from '@/lib/gmailSync'
+import { GmailAuthError } from '@/lib/gmailToken'
 import { getLastSync } from '@/lib/gmailSyncState'
 import { tripHasPlaceholders } from '@/lib/tripMerge'
 import type { TripPlan } from '@/types/trip-plan'
@@ -54,8 +55,33 @@ const Toast = styled.div<{ $kind: 'ok' | 'err' | 'info' }>`
   }
 `
 
+const ToastButton = styled.button`
+  background: rgba(255, 255, 255, 0.22);
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+  white-space: nowrap;
+  &:hover { background: rgba(255, 255, 255, 0.32); }
+`
+
+const ToastDismiss = styled.button`
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 2px 4px;
+  &:hover { color: #fff; }
+`
+
 type Mode = 'idle' | 'syncing' | 'gmail'
-type ToastState = { kind: 'ok' | 'err' | 'info'; text: string } | null
+type ToastAction = { label: string; onClick: () => void }
+type ToastState = { kind: 'ok' | 'err' | 'info'; text: string; action?: ToastAction } | null
 
 function formatRelative(iso: string): string {
   const ms = Date.now() - new Date(iso).getTime()
@@ -71,16 +97,31 @@ function formatRelative(iso: string): string {
 
 export default function CloudSyncButton() {
   const navigate = useNavigate()
-  const { session, user, signOut } = useAuth()
+  const { session, user, signOut, signInWithGoogle } = useAuth()
   const trips = useTripStore(s => s.trips)
   const [mode, setMode] = useState<Mode>('idle')
   const [toast, setToast] = useState<ToastState>(null)
 
   useEffect(() => {
     if (!toast) return
+    // Actionable toasts (e.g. "reconnect Gmail") stay until the user acts or
+    // dismisses — auto-dismissing would hide the button before it's useful.
+    if (toast.action) return
     const t = setTimeout(() => setToast(null), 4000)
     return () => clearTimeout(t)
   }, [toast])
+
+  // Friendly "reconnect Gmail" prompt shown when the Gmail token expired/was
+  // revoked. Re-running the Google OAuth (access_type=offline + prompt=consent)
+  // mints and stores a fresh refresh token, so sync works again.
+  const gmailReconnectToast = (): ToastState => ({
+    kind: 'info',
+    text: '🔌 החיבור ל-Gmail פג. צריך להתחבר מחדש כדי לחדש את הסנכרון.',
+    action: {
+      label: 'חבר מחדש את Gmail',
+      onClick: () => { void signInWithGoogle() },
+    },
+  })
 
   // One-shot cleanup of auto-generated trips from the legacy Gmail-sync code.
   // Old code created a new trip for any booking date outside existing trips;
@@ -172,8 +213,14 @@ export default function CloudSyncButton() {
           // don't set the done flag — let next refresh retry
         }
       } catch (e) {
-        const msg = e instanceof Error ? e.message : 'שגיאה'
-        setToast({ kind: 'err', text: `סנכרון אוטומטי נכשל: ${msg.slice(0, 150)}` })
+        if (cancelled) return
+        if (e instanceof GmailAuthError) {
+          // Not a real failure — the Gmail token just expired. Offer to reconnect.
+          setToast(gmailReconnectToast())
+        } else {
+          const msg = e instanceof Error ? e.message : 'שגיאה'
+          setToast({ kind: 'err', text: `סנכרון אוטומטי נכשל: ${msg.slice(0, 150)}` })
+        }
         // don't set done flag — retry on next refresh
       }
       setMode('idle')
@@ -252,14 +299,18 @@ export default function CloudSyncButton() {
         setToast({ kind: 'ok', text: `📧 ${summary} (סרקתי ${report.scanned} מיילים${ai}${skipped})` })
       }
     } catch (e) {
-      const msg = e instanceof Error ? e.message : 'שגיאה'
-      const isQuota = /\b429\b|quota|rate.?limit/i.test(msg)
-      setToast({
-        kind: 'err',
-        text: isQuota
-          ? '⚠️ מכסת Gemini החינמית (15/דקה או 1500/יום) הסתיימה. נסה שוב בעוד דקה־שתיים, או מחר אם זו המכסה היומית.'
-          : msg.slice(0, 200),
-      })
+      if (e instanceof GmailAuthError) {
+        setToast(gmailReconnectToast())
+      } else {
+        const msg = e instanceof Error ? e.message : 'שגיאה'
+        const isQuota = /\b429\b|quota|rate.?limit/i.test(msg)
+        setToast({
+          kind: 'err',
+          text: isQuota
+            ? '⚠️ מכסת Gemini החינמית (15/דקה או 1500/יום) הסתיימה. נסה שוב בעוד דקה־שתיים, או מחר אם זו המכסה היומית.'
+            : msg.slice(0, 200),
+        })
+      }
     }
     setMode('idle')
   }
@@ -294,6 +345,16 @@ export default function CloudSyncButton() {
           {toast.kind === 'ok' && <Check size={16} />}
           {toast.kind === 'err' && <AlertCircle size={16} />}
           <span>{toast.text}</span>
+          {toast.action && (
+            <>
+              <ToastButton
+                onClick={() => { toast.action?.onClick(); setToast(null) }}
+              >
+                {toast.action.label}
+              </ToastButton>
+              <ToastDismiss onClick={() => setToast(null)} aria-label="סגור">✕</ToastDismiss>
+            </>
+          )}
         </Toast>
       )}
     </>
