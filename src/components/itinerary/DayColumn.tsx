@@ -9,7 +9,7 @@ import WeatherBadge from './WeatherBadge'
 import { Plus, Pencil, Trash2, Navigation } from 'lucide-react'
 import styled from 'styled-components'
 import type { DayWeather } from '@/services/weatherService'
-import { wazeUrl } from '@/utils/maps'
+import { wazeUrl, googleMapsUrl, googleMapsRouteUrl } from '@/utils/maps'
 
 const CATEGORY_COLORS: Record<string, string> = {
   activity: '#f59e0b',
@@ -44,6 +44,10 @@ export default function DayColumn({ day, tripId, dayIndex, weather }: Props) {
   const [editEvent, setEditEvent] = useState<TripEvent | undefined>()
 
   const sortedEvents = [...day.events].sort((a, b) => a.startTime.localeCompare(b.startTime))
+  const dayRouteUrl = googleMapsRouteUrl(
+    sortedEvents.filter(e => e.location).map(e => e.location as string)
+  )
+  const routeStopCount = sortedEvents.filter(e => e.location).length
 
   const timelineItems: TimelineItem[] = sortedEvents.map(event => ({
     key: event.id,
@@ -66,6 +70,16 @@ export default function DayColumn({ day, tripId, dayIndex, weather }: Props) {
         {event.location && (
           <Stack direction="row" spacing="xs" align="center" style={{ flexWrap: 'wrap' }}>
             <Typography variant="body2" style={{ color: '#6b7280' }}>📍 {event.location}</Typography>
+            <a
+              href={googleMapsUrl(event.location)}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 4, color: '#2563eb', fontSize: 13, textDecoration: 'none' }}
+              aria-label={`נווט ל-${event.location} ב-Google Maps`}
+            >
+              <Navigation size={13} />
+              <span>Google Maps</span>
+            </a>
             <a
               href={wazeUrl(event.location)}
               target="_blank"
@@ -93,6 +107,21 @@ export default function DayColumn({ day, tripId, dayIndex, weather }: Props) {
             <Typography variant="body2" style={{ color: '#6b7280', fontSize: 12, fontWeight: 600 }}>יום {dayIndex + 1}</Typography>
             <Typography variant="body1" style={{ fontWeight: 600 }}>{formatDateHe(day.date)}</Typography>
             {weather && <WeatherBadge data={weather} />}
+            {routeStopCount >= 2 && (
+              <a
+                href={dayRouteUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                title="מסלול אחד דרך כל עצירות היום"
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 6, alignSelf: 'flex-start',
+                  background: '#4285f4', color: '#fff', fontSize: 13, fontWeight: 600,
+                  padding: '6px 12px', borderRadius: 999, textDecoration: 'none', marginTop: 2,
+                }}
+              >
+                🗺️ מסלול היום בגוגל מפות
+              </a>
+            )}
           </Stack>
 
           {timelineItems.length > 0 ? (

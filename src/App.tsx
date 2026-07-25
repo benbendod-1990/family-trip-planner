@@ -9,7 +9,6 @@ import Budget from './pages/Budget'
 import Travel from './pages/Travel'
 import Tasks from './pages/Tasks'
 import Packing from './pages/Packing'
-import Map from './pages/Map'
 import FamilyProfile from './pages/FamilyProfile'
 import AppLayout from './components/layout/AppLayout'
 
@@ -29,7 +28,8 @@ function App() {
         <Route path="budget" element={<Budget />} />
         <Route path="travel" element={<Travel />} />
         <Route path="packing" element={<Packing />} />
-        <Route path="map" element={<Map />} />
+        {/* Map merged into the itinerary — redirect old/bookmarked links. */}
+        <Route path="map" element={<Navigate to="../itinerary" replace />} />
       </Route>
     </Routes>
   )

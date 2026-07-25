@@ -16,7 +16,7 @@ import TodayCard from '@/components/dashboard/TodayCard'
 import SpendingInsight from '@/components/dashboard/SpendingInsight'
 import QuickActions from '@/components/dashboard/QuickActions'
 import MiniStat from '@/components/dashboard/MiniStat'
-import { Wallet, ListTodo, CalendarDays, Backpack, Menu, Map as MapIcon, Compass, CalendarRange, Sun } from 'lucide-react'
+import { Wallet, ListTodo, CalendarDays, Backpack, Menu, Compass, CalendarRange, Sun } from 'lucide-react'
 import { differenceInCalendarDays, parseISO } from 'date-fns'
 
 const PageWrapper = styled.div<{ $mobile: boolean }>`
@@ -354,9 +354,6 @@ function DashboardContent() {
         <BottomNav>
           <NavBtn onClick={() => navigate(`/trip/${trip.id}/travel`)}>
             <Menu size={20} /> עוד
-          </NavBtn>
-          <NavBtn onClick={() => navigate(`/trip/${trip.id}/map`)}>
-            <MapIcon size={20} /> מפה
           </NavBtn>
           <NavBtn $disabled title="בקרוב">
             <Compass size={20} /> מה עושים?
