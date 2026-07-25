@@ -142,6 +142,48 @@ const HintBubble = styled.div`
   pointer-events: none;
 `
 
+const RoutePanel = styled.div`
+  position: absolute;
+  top: 12px;
+  inset-inline: 12px;
+  margin-inline: auto;
+  max-width: 460px;
+  z-index: 1000;
+  background: ${({ theme }) => theme.colors.white};
+  border-radius: 14px;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.2);
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+`
+
+const RouteLink = styled.a`
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #4285f4;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 9px 14px;
+  border-radius: 999px;
+  text-decoration: none;
+  white-space: nowrap;
+  &:hover { background: #3367d6; }
+`
+
+const RouteClose = styled.button`
+  background: transparent;
+  border: none;
+  color: ${({ theme }) => theme.colors.gray[500]};
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 2px 4px;
+  &:hover { color: ${({ theme }) => theme.colors.gray[800]}; }
+`
+
 const LegendDot = styled.span<{ $color: string }>`
   display: inline-block;
   width: 10px;
@@ -235,9 +277,11 @@ export default function Map() {
   const containerRef = useRef<HTMLDivElement>(null)
   const initRef = useRef(false)
   const markersRef = useRef<Map<string, L.Marker>>(new globalThis.Map())
-  // Markers grouped by their day (date) so clicking a legend day can focus +
-  // open all of that day's activity popups at once.
-  const dayMarkersRef = useRef<Map<string, L.Marker[]>>(new globalThis.Map())
+  // Per-day route data, keyed by date: the ordered stops (chronological) used
+  // to build one connected Google Maps directions link, and the polyline drawn
+  // on the map so we can highlight the selected day and dim the rest.
+  const dayRouteRef = useRef<Map<string, Array<{ lat: number; lon: number; name: string }>>>(new globalThis.Map())
+  const dayPolylinesRef = useRef<Map<string, L.Polyline>>(new globalThis.Map())
   const clickPinRef = useRef<L.Marker | null>(null)
 
   // Build flat list of points + a stable date→color map.
@@ -405,7 +449,7 @@ export default function Map() {
       }
       if (cancelled || !containerRef.current) return
 
-      const map = L.map(containerRef.current, { zoomControl: true, closePopupOnClick: false })
+      const map = L.map(containerRef.current, { zoomControl: true })
         .setView([coords.lat, coords.lon], 12)
       mapRef.current = map
 
@@ -471,33 +515,30 @@ export default function Map() {
           }),
         })
           .addTo(map)
-          // autoClose/closeOnClick false so a whole day's popups can stay open
-          // together when you click a day in the legend.
-          .bindPopup(buildPopupHtml(p), { maxWidth: 300, autoClose: false, closeOnClick: false })
+          .bindPopup(buildPopupHtml(p), { maxWidth: 300 })
         markersRef.current.set(p.id, marker)
-        if (p.date) {
-          const arr = dayMarkersRef.current.get(p.date) ?? []
-          arr.push(marker)
-          dayMarkersRef.current.set(p.date, arr)
-        }
         bounds.extend([p.lat, p.lon])
       }
 
-      // Per-day polylines connecting events in chronological order.
+      // Group each day's located stops in chronological order — used both for
+      // the connecting polyline and for the "open the whole day in Google Maps"
+      // route link.
       const byDate = new globalThis.Map<string, Array<MapPoint & { lat: number; lon: number }>>()
       for (const p of located) {
-        if (p.kind !== 'event' || !p.date) continue
+        if (!p.date || p.kind === 'destination') continue
         const arr = byDate.get(p.date) ?? []
         arr.push(p)
         byDate.set(p.date, arr)
       }
       for (const [date, list] of byDate) {
-        if (list.length < 2) continue
         list.sort((a, b) => (a.startTime ?? '').localeCompare(b.startTime ?? ''))
-        L.polyline(
+        dayRouteRef.current.set(date, list.map(p => ({ lat: p.lat, lon: p.lon, name: p.name })))
+        if (list.length < 2) continue
+        const line = L.polyline(
           list.map(p => [p.lat, p.lon] as [number, number]),
           { color: dayColor.get(date) ?? '#888', weight: 3, opacity: 0.6, dashArray: '6 6' }
         ).addTo(map)
+        dayPolylinesRef.current.set(date, line)
       }
 
       if (bounds.isValid()) {
@@ -511,7 +552,8 @@ export default function Map() {
       cancelled = true
       if (mapRef.current) { mapRef.current.remove(); mapRef.current = null }
       markersRef.current.clear()
-      dayMarkersRef.current.clear()
+      dayRouteRef.current.clear()
+      dayPolylinesRef.current.clear()
       clickPinRef.current = null
       initRef.current = false
     }
@@ -526,29 +568,52 @@ export default function Map() {
     setPinResolving(false)
   }
 
-  // Click a day in the legend → focus the map on that day's activities and pop
-  // them all open at once. Click the same day again to clear.
+  // Reset every day's polyline back to its default dashed style.
+  function resetRouteStyles() {
+    dayPolylinesRef.current.forEach(line => line.setStyle({ weight: 3, opacity: 0.6, dashArray: '6 6' }))
+  }
+
+  // Click a day in the legend → highlight that one day's connected route (dim
+  // the rest) and frame it. A floating panel then offers the whole day as a
+  // single Google Maps directions link. Click the same day again to clear.
   function focusDay(date: string) {
     const map = mapRef.current
     if (!map) return
-    // Always start from a clean slate: close every open popup.
     markersRef.current.forEach(m => m.closePopup())
+    resetRouteStyles()
 
     if (selectedDate === date) { setSelectedDate(null); return }
     setSelectedDate(date)
 
-    const markers = dayMarkersRef.current.get(date) ?? []
-    if (!markers.length) return
+    // Emphasise this day's route, fade the others.
+    dayPolylinesRef.current.forEach((line, d) => {
+      if (d === date) line.setStyle({ weight: 5, opacity: 1, dashArray: undefined }).bringToFront()
+      else line.setStyle({ weight: 2, opacity: 0.12, dashArray: '6 6' })
+    })
 
-    // Open all of the day's popups, then pan/zoom so they're all in view.
-    markers.forEach(m => m.openPopup())
-    if (markers.length === 1) {
-      map.flyTo(markers[0].getLatLng(), Math.max(map.getZoom(), 14), { duration: 0.6 })
+    const stops = dayRouteRef.current.get(date) ?? []
+    if (!stops.length) return
+    if (stops.length === 1) {
+      map.flyTo([stops[0].lat, stops[0].lon], Math.max(map.getZoom(), 14), { duration: 0.6 })
     } else {
-      const bounds = L.latLngBounds(markers.map(m => m.getLatLng()))
+      const bounds = L.latLngBounds(stops.map(s => [s.lat, s.lon] as [number, number]))
       map.flyToBounds(bounds, { padding: [70, 70], maxZoom: 15, duration: 0.6 })
     }
   }
+
+  function clearSelectedDay() {
+    resetRouteStyles()
+    setSelectedDate(null)
+  }
+
+  // One connected Google Maps directions link through all of a day's stops, in
+  // order. The /dir/lat,lng/lat,lng/… form opens the native Maps app on mobile.
+  function googleMapsRouteUrl(stops: Array<{ lat: number; lon: number }>): string {
+    const path = stops.map(s => `${s.lat},${s.lon}`).join('/')
+    return `https://www.google.com/maps/dir/${path}`
+  }
+
+  const selectedStops = selectedDate ? (dayRouteRef.current.get(selectedDate) ?? []) : []
 
   // Refresh popups when AI insights arrive.
   useEffect(() => {
@@ -628,8 +693,33 @@ export default function Map() {
         <Body $mobile={isMobile}>
           <MapWrapper>
             <div ref={containerRef} style={{ height: '100%', width: '100%' }} />
-            {status === 'ready' && !pin && (
+            {status === 'ready' && !pin && !selectedDate && (
               <HintBubble>💡 הקליקו על המפה כדי להוסיף ללוז</HintBubble>
+            )}
+            {selectedDate && (
+              <RoutePanel>
+                <span style={{ fontSize: 22 }}>🚗</span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontWeight: 600, fontSize: 14 }}>
+                    מסלול {formatDateShort(selectedDate)}
+                  </div>
+                  <div style={{ fontSize: 12, opacity: 0.7 }}>
+                    {selectedStops.length > 0
+                      ? `${selectedStops.length} עצירות · לפי סדר השעות`
+                      : 'אין פעילויות עם מיקום ביום זה'}
+                  </div>
+                </div>
+                {selectedStops.length > 0 && (
+                  <RouteLink
+                    href={googleMapsRouteUrl(selectedStops)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    🗺️ פתח בגוגל מפות
+                  </RouteLink>
+                )}
+                <RouteClose onClick={clearSelectedDay} aria-label="סגור">✕</RouteClose>
+              </RoutePanel>
             )}
             {pin && (
               <FloatingAddPanel $mobile={isMobile}>
@@ -652,7 +742,7 @@ export default function Map() {
           <Sidebar $mobile={isMobile}>
             <Typography variant="h6" style={{ margin: '0 0 2px' }}>מקרא תאריכים</Typography>
             <Typography variant="caption" style={{ opacity: 0.7, display: 'block', marginBottom: 8 }}>
-              👆 לחצו על יום כדי לראות את כל הפעילויות שלו על המפה
+              👆 לחצו על יום כדי לסמן את המסלול שלו ולפתוח אותו כמסלול אחד בגוגל מפות
             </Typography>
             <div style={{ marginBottom: 12, fontSize: 13 }}>
               <div style={{ marginBottom: 4, padding: '0 8px' }}>
@@ -662,13 +752,13 @@ export default function Map() {
                 <LegendDot $color={STAY_COLOR} /> לינות 🏨
               </div>
               {trip.days.map(day => {
-                const hasActivities = (dayMarkersRef.current.get(day.date)?.length ?? 0) > 0
+                const hasActivities = (dayRouteRef.current.get(day.date)?.length ?? 0) > 0
                 return (
                   <DayRow
                     key={day.id}
                     $selected={selectedDate === day.date}
                     onClick={() => focusDay(day.date)}
-                    title={hasActivities ? 'הצג את פעילויות היום על המפה' : 'אין פעילויות עם מיקום ביום זה'}
+                    title={hasActivities ? 'סמן את מסלול היום ופתח בגוגל מפות' : 'אין פעילויות עם מיקום ביום זה'}
                   >
                     <LegendDot $color={dayColor.get(day.date) ?? '#888'} />
                     <span>{formatDateShort(day.date)} {day.label ? `· ${day.label}` : ''}</span>
