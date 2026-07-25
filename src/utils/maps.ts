@@ -41,3 +41,18 @@ export function googleMapsUrl(input: string | MapTarget): string {
   const q = (t.address ?? t.label ?? '').trim()
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}`
 }
+
+// One connected Google Maps directions link through every stop, in order. The
+// /maps/dir/A/B/C form opens the native Maps app on mobile and lets Google
+// geocode each stop itself — so plain address strings work, no coords needed.
+export function googleMapsRouteUrl(stops: Array<string | MapTarget>): string {
+  const path = stops
+    .map(s => {
+      const t = toTarget(s)
+      if (isFiniteCoord(t.lat) && isFiniteCoord(t.lng)) return `${t.lat},${t.lng}`
+      return encodeURIComponent((t.address ?? t.label ?? '').trim())
+    })
+    .filter(Boolean)
+    .join('/')
+  return `https://www.google.com/maps/dir/${path}`
+}

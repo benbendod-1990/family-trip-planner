@@ -1,254 +1,12 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useMemo } from 'react'
 import { useParams } from 'react-router-dom'
-import { Stack, Typography, Badge, Button } from 'myk-library'
-import styled, { keyframes } from 'styled-components'
+import { Stack, Typography, Badge } from 'myk-library'
+import styled from 'styled-components'
 import { useTripStore } from '@/stores/tripStore'
-import { geocodeDestination, reverseGeocode } from '@/services/weatherService'
 import { useBreakpoint } from '@/hooks/useBreakpoint'
-import { wazeUrl, googleMapsUrl } from '@/utils/maps'
+import { wazeUrl, googleMapsUrl, googleMapsRouteUrl } from '@/utils/maps'
 import { formatDateShort } from '@/utils/date'
-import { fetchMapInsights, type MapInsightsResponse } from '@/lib/aiClient'
-import SmartAddBar from '@/components/itinerary/SmartAddBar'
-import type { TripCoords } from '@/types/trip-plan'
-import L from 'leaflet'
-
-import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png'
-import markerIcon from 'leaflet/dist/images/marker-icon.png'
-import markerShadow from 'leaflet/dist/images/marker-shadow.png'
-
-delete (L.Icon.Default.prototype as unknown as Record<string, unknown>)._getIconUrl
-L.Icon.Default.mergeOptions({
-  iconUrl: markerIcon,
-  iconRetinaUrl: markerIcon2x,
-  shadowUrl: markerShadow,
-})
-
-// Distinct, high-contrast palette for up to ~14 days. After that, colors recycle.
-const DAY_PALETTE = [
-  '#ef4444', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6',
-  '#ec4899', '#06b6d4', '#84cc16', '#f97316', '#6366f1',
-  '#14b8a6', '#d946ef', '#eab308', '#0ea5e9',
-]
-const DESTINATION_COLOR = '#1f2937' // neutral dark for the trip's anchor
-const STAY_COLOR = '#7c3aed' // accommodations span multiple days → fixed color
-
-type PointKind = 'destination' | 'accommodation' | 'event'
-
-interface MapPoint {
-  id: string
-  kind: PointKind
-  name: string
-  address: string
-  date?: string // YYYY-MM-DD
-  startTime?: string
-  category?: string
-  emoji: string
-  color: string
-  dayIndex?: number
-}
-
-const slide = keyframes`
-  from { transform: translateX(100%); }
-  to   { transform: translateX(-100%); }
-`
-
-const PageWrapper = styled.div`
-  display: flex;
-  flex-direction: column;
-  height: calc(100vh - 60px);
-`
-
-const MapHeader = styled.div<{ $mobile: boolean }>`
-  padding: 12px ${({ $mobile }) => ($mobile ? '12px' : '24px')};
-  border-bottom: 1px solid ${({ theme }) => theme.colors.gray[200]};
-  flex-shrink: 0;
-`
-
-const LoadingBar = styled.div`
-  height: 3px;
-  background: ${({ theme }) => theme.colors.gray[200]};
-  overflow: hidden;
-  flex-shrink: 0;
-
-  &::after {
-    content: '';
-    display: block;
-    height: 100%;
-    width: 40%;
-    background: ${({ theme }) => theme.colors.primary[500]};
-    animation: ${slide} 1.2s ease-in-out infinite;
-  }
-`
-
-const Body = styled.div<{ $mobile: boolean }>`
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  flex-direction: ${({ $mobile }) => ($mobile ? 'column' : 'row')};
-`
-
-const MapWrapper = styled.div`
-  flex: 1;
-  min-height: 0;
-  position: relative;
-
-  .leaflet-container {
-    height: 100%;
-    width: 100%;
-    background: #e8e8e8;
-  }
-`
-
-const Sidebar = styled.aside<{ $mobile: boolean }>`
-  width: ${({ $mobile }) => ($mobile ? '100%' : '320px')};
-  max-height: ${({ $mobile }) => ($mobile ? '40vh' : 'none')};
-  border-${({ $mobile }) => ($mobile ? 'top' : 'right')}: 1px solid ${({ theme }) => theme.colors.gray[200]};
-  background: ${({ theme }) => theme.colors.gray[50] ?? '#fafafa'};
-  overflow-y: auto;
-  padding: 12px 14px;
-`
-
-const ErrorBox = styled.div`
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-`
-
-const FloatingAddPanel = styled.div<{ $mobile: boolean }>`
-  position: absolute;
-  z-index: 1000;
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.18);
-  padding: 0;
-  ${({ $mobile }) =>
-    $mobile
-      ? `inset-inline: 12px; bottom: 12px; max-width: none;`
-      : `inset-inline-start: 16px; bottom: 16px; width: 360px;`}
-`
-
-const HintBubble = styled.div`
-  position: absolute;
-  top: 12px;
-  inset-inline-start: 50%;
-  transform: translateX(-50%);
-  background: rgba(31, 41, 55, 0.92);
-  color: white;
-  font-size: 12px;
-  padding: 6px 12px;
-  border-radius: 999px;
-  z-index: 999;
-  pointer-events: none;
-`
-
-const RoutePanel = styled.div`
-  position: absolute;
-  top: 12px;
-  inset-inline: 12px;
-  margin-inline: auto;
-  max-width: 460px;
-  z-index: 1000;
-  background: ${({ theme }) => theme.colors.white};
-  border-radius: 14px;
-  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.2);
-  padding: 12px 14px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-`
-
-const RouteLink = styled.a`
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: #4285f4;
-  color: #fff;
-  font-size: 14px;
-  font-weight: 600;
-  padding: 9px 14px;
-  border-radius: 999px;
-  text-decoration: none;
-  white-space: nowrap;
-  &:hover { background: #3367d6; }
-`
-
-const RouteClose = styled.button`
-  background: transparent;
-  border: none;
-  color: ${({ theme }) => theme.colors.gray[500]};
-  font-size: 18px;
-  line-height: 1;
-  cursor: pointer;
-  padding: 2px 4px;
-  &:hover { color: ${({ theme }) => theme.colors.gray[800]}; }
-`
-
-const LegendDot = styled.span<{ $color: string }>`
-  display: inline-block;
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: ${({ $color }) => $color};
-  margin-inline-end: 6px;
-  vertical-align: middle;
-  border: 1px solid rgba(0, 0, 0, 0.15);
-`
-
-const DayRow = styled.button<{ $selected: boolean }>`
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  width: 100%;
-  text-align: start;
-  border: none;
-  background: ${({ $selected, theme }) => ($selected ? theme.colors.primary[100] : 'transparent')};
-  color: inherit;
-  font: inherit;
-  font-size: 13px;
-  padding: 5px 8px;
-  margin-bottom: 1px;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: background 0.12s;
-  &:hover { background: ${({ theme }) => theme.colors.primary[50]}; }
-`
-
-const TipCard = styled.div<{ $color: string }>`
-  border: 1px solid ${({ theme }) => theme.colors.gray[200]};
-  border-inline-start: 3px solid ${({ $color }) => $color};
-  border-radius: 6px;
-  padding: 8px 10px;
-  margin-bottom: 8px;
-  background: white;
-  font-size: 13px;
-`
-
-function pinSvg(color: string, emoji: string): string {
-  return `
-    <div style="
-      position: relative;
-      width: 30px;
-      height: 38px;
-      filter: drop-shadow(0 2px 2px rgba(0,0,0,0.35));
-    ">
-      <svg viewBox="0 0 30 38" width="30" height="38" xmlns="http://www.w3.org/2000/svg">
-        <path d="M15 0 C6.7 0 0 6.7 0 15 C0 26 15 38 15 38 C15 38 30 26 30 15 C30 6.7 23.3 0 15 0 Z"
-          fill="${color}" stroke="white" stroke-width="2" />
-        <circle cx="15" cy="15" r="9" fill="white" />
-      </svg>
-      <div style="
-        position: absolute;
-        top: 5px;
-        left: 0;
-        width: 30px;
-        text-align: center;
-        font-size: 14px;
-        line-height: 20px;
-      ">${emoji}</div>
-    </div>
-  `
-}
+import { warmDisplayFont } from '@/theme/warmTheme'
 
 function eventEmoji(category?: string): string {
   switch (category) {
@@ -260,603 +18,266 @@ function eventEmoji(category?: string): string {
   }
 }
 
+interface Stop {
+  id: string
+  title: string
+  location: string
+  startTime?: string
+  emoji: string
+}
+
+interface DayGroup {
+  id: string
+  date: string
+  label?: string
+  color: string
+  stops: Stop[]
+}
+
+const DAY_PALETTE = [
+  '#ef4444', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6',
+  '#ec4899', '#06b6d4', '#84cc16', '#f97316', '#6366f1',
+  '#14b8a6', '#d946ef', '#eab308', '#0ea5e9',
+]
+
+const PageWrapper = styled.div`
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 60px);
+`
+
+const Header = styled.div<{ $mobile: boolean }>`
+  padding: 12px ${({ $mobile }) => ($mobile ? '12px' : '24px')};
+  border-bottom: 1px solid ${({ theme }) => theme.colors.gray[200]};
+  flex-shrink: 0;
+`
+
+const ScrollBody = styled.div<{ $mobile: boolean }>`
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: ${({ $mobile }) => ($mobile ? '12px' : '20px 24px')};
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 720px;
+  width: 100%;
+  margin-inline: auto;
+`
+
+const Section = styled.div`
+  background: ${({ theme }) => theme.colors.white};
+  border: 1px solid ${({ theme }) => theme.colors.gray[200]};
+  border-radius: 14px;
+  box-shadow: ${({ theme }) => theme.shadows.sm};
+  overflow: hidden;
+  /* In the flex-column scroll body, keep each card at its content height
+     instead of letting flex shrink + overflow:hidden clip the rows. */
+  flex-shrink: 0;
+`
+
+const DayHead = styled.div<{ $color: string }>`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-inline-start: 5px solid ${({ $color }) => $color};
+  background: ${({ theme }) => theme.colors.gray[50]};
+`
+
+const DayTitle = styled.div`
+  font-family: ${warmDisplayFont};
+  font-size: 18px;
+  font-weight: 500;
+  color: ${({ theme }) => theme.colors.gray[900]};
+`
+
+const RouteLink = styled.a`
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #4285f4;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 13px;
+  border-radius: 999px;
+  text-decoration: none;
+  white-space: nowrap;
+  margin-inline-start: auto;
+  &:hover { background: #3367d6; }
+`
+
+const StopRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-top: 1px solid ${({ theme }) => theme.colors.gray[100]};
+`
+
+const StopInfo = styled.div`
+  flex: 1;
+  min-width: 0;
+`
+
+const StopTitle = styled.div`
+  font-size: 14px;
+  font-weight: 600;
+  color: ${({ theme }) => theme.colors.gray[900]};
+`
+
+const StopMeta = styled.div`
+  font-size: 12px;
+  color: ${({ theme }) => theme.colors.gray[500]};
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+`
+
+const MiniLink = styled.a<{ $bg: string }>`
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 9px;
+  border-radius: 6px;
+  background: ${({ $bg }) => $bg};
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+  &:hover { filter: brightness(0.93); }
+`
+
+const EmptyBox = styled.div`
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  opacity: 0.7;
+  padding: 40px 16px;
+`
+
 export default function Map() {
   const { id } = useParams<{ id: string }>()
   const trip = useTripStore(s => s.trips.find(t => t.id === id))
-  const setCoords = useTripStore(s => s.setCoords)
-
   const { isMobile } = useBreakpoint()
-  const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading')
-  const [aiStatus, setAiStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle')
-  const [insights, setInsights] = useState<MapInsightsResponse | null>(null)
-  const [aiError, setAiError] = useState<string | null>(null)
-  const [pin, setPin] = useState<{ name?: string; address?: string; coords: TripCoords } | null>(null)
-  const [pinResolving, setPinResolving] = useState(false)
-  const [selectedDate, setSelectedDate] = useState<string | null>(null)
-  const mapRef = useRef<L.Map | null>(null)
-  const containerRef = useRef<HTMLDivElement>(null)
-  const initRef = useRef(false)
-  const markersRef = useRef<Map<string, L.Marker>>(new globalThis.Map())
-  // Per-day route data, keyed by date: the ordered stops (chronological) used
-  // to build one connected Google Maps directions link, and the polyline drawn
-  // on the map so we can highlight the selected day and dim the rest.
-  const dayRouteRef = useRef<Map<string, Array<{ lat: number; lon: number; name: string }>>>(new globalThis.Map())
-  const dayPolylinesRef = useRef<Map<string, L.Polyline>>(new globalThis.Map())
-  const clickPinRef = useRef<L.Marker | null>(null)
 
-  // Build flat list of points + a stable date→color map.
-  const { points, dayColor } = useMemo(() => {
-    const dayColor = new globalThis.Map<string, string>()
-    if (!trip) return { points: [] as MapPoint[], dayColor }
-
+  const days = useMemo<DayGroup[]>(() => {
+    if (!trip) return []
     const sortedDates = trip.days.map(d => d.date).sort()
-    sortedDates.forEach((date, idx) => {
-      dayColor.set(date, DAY_PALETTE[idx % DAY_PALETTE.length])
-    })
-
-    const pts: MapPoint[] = []
-
-    // Destination anchor
-    pts.push({
-      id: `dest-${trip.id}`,
-      kind: 'destination',
-      name: trip.destination,
-      address: trip.destination,
-      emoji: trip.coverEmoji || '📍',
-      color: DESTINATION_COLOR,
-    })
-
-    // Accommodations
-    for (const acc of trip.accommodations) {
-      if (!acc.address) continue
-      pts.push({
-        id: `acc-${acc.id}`,
-        kind: 'accommodation',
-        name: acc.name,
-        address: acc.address,
-        date: acc.checkIn,
-        emoji: '🏨',
-        color: STAY_COLOR,
-      })
-    }
-
-    // Events (color by their day)
-    trip.days.forEach((day, dayIdx) => {
-      for (const ev of day.events) {
-        if (!ev.location) continue
-        pts.push({
-          id: `ev-${ev.id}`,
-          kind: 'event',
-          name: ev.title,
-          address: ev.location,
+    const colorFor = (date: string) => DAY_PALETTE[sortedDates.indexOf(date) % DAY_PALETTE.length]
+    return trip.days
+      .map(day => {
+        const stops = day.events
+          .filter(ev => ev.location)
+          .slice()
+          .sort((a, b) => (a.startTime ?? '').localeCompare(b.startTime ?? ''))
+          .map(ev => ({
+            id: ev.id,
+            title: ev.title,
+            location: ev.location as string,
+            startTime: ev.startTime,
+            emoji: eventEmoji(ev.category),
+          }))
+        return {
+          id: day.id,
           date: day.date,
-          startTime: ev.startTime,
-          category: ev.category,
-          emoji: eventEmoji(ev.category),
-          color: dayColor.get(day.date) ?? DAY_PALETTE[dayIdx % DAY_PALETTE.length],
-          dayIndex: dayIdx,
-        })
-      }
-    })
-
-    return { points: pts, dayColor }
+          label: day.label,
+          color: colorFor(day.date),
+          stops,
+        }
+      })
+      .filter(d => d.stops.length > 0)
   }, [trip])
 
-  // Lookup helpers driven by latest insights.
-  const tipsById = useMemo(() => {
-    const m = new globalThis.Map<string, { tips: string[]; nearby: MapInsightsResponse['per_point'][number]['nearby'] }>()
-    if (insights) {
-      for (const p of insights.per_point) m.set(p.id, { tips: p.tips, nearby: p.nearby })
-    }
-    return m
-  }, [insights])
-
-  const connectionsForPoint = useMemo(() => {
-    const m = new globalThis.Map<string, MapInsightsResponse['connections']>()
-    if (insights) {
-      for (const c of insights.connections) {
-        const arr = m.get(c.from_id) ?? []
-        arr.push(c)
-        m.set(c.from_id, arr)
-      }
-    }
-    return m
-  }, [insights])
-
-  // Build popup HTML for a point (used both at init time and on insights update).
-  function buildPopupHtml(p: MapPoint): string {
-    const dateLabel = p.date ? formatDateShort(p.date) : ''
-    const timeLabel = p.startTime ? `🕐 ${p.startTime}` : ''
-    const waze = wazeUrl(p.address)
-    const gmap = googleMapsUrl(p.address)
-
-    const aiBlock = (() => {
-      const data = tipsById.get(p.id)
-      if (!data) return ''
-      const tipsHtml = data.tips.length
-        ? `<div style="margin-top:6px;"><b>טיפים:</b><ul style="margin:4px 0 0 16px;padding:0;">${data.tips
-            .map(t => `<li style="margin:2px 0;">${escapeHtml(t)}</li>`)
-            .join('')}</ul></div>`
-        : ''
-      const nearbyHtml = data.nearby.length
-        ? `<div style="margin-top:6px;"><b>בסביבה:</b><ul style="margin:4px 0 0 16px;padding:0;">${data.nearby
-            .map(
-              n =>
-                `<li style="margin:2px 0;">${n.kid_friendly ? '👶 ' : ''}<a href="${escapeAttr(
-                  n.source_url
-                )}" target="_blank" rel="noopener">${escapeHtml(n.name)}</a> · ${escapeHtml(n.why)} <span style="opacity:.6;">(${n.walking_minutes}′)</span></li>`
-            )
-            .join('')}</ul></div>`
-        : ''
-      const conns = connectionsForPoint.get(p.id) ?? []
-      const connHtml = conns.length
-        ? `<div style="margin-top:6px;"><b>בדרך הלאה:</b><ul style="margin:4px 0 0 16px;padding:0;">${conns
-            .map(
-              c =>
-                `<li style="margin:2px 0;"><a href="${escapeAttr(
-                  c.source_url
-                )}" target="_blank" rel="noopener">${escapeHtml(c.suggestion)}</a></li>`
-            )
-            .join('')}</ul></div>`
-        : ''
-      return tipsHtml + nearbyHtml + connHtml
-    })()
-
-    return `
-      <div style="min-width:220px;max-width:280px;font-size:13px;line-height:1.4;">
-        <div style="font-weight:600;font-size:14px;">${p.emoji} ${escapeHtml(p.name)}</div>
-        ${dateLabel || timeLabel
-          ? `<div style="opacity:.7;font-size:12px;margin-top:2px;">${dateLabel}${dateLabel && timeLabel ? ' · ' : ''}${timeLabel}</div>`
-          : ''
-        }
-        <div style="margin-top:6px;">📍 ${escapeHtml(p.address)}</div>
-        <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;">
-          <a href="${escapeAttr(waze)}" target="_blank" rel="noopener"
-             style="padding:4px 8px;background:#33ccff;color:white;border-radius:4px;text-decoration:none;font-weight:600;">Waze</a>
-          <a href="${escapeAttr(gmap)}" target="_blank" rel="noopener"
-             style="padding:4px 8px;background:#4285f4;color:white;border-radius:4px;text-decoration:none;font-weight:600;">Google Maps</a>
-        </div>
-        ${aiBlock}
-      </div>
-    `
-  }
-
-  // Init map once per trip.
-  useEffect(() => {
-    if (!trip || !containerRef.current || initRef.current) return
-    initRef.current = true
-
-    let cancelled = false
-
-    async function init() {
-      if (!trip || !containerRef.current) return
-
-      let coords = trip.coords ?? null
-      if (!coords) {
-        coords = await geocodeDestination(trip.destination)
-        // The bare destination name (e.g. a Hebrew country name like "הולנד") often
-        // doesn't resolve — geocoders expect a specific place. Fall back to the first
-        // real address we have (accommodation, then any event) before giving up.
-        if (!coords) {
-          const fallbackAddress =
-            trip.accommodations[0]?.address ??
-            trip.days.flatMap(d => d.events).find(e => e.location)?.location
-          if (fallbackAddress) coords = await geocodeDestination(fallbackAddress)
-        }
-        if (cancelled) return
-        if (!coords) { setStatus('error'); return }
-        if (id) setCoords(id, coords)
-      }
-      if (cancelled || !containerRef.current) return
-
-      const map = L.map(containerRef.current, { zoomControl: true })
-        .setView([coords.lat, coords.lon], 12)
-      mapRef.current = map
-
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-        maxZoom: 19,
-      }).addTo(map)
-
-      // Click-on-empty-spot → reverse geocode → open SmartAddBar with location pinned.
-      map.on('click', async (e: L.LeafletMouseEvent) => {
-        const c: TripCoords = { lat: e.latlng.lat, lon: e.latlng.lng }
-        if (clickPinRef.current) {
-          clickPinRef.current.remove()
-          clickPinRef.current = null
-        }
-        clickPinRef.current = L.marker([c.lat, c.lon], {
-          icon: L.divIcon({
-            className: 'trip-pin-temp',
-            html: pinSvg('#8b5cf6', '✨'),
-            iconSize: [30, 38],
-            iconAnchor: [15, 38],
-          }),
-        }).addTo(map)
-        setPin({ coords: c })
-        setPinResolving(true)
-        const rev = await reverseGeocode(c)
-        setPinResolving(false)
-        setPin(curr => (curr && curr.coords.lat === c.lat && curr.coords.lon === c.lon
-          ? { ...curr, name: rev?.name, address: rev?.address ?? `${c.lat.toFixed(4)}, ${c.lon.toFixed(4)}` }
-          : curr))
-      })
-
-      if (!cancelled) setStatus('ready')
-
-      // Geocode all points in parallel (each result is cached — see geocodeDestination).
-      const located: Array<MapPoint & { lat: number; lon: number }> = []
-
-      // Destination anchor first (we already have its coords).
-      const destPoint = points.find(p => p.kind === 'destination')
-      if (destPoint) {
-        located.push({ ...destPoint, lat: coords.lat, lon: coords.lon })
-      }
-
-      const otherPoints = points.filter(p => p.kind !== 'destination')
-      const resolved = await Promise.all(
-        otherPoints.map(async p => ({ p, c: await geocodeDestination(p.address) }))
-      )
-      if (cancelled) return
-      for (const { p, c } of resolved) {
-        if (!c) continue
-        located.push({ ...p, lat: c.lat, lon: c.lon })
-      }
-
-      // Add markers.
-      const bounds = L.latLngBounds([])
-      for (const p of located) {
-        const marker = L.marker([p.lat, p.lon], {
-          icon: L.divIcon({
-            className: 'trip-pin',
-            html: pinSvg(p.color, p.emoji),
-            iconSize: [30, 38],
-            iconAnchor: [15, 38],
-          }),
-        })
-          .addTo(map)
-          .bindPopup(buildPopupHtml(p), { maxWidth: 300 })
-        markersRef.current.set(p.id, marker)
-        bounds.extend([p.lat, p.lon])
-      }
-
-      // Group each day's located stops in chronological order — used both for
-      // the connecting polyline and for the "open the whole day in Google Maps"
-      // route link.
-      const byDate = new globalThis.Map<string, Array<MapPoint & { lat: number; lon: number }>>()
-      for (const p of located) {
-        if (!p.date || p.kind === 'destination') continue
-        const arr = byDate.get(p.date) ?? []
-        arr.push(p)
-        byDate.set(p.date, arr)
-      }
-      for (const [date, list] of byDate) {
-        list.sort((a, b) => (a.startTime ?? '').localeCompare(b.startTime ?? ''))
-        dayRouteRef.current.set(date, list.map(p => ({ lat: p.lat, lon: p.lon, name: p.name })))
-        if (list.length < 2) continue
-        const line = L.polyline(
-          list.map(p => [p.lat, p.lon] as [number, number]),
-          { color: dayColor.get(date) ?? '#888', weight: 3, opacity: 0.6, dashArray: '6 6' }
-        ).addTo(map)
-        dayPolylinesRef.current.set(date, line)
-      }
-
-      if (bounds.isValid()) {
-        map.fitBounds(bounds, { padding: [30, 30], maxZoom: 14 })
-      }
-    }
-
-    init()
-
-    return () => {
-      cancelled = true
-      if (mapRef.current) { mapRef.current.remove(); mapRef.current = null }
-      markersRef.current.clear()
-      dayRouteRef.current.clear()
-      dayPolylinesRef.current.clear()
-      clickPinRef.current = null
-      initRef.current = false
-    }
-  }, [trip?.id]) // eslint-disable-line react-hooks/exhaustive-deps
-
-  function closePinPanel() {
-    if (clickPinRef.current) {
-      clickPinRef.current.remove()
-      clickPinRef.current = null
-    }
-    setPin(null)
-    setPinResolving(false)
-  }
-
-  // Reset every day's polyline back to its default dashed style.
-  function resetRouteStyles() {
-    dayPolylinesRef.current.forEach(line => line.setStyle({ weight: 3, opacity: 0.6, dashArray: '6 6' }))
-  }
-
-  // Click a day in the legend → highlight that one day's connected route (dim
-  // the rest) and frame it. A floating panel then offers the whole day as a
-  // single Google Maps directions link. Click the same day again to clear.
-  function focusDay(date: string) {
-    const map = mapRef.current
-    if (!map) return
-    markersRef.current.forEach(m => m.closePopup())
-    resetRouteStyles()
-
-    if (selectedDate === date) { setSelectedDate(null); return }
-    setSelectedDate(date)
-
-    // Emphasise this day's route, fade the others.
-    dayPolylinesRef.current.forEach((line, d) => {
-      if (d === date) line.setStyle({ weight: 5, opacity: 1, dashArray: undefined }).bringToFront()
-      else line.setStyle({ weight: 2, opacity: 0.12, dashArray: '6 6' })
-    })
-
-    const stops = dayRouteRef.current.get(date) ?? []
-    if (!stops.length) return
-    if (stops.length === 1) {
-      map.flyTo([stops[0].lat, stops[0].lon], Math.max(map.getZoom(), 14), { duration: 0.6 })
-    } else {
-      const bounds = L.latLngBounds(stops.map(s => [s.lat, s.lon] as [number, number]))
-      map.flyToBounds(bounds, { padding: [70, 70], maxZoom: 15, duration: 0.6 })
-    }
-  }
-
-  function clearSelectedDay() {
-    resetRouteStyles()
-    setSelectedDate(null)
-  }
-
-  // One connected Google Maps directions link through all of a day's stops, in
-  // order. The /dir/lat,lng/lat,lng/… form opens the native Maps app on mobile.
-  function googleMapsRouteUrl(stops: Array<{ lat: number; lon: number }>): string {
-    const path = stops.map(s => `${s.lat},${s.lon}`).join('/')
-    return `https://www.google.com/maps/dir/${path}`
-  }
-
-  const selectedStops = selectedDate ? (dayRouteRef.current.get(selectedDate) ?? []) : []
-
-  // Refresh popups when AI insights arrive.
-  useEffect(() => {
-    if (!insights) return
-    for (const p of points) {
-      const marker = markersRef.current.get(p.id)
-      if (marker) marker.setPopupContent(buildPopupHtml(p))
-    }
-  }, [insights]) // eslint-disable-line react-hooks/exhaustive-deps
-
-  async function loadInsights() {
-    if (!trip) return
-    setAiStatus('loading')
-    setAiError(null)
-    try {
-      const adults = trip.family.filter(m => !m.isChild).length
-      const childrenCount = trip.family.filter(m => m.isChild).length
-      const aiPoints = points.map(p => ({
-        id: p.id,
-        kind: p.kind,
-        name: p.name,
-        address: p.address,
-        date: p.date,
-        startTime: p.startTime,
-        category: p.category,
-      }))
-      const res = await fetchMapInsights({
-        destination: trip.destination,
-        startDate: trip.startDate,
-        endDate: trip.endDate,
-        passengers: { adults, children: childrenCount },
-        points: aiPoints,
-      })
-      setInsights(res)
-      setAiStatus('ready')
-    } catch (e) {
-      setAiError(e instanceof Error ? e.message : String(e))
-      setAiStatus('error')
-    }
-  }
+  const accommodations = useMemo(
+    () => (trip?.accommodations ?? []).filter(a => a.address),
+    [trip]
+  )
 
   if (!trip) return null
 
+  const totalStops = days.reduce((n, d) => n + d.stops.length, 0)
+
   return (
     <PageWrapper>
-      <MapHeader $mobile={isMobile}>
+      <Header $mobile={isMobile}>
         <Stack direction="row" align="center" spacing="sm" style={{ flexWrap: 'wrap' }}>
           <Typography variant="h5" style={{ margin: 0 }}>🗺️ מפה</Typography>
           <Badge variant="info" size="sm">{trip.destination}</Badge>
-          {trip.accommodations.length > 0 && (
-            <Badge size="sm">🏨 {trip.accommodations.length} לינות</Badge>
+          {accommodations.length > 0 && (
+            <Badge size="sm">🏨 {accommodations.length} לינות</Badge>
           )}
-          <Badge size="sm">📍 {points.length} נקודות</Badge>
-          {status === 'loading' && (
-            <Typography variant="caption" style={{ opacity: 0.6 }}>מאתר יעד...</Typography>
-          )}
-          <div style={{ marginInlineStart: 'auto' }}>
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={loadInsights}
-              disabled={aiStatus === 'loading' || status !== 'ready'}
-            >
-              {aiStatus === 'loading' ? '⏳ מחפש טיפים…' : '✨ טיפים חכמים מ-AI'}
-            </Button>
-          </div>
+          <Badge size="sm">📍 {totalStops} מקומות</Badge>
         </Stack>
-      </MapHeader>
+        <Typography variant="caption" style={{ opacity: 0.7, display: 'block', marginTop: 6 }}>
+          כל יום כמסלול אחד ב-Google Maps, וכל מקום בנפרד לניווט
+        </Typography>
+      </Header>
 
-      {(status === 'loading' || aiStatus === 'loading') && <LoadingBar />}
+      <ScrollBody $mobile={isMobile}>
+        {accommodations.length > 0 && (
+          <Section>
+            <DayHead $color="#7c3aed">
+              <span style={{ fontSize: 20 }}>🏨</span>
+              <DayTitle>לינות</DayTitle>
+            </DayHead>
+            {accommodations.map(acc => (
+              <StopRow key={acc.id}>
+                <StopInfo>
+                  <StopTitle>{acc.name}</StopTitle>
+                  <StopMeta>📍 {acc.address}</StopMeta>
+                </StopInfo>
+                <MiniLink $bg="#4285f4" href={googleMapsUrl(acc.address as string)} target="_blank" rel="noopener noreferrer">Google Maps</MiniLink>
+                <MiniLink $bg="#33ccff" href={wazeUrl(acc.address as string)} target="_blank" rel="noopener noreferrer">Waze</MiniLink>
+              </StopRow>
+            ))}
+          </Section>
+        )}
 
-      {status === 'error' ? (
-        <ErrorBox>
-          <Typography variant="body2">לא ניתן למצוא את "{trip.destination}" על המפה</Typography>
-        </ErrorBox>
-      ) : (
-        <Body $mobile={isMobile}>
-          <MapWrapper>
-            <div ref={containerRef} style={{ height: '100%', width: '100%' }} />
-            {status === 'ready' && !pin && !selectedDate && (
-              <HintBubble>💡 הקליקו על המפה כדי להוסיף ללוז</HintBubble>
-            )}
-            {selectedDate && (
-              <RoutePanel>
-                <span style={{ fontSize: 22 }}>🚗</span>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontWeight: 600, fontSize: 14 }}>
-                    מסלול {formatDateShort(selectedDate)}
-                  </div>
-                  <div style={{ fontSize: 12, opacity: 0.7 }}>
-                    {selectedStops.length > 0
-                      ? `${selectedStops.length} עצירות · לפי סדר השעות`
-                      : 'אין פעילויות עם מיקום ביום זה'}
-                  </div>
-                </div>
-                {selectedStops.length > 0 && (
+        {days.length === 0 ? (
+          <EmptyBox>
+            <Typography variant="body2">
+              אין עדיין פעילויות עם מיקום. הוסיפו מקומות בלו״ז והם יופיעו כאן כמסלולים לפתיחה בגוגל מפות.
+            </Typography>
+          </EmptyBox>
+        ) : (
+          days.map(day => (
+            <Section key={day.id}>
+              <DayHead $color={day.color}>
+                <DayTitle>
+                  {formatDateShort(day.date)}{day.label ? ` · ${day.label}` : ''}
+                </DayTitle>
+                {day.stops.length >= 2 && (
                   <RouteLink
-                    href={googleMapsRouteUrl(selectedStops)}
+                    href={googleMapsRouteUrl(day.stops.map(s => s.location))}
                     target="_blank"
                     rel="noopener noreferrer"
+                    title="מסלול אחד דרך כל עצירות היום"
                   >
-                    🗺️ פתח בגוגל מפות
+                    🗺️ מסלול היום בגוגל מפות
                   </RouteLink>
                 )}
-                <RouteClose onClick={clearSelectedDay} aria-label="סגור">✕</RouteClose>
-              </RoutePanel>
-            )}
-            {pin && (
-              <FloatingAddPanel $mobile={isMobile}>
-                <div style={{ padding: 12 }}>
-                  <SmartAddBar
-                    trip={trip}
-                    pinnedLocation={
-                      pinResolving
-                        ? { name: '🔄 מאתר כתובת...', address: undefined, coords: pin.coords }
-                        : pin
-                    }
-                    onCancel={closePinPanel}
-                    onAdded={closePinPanel}
-                  />
-                </div>
-              </FloatingAddPanel>
-            )}
-          </MapWrapper>
-
-          <Sidebar $mobile={isMobile}>
-            <Typography variant="h6" style={{ margin: '0 0 2px' }}>מקרא תאריכים</Typography>
-            <Typography variant="caption" style={{ opacity: 0.7, display: 'block', marginBottom: 8 }}>
-              👆 לחצו על יום כדי לסמן את המסלול שלו ולפתוח אותו כמסלול אחד בגוגל מפות
-            </Typography>
-            <div style={{ marginBottom: 12, fontSize: 13 }}>
-              <div style={{ marginBottom: 4, padding: '0 8px' }}>
-                <LegendDot $color={DESTINATION_COLOR} /> יעד
-              </div>
-              <div style={{ marginBottom: 4, padding: '0 8px' }}>
-                <LegendDot $color={STAY_COLOR} /> לינות 🏨
-              </div>
-              {trip.days.map(day => {
-                const hasActivities = (dayRouteRef.current.get(day.date)?.length ?? 0) > 0
-                return (
-                  <DayRow
-                    key={day.id}
-                    $selected={selectedDate === day.date}
-                    onClick={() => focusDay(day.date)}
-                    title={hasActivities ? 'סמן את מסלול היום ופתח בגוגל מפות' : 'אין פעילויות עם מיקום ביום זה'}
-                  >
-                    <LegendDot $color={dayColor.get(day.date) ?? '#888'} />
-                    <span>{formatDateShort(day.date)} {day.label ? `· ${day.label}` : ''}</span>
-                  </DayRow>
-                )
-              })}
-            </div>
-
-            <Typography variant="h6" style={{ margin: '12px 0 8px' }}>
-              ✨ טיפים חכמים
-            </Typography>
-            {aiStatus === 'idle' && (
-              <Typography variant="caption" style={{ opacity: 0.7 }}>
-                לחצו "טיפים חכמים מ-AI" למעלה כדי לקבל המלצות אישיות לכל נקודה במפה.
-              </Typography>
-            )}
-            {aiStatus === 'error' && (
-              <Typography variant="caption" style={{ color: '#ef4444' }}>
-                שגיאה בקבלת טיפים: {aiError}
-              </Typography>
-            )}
-            {aiStatus === 'ready' && insights && (
-              <>
-                {insights.per_point
-                  .filter(pp => pp.tips.length || pp.nearby.length)
-                  .map(pp => {
-                    const point = points.find(p => p.id === pp.id)
-                    if (!point) return null
-                    return (
-                      <TipCard key={pp.id} $color={point.color}>
-                        <div style={{ fontWeight: 600, marginBottom: 4 }}>
-                          {point.emoji} {point.name}
-                          {point.date && (
-                            <span style={{ opacity: 0.6, fontWeight: 400, marginInlineStart: 6 }}>
-                              · {formatDateShort(point.date)}
-                            </span>
-                          )}
-                        </div>
-                        {pp.tips.map((t, i) => (
-                          <div key={i} style={{ marginBottom: 2 }}>• {t}</div>
-                        ))}
-                        {pp.nearby.length > 0 && (
-                          <div style={{ marginTop: 6, fontSize: 12 }}>
-                            <b>בסביבה:</b>
-                            {pp.nearby.map((n, i) => (
-                              <div key={i} style={{ marginTop: 2 }}>
-                                {n.kid_friendly ? '👶 ' : ''}
-                                <a href={n.source_url} target="_blank" rel="noopener noreferrer">
-                                  {n.name}
-                                </a>{' '}
-                                · {n.why}{' '}
-                                <span style={{ opacity: 0.6 }}>({n.walking_minutes}′)</span>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </TipCard>
-                    )
-                  })}
-                {insights.connections.length > 0 && (
-                  <>
-                    <Typography variant="h6" style={{ margin: '12px 0 6px' }}>
-                      🔗 חיבורים בין נקודות
-                    </Typography>
-                    {insights.connections.map((c, i) => {
-                      const from = points.find(p => p.id === c.from_id)
-                      const to = points.find(p => p.id === c.to_id)
-                      return (
-                        <TipCard key={i} $color={from?.color ?? '#888'}>
-                          <div style={{ fontSize: 12, opacity: 0.7, marginBottom: 2 }}>
-                            {from?.name ?? '?'} → {to?.name ?? '?'}
-                          </div>
-                          <a href={c.source_url} target="_blank" rel="noopener noreferrer">
-                            {c.suggestion}
-                          </a>
-                        </TipCard>
-                      )
-                    })}
-                  </>
-                )}
-              </>
-            )}
-          </Sidebar>
-        </Body>
-      )}
+              </DayHead>
+              {day.stops.map(stop => (
+                <StopRow key={stop.id}>
+                  <span style={{ fontSize: 18 }}>{stop.emoji}</span>
+                  <StopInfo>
+                    <StopTitle>
+                      {stop.startTime ? `${stop.startTime} · ` : ''}{stop.title}
+                    </StopTitle>
+                    <StopMeta>📍 {stop.location}</StopMeta>
+                  </StopInfo>
+                  <MiniLink $bg="#4285f4" href={googleMapsUrl(stop.location)} target="_blank" rel="noopener noreferrer">Google Maps</MiniLink>
+                  <MiniLink $bg="#33ccff" href={wazeUrl(stop.location)} target="_blank" rel="noopener noreferrer">Waze</MiniLink>
+                </StopRow>
+              ))}
+            </Section>
+          ))
+        )}
+      </ScrollBody>
     </PageWrapper>
   )
-}
-
-function escapeHtml(s: string): string {
-  return s
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;')
-}
-
-function escapeAttr(s: string): string {
-  return escapeHtml(s)
 }
