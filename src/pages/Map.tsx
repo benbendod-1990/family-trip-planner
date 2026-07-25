@@ -153,6 +153,25 @@ const LegendDot = styled.span<{ $color: string }>`
   border: 1px solid rgba(0, 0, 0, 0.15);
 `
 
+const DayRow = styled.button<{ $selected: boolean }>`
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  width: 100%;
+  text-align: start;
+  border: none;
+  background: ${({ $selected, theme }) => ($selected ? theme.colors.primary[100] : 'transparent')};
+  color: inherit;
+  font: inherit;
+  font-size: 13px;
+  padding: 5px 8px;
+  margin-bottom: 1px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.12s;
+  &:hover { background: ${({ theme }) => theme.colors.primary[50]}; }
+`
+
 const TipCard = styled.div<{ $color: string }>`
   border: 1px solid ${({ theme }) => theme.colors.gray[200]};
   border-inline-start: 3px solid ${({ $color }) => $color};
@@ -211,10 +230,14 @@ export default function Map() {
   const [aiError, setAiError] = useState<string | null>(null)
   const [pin, setPin] = useState<{ name?: string; address?: string; coords: TripCoords } | null>(null)
   const [pinResolving, setPinResolving] = useState(false)
+  const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const mapRef = useRef<L.Map | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const initRef = useRef(false)
   const markersRef = useRef<Map<string, L.Marker>>(new globalThis.Map())
+  // Markers grouped by their day (date) so clicking a legend day can focus +
+  // open all of that day's activity popups at once.
+  const dayMarkersRef = useRef<Map<string, L.Marker[]>>(new globalThis.Map())
   const clickPinRef = useRef<L.Marker | null>(null)
 
   // Build flat list of points + a stable date→color map.
@@ -382,7 +405,7 @@ export default function Map() {
       }
       if (cancelled || !containerRef.current) return
 
-      const map = L.map(containerRef.current, { zoomControl: true })
+      const map = L.map(containerRef.current, { zoomControl: true, closePopupOnClick: false })
         .setView([coords.lat, coords.lon], 12)
       mapRef.current = map
 
@@ -448,8 +471,15 @@ export default function Map() {
           }),
         })
           .addTo(map)
-          .bindPopup(buildPopupHtml(p), { maxWidth: 300 })
+          // autoClose/closeOnClick false so a whole day's popups can stay open
+          // together when you click a day in the legend.
+          .bindPopup(buildPopupHtml(p), { maxWidth: 300, autoClose: false, closeOnClick: false })
         markersRef.current.set(p.id, marker)
+        if (p.date) {
+          const arr = dayMarkersRef.current.get(p.date) ?? []
+          arr.push(marker)
+          dayMarkersRef.current.set(p.date, arr)
+        }
         bounds.extend([p.lat, p.lon])
       }
 
@@ -481,6 +511,7 @@ export default function Map() {
       cancelled = true
       if (mapRef.current) { mapRef.current.remove(); mapRef.current = null }
       markersRef.current.clear()
+      dayMarkersRef.current.clear()
       clickPinRef.current = null
       initRef.current = false
     }
@@ -493,6 +524,30 @@ export default function Map() {
     }
     setPin(null)
     setPinResolving(false)
+  }
+
+  // Click a day in the legend → focus the map on that day's activities and pop
+  // them all open at once. Click the same day again to clear.
+  function focusDay(date: string) {
+    const map = mapRef.current
+    if (!map) return
+    // Always start from a clean slate: close every open popup.
+    markersRef.current.forEach(m => m.closePopup())
+
+    if (selectedDate === date) { setSelectedDate(null); return }
+    setSelectedDate(date)
+
+    const markers = dayMarkersRef.current.get(date) ?? []
+    if (!markers.length) return
+
+    // Open all of the day's popups, then pan/zoom so they're all in view.
+    markers.forEach(m => m.openPopup())
+    if (markers.length === 1) {
+      map.flyTo(markers[0].getLatLng(), Math.max(map.getZoom(), 14), { duration: 0.6 })
+    } else {
+      const bounds = L.latLngBounds(markers.map(m => m.getLatLng()))
+      map.flyToBounds(bounds, { padding: [70, 70], maxZoom: 15, duration: 0.6 })
+    }
   }
 
   // Refresh popups when AI insights arrive.
@@ -595,20 +650,31 @@ export default function Map() {
           </MapWrapper>
 
           <Sidebar $mobile={isMobile}>
-            <Typography variant="h6" style={{ margin: '0 0 8px' }}>מקרא תאריכים</Typography>
+            <Typography variant="h6" style={{ margin: '0 0 2px' }}>מקרא תאריכים</Typography>
+            <Typography variant="caption" style={{ opacity: 0.7, display: 'block', marginBottom: 8 }}>
+              👆 לחצו על יום כדי לראות את כל הפעילויות שלו על המפה
+            </Typography>
             <div style={{ marginBottom: 12, fontSize: 13 }}>
-              <div style={{ marginBottom: 4 }}>
+              <div style={{ marginBottom: 4, padding: '0 8px' }}>
                 <LegendDot $color={DESTINATION_COLOR} /> יעד
               </div>
-              <div style={{ marginBottom: 4 }}>
+              <div style={{ marginBottom: 4, padding: '0 8px' }}>
                 <LegendDot $color={STAY_COLOR} /> לינות 🏨
               </div>
-              {trip.days.map(day => (
-                <div key={day.id} style={{ marginBottom: 2 }}>
-                  <LegendDot $color={dayColor.get(day.date) ?? '#888'} />
-                  {formatDateShort(day.date)} {day.label ? `· ${day.label}` : ''}
-                </div>
-              ))}
+              {trip.days.map(day => {
+                const hasActivities = (dayMarkersRef.current.get(day.date)?.length ?? 0) > 0
+                return (
+                  <DayRow
+                    key={day.id}
+                    $selected={selectedDate === day.date}
+                    onClick={() => focusDay(day.date)}
+                    title={hasActivities ? 'הצג את פעילויות היום על המפה' : 'אין פעילויות עם מיקום ביום זה'}
+                  >
+                    <LegendDot $color={dayColor.get(day.date) ?? '#888'} />
+                    <span>{formatDateShort(day.date)} {day.label ? `· ${day.label}` : ''}</span>
+                  </DayRow>
+                )
+              })}
             </div>
 
             <Typography variant="h6" style={{ margin: '12px 0 8px' }}>
