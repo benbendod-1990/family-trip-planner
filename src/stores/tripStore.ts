@@ -11,6 +11,7 @@ import type { TripCoords } from '@/types/trip-plan'
 import { generateId } from '@/utils/id'
 import { getDaysBetween } from '@/utils/date'
 import { DEMO_TRIP, DEMO_TRIPS } from '@/data/demoData'
+import { normalizeSeedTimestamp } from '@/lib/seedNormalize'
 
 interface TripStore {
   trips: TripPlan[]
@@ -473,7 +474,73 @@ export const useTripStore = create<TripStore>()(
             const hasUtcFlightTimes = (t.flights ?? []).some(f =>
               (f.departureTime ?? '').endsWith('Z') || (f.arrivalTime ?? '').endsWith('Z')
             )
-            return (hasEasyJet || isEmptyItinerary || oldStart || hasUtcFlightTimes) ? freshHolland : t
+            // Content marker for the itinerary overhaul that came from the
+            // Google Doc (source of truth). These places were dropped from the
+            // plan, so their presence proves the live copy predates the current
+            // Doc. The refreshed seed carries none of them, so this is
+            // self-limiting — it can't fire twice.
+            const hasOldItinerary = (t.days ?? []).some(d =>
+              (d.events ?? []).some(e =>
+                /Julianatoren|Plaswijckpark|Pukkemuk|Binnendieze|Docus|Loonse/i.test(
+                  `${e.title ?? ''} ${e.location ?? ''}`
+                )
+              )
+            )
+            // A fundamentally broken copy (wrong flight, wrong dates) predates
+            // the good baseline — replace the whole trip.
+            const isBroken = hasEasyJet || isEmptyItinerary || oldStart || hasUtcFlightTimes
+            const now = new Date().toISOString()
+            if (isBroken) return { ...freshHolland, updatedAt: now }
+            // Otherwise only the itinerary changed: swap just the days, keeping
+            // the user's own tasks / budget / edits intact. Stamp "now" so the
+            // swap beats any older cloud copy on the next newer-wins merge and
+            // propagates to the other device instead of being clobbered back.
+            if (hasOldItinerary) {
+              return {
+                ...t,
+                days: freshHolland.days,
+                docUrl: t.docUrl ?? freshHolland.docUrl,
+                docLastPulledAt: freshHolland.docLastPulledAt,
+                updatedAt: now,
+              }
+            }
+            return t
+          })
+        }
+
+        // One-shot: reconcile Holland booking-reminder tasks to the refreshed
+        // seed. Scoped to the seed's booking namespace so the user's own tasks
+        // (random UUIDs) and the flight tasks are never touched. Drops reminders
+        // for places no longer in the plan, refreshes moved-date wording, and
+        // adds the new bookings — all while preserving the user's done-state.
+        // Self-limiting: skips when already reconciled so it won't re-bump.
+        const BOOKING_NS = 'a1b2c3d4-e5f6-4001-8001-'
+        if (freshHolland) {
+          const seedBooking = (freshHolland.tasks ?? []).filter(s => s.id.startsWith(BOOKING_NS))
+          const seedById = new globalThis.Map(seedBooking.map(s => [s.id, s]))
+          const seedIds = new Set(seedBooking.map(s => s.id))
+          state.trips = state.trips.map(t => {
+            if (t.id !== HOLLAND_ID) return t
+            const before = t.tasks ?? []
+            const haveIds = new Set(before.map(x => x.id))
+            const hasStale = before.some(x => x.id.startsWith(BOOKING_NS) && !seedIds.has(x.id))
+            const missingNew = seedBooking.some(s => !haveIds.has(s.id))
+            const drift = before.some(x => {
+              const s = seedById.get(x.id)
+              return !!s && (s.title !== x.title || s.description !== x.description ||
+                s.dueDate !== x.dueDate || s.assignedTo !== x.assignedTo)
+            })
+            if (!hasStale && !missingNew && !drift) return t
+            // Keep non-booking tasks as-is; drop booking tasks the seed dropped;
+            // refresh surviving booking tasks from seed but keep done-state.
+            const tasks = before
+              .filter(x => !x.id.startsWith(BOOKING_NS) || seedIds.has(x.id))
+              .map(x => {
+                const s = seedById.get(x.id)
+                return s ? { ...s, done: x.done, completedAt: x.completedAt } : x
+              })
+            for (const s of seedBooking) if (!haveIds.has(s.id)) tasks.push(s)
+            return { ...t, tasks, updatedAt: new Date().toISOString() }
           })
         }
 
@@ -496,6 +563,20 @@ export const useTripStore = create<TripStore>()(
           packingItems: t.packingItems ?? [],
           carRentals: t.carRentals ?? [],
         }))
+
+        // Normalize the legacy far-future updatedAt sentinel (2099) the
+        // Crete/Holland seeds used to ship with. Left in place it makes this
+        // device reject every edit pulled from the spouse's device — and it
+        // would also let a stale cloud copy clobber the itinerary swap above.
+        // Rewrite to createdAt so newer-wins works. See seedNormalize.
+        state.trips = state.trips.map(normalizeSeedTimestamp)
+
+        // Carry the linked Google Doc URL onto live trips that predate it, so
+        // the Doc↔app link survives on already-installed devices.
+        state.trips = state.trips.map(t => {
+          const seed = DEMO_TRIPS.find(s => s.id === t.id)
+          return seed?.docUrl && !t.docUrl ? { ...t, docUrl: seed.docUrl } : t
+        })
       },
     }
   )

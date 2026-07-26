@@ -26,6 +26,10 @@ export interface TripPlan {
   carRentals: CarRental[]
   packingItems: PackingItem[]
   coords?: TripCoords
+  /** Linked Google Doc — the source of truth for this trip's plan. */
+  docUrl?: string
+  /** When the seed/app content was last reconciled against docUrl. */
+  docLastPulledAt?: string
   createdAt: string
   updatedAt: string
 }

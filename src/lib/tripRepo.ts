@@ -6,6 +6,7 @@ import type { FamilyMember } from '@/types/family'
 import type { TripTask } from '@/types/task'
 import type { PackingItem } from '@/types/packing'
 import { supabase } from './supabase'
+import { normalizeSeedTimestamp } from './seedNormalize'
 
 type Row = Record<string, unknown>
 
@@ -74,7 +75,7 @@ async function hydrateTrip(t: Row): Promise<TripPlan> {
     items: b.map(x => fromDb(x) as unknown as BudgetItem),
   }
 
-  return {
+  return normalizeSeedTimestamp({
     id: tripId,
     name: t.name as string,
     destination: t.destination as string,
@@ -92,7 +93,7 @@ async function hydrateTrip(t: Row): Promise<TripPlan> {
     coords: t.coords as TripPlan['coords'],
     createdAt: t.created_at as string,
     updatedAt: t.updated_at as string,
-  }
+  })
 }
 
 // ────────────────────────────────────────────────────────────────────────────
