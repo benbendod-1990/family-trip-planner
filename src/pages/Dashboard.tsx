@@ -330,8 +330,10 @@ function DashboardContent() {
       {/* Urgent tasks */}
       {phase !== 'done' && <UrgentTasksCard trip={trip} />}
 
-      {/* Google Doc — source of truth for the plan */}
-      {phase !== 'done' && <TripDocCard trip={trip} />}
+      {/* Google Doc — source of truth for the plan. Shown for finished trips
+          too: the Doc is still the record of what the trip actually was, and
+          hiding it made it look like the feature had disappeared. */}
+      <TripDocCard trip={trip} />
 
       {/* Family */}
       {trip.family.length > 0 && (
