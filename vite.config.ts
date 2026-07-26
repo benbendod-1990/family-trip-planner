@@ -53,6 +53,12 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
+      // myk-library doesn't tree-shake, so its Chart/CodeEditor components
+      // dragged recharts + monaco into every launch as a 932kB eager chunk.
+      // This app renders neither — see src/stubs/unused-vendor.tsx.
+      // @tanstack/react-table is intentionally left alone: DataTable is used.
+      'recharts': path.resolve(__dirname, './src/stubs/unused-vendor.tsx'),
+      '@monaco-editor/react': path.resolve(__dirname, './src/stubs/unused-vendor.tsx'),
     },
   },
   server: {
