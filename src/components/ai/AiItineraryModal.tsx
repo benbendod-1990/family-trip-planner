@@ -1,6 +1,9 @@
 import { useState, useMemo } from 'react'
 import { MapContainer, TileLayer, Marker, Popup, Polyline } from 'react-leaflet'
 import L from 'leaflet'
+// Lives here rather than in main.tsx so Leaflet's CSS ships with this lazy
+// chunk instead of the app-wide stylesheet.
+import 'leaflet/dist/leaflet.css'
 import { Modal, Button, Stack, Typography, Badge, Alert, Spinner } from 'myk-library'
 import styled from 'styled-components'
 import { CheckCircle, XCircle, ChevronDown, ChevronUp, Calendar, RefreshCw } from 'lucide-react'

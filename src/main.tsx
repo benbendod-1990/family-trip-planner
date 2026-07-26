@@ -6,8 +6,8 @@ import { GlobalStyles } from 'myk-library'
 import { tripTheme } from './theme/tripTheme'
 import App from './App'
 import { AuthProvider } from './lib/AuthContext'
+import PwaUpdatePrompt from './components/pwa/PwaUpdatePrompt'
 import './index.css'
-import 'leaflet/dist/leaflet.css'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -16,6 +16,7 @@ createRoot(document.getElementById('root')!).render(
       <BrowserRouter basename={import.meta.env.BASE_URL}>
         <AuthProvider>
           <App />
+          <PwaUpdatePrompt />
         </AuthProvider>
       </BrowserRouter>
     </ThemeProvider>

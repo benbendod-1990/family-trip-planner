@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, lazy, Suspense } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   ActionIcon, Drawer, Stack, Typography, Alert, Spinner, Button,
@@ -8,7 +8,9 @@ import { Sparkles, Send, Trash2 } from 'lucide-react'
 import { useAiStore } from '@/stores/aiStore'
 import { useTripStore } from '@/stores/tripStore'
 import { sendAiMessage } from '@/services/aiService'
-import AiItineraryModal from '@/components/ai/AiItineraryModal'
+// Lazy: this modal pulls in Leaflet, which is far too heavy to sit in the
+// chunk that every trip screen loads. It only mounts once the user opens it.
+const AiItineraryModal = lazy(() => import('@/components/ai/AiItineraryModal'))
 
 const Fab = styled.button`
   position: fixed;
@@ -164,11 +166,13 @@ export default function AiChatDrawer() {
   return (
     <>
       {showBuilder && activeTripId && (
-        <AiItineraryModal
-          open={showBuilder}
-          onClose={() => setShowBuilder(false)}
-          tripId={activeTripId}
-        />
+        <Suspense fallback={null}>
+          <AiItineraryModal
+            open={showBuilder}
+            onClose={() => setShowBuilder(false)}
+            tripId={activeTripId}
+          />
+        </Suspense>
       )}
 
       <Fab onClick={() => setOpen(true)} title="עוזר AI" aria-label="פתח עוזר AI">

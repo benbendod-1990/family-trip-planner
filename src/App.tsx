@@ -1,37 +1,48 @@
+import { lazy, Suspense } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import Home from './pages/Home'
 import Login from './pages/Login'
-import Quickstart from './pages/Quickstart'
-import Dashboard from './pages/Dashboard'
-import Itinerary from './pages/Itinerary'
-import Family from './pages/Family'
-import Budget from './pages/Budget'
-import Travel from './pages/Travel'
-import Tasks from './pages/Tasks'
-import Packing from './pages/Packing'
-import FamilyProfile from './pages/FamilyProfile'
-import AppLayout from './components/layout/AppLayout'
+import RouteFallback from './components/layout/RouteFallback'
+
+/*
+ * Home and Login load eagerly — they are the two entry points, so putting them
+ * behind a lazy chunk would only add a round trip before the first screen.
+ * Everything else is split out: the trip pages are reachable only after a trip
+ * is opened, and they pull in the heaviest dependencies.
+ */
+const Quickstart = lazy(() => import('./pages/Quickstart'))
+const FamilyProfile = lazy(() => import('./pages/FamilyProfile'))
+const AppLayout = lazy(() => import('./components/layout/AppLayout'))
+const Dashboard = lazy(() => import('./pages/Dashboard'))
+const Itinerary = lazy(() => import('./pages/Itinerary'))
+const Family = lazy(() => import('./pages/Family'))
+const Budget = lazy(() => import('./pages/Budget'))
+const Travel = lazy(() => import('./pages/Travel'))
+const Tasks = lazy(() => import('./pages/Tasks'))
+const Packing = lazy(() => import('./pages/Packing'))
 
 function App() {
   return (
-    <Routes>
-      <Route path="/" element={<Home />} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/quickstart" element={<Quickstart />} />
-      <Route path="/profile" element={<FamilyProfile />} />
-      <Route path="/trip/:id" element={<AppLayout />}>
-        <Route index element={<Navigate to="dashboard" replace />} />
-        <Route path="dashboard" element={<Dashboard />} />
-        <Route path="itinerary" element={<Itinerary />} />
-        <Route path="family" element={<Family />} />
-        <Route path="tasks" element={<Tasks />} />
-        <Route path="budget" element={<Budget />} />
-        <Route path="travel" element={<Travel />} />
-        <Route path="packing" element={<Packing />} />
-        {/* Map merged into the itinerary — redirect old/bookmarked links. */}
-        <Route path="map" element={<Navigate to="../itinerary" replace />} />
-      </Route>
-    </Routes>
+    <Suspense fallback={<RouteFallback />}>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/quickstart" element={<Quickstart />} />
+        <Route path="/profile" element={<FamilyProfile />} />
+        <Route path="/trip/:id" element={<AppLayout />}>
+          <Route index element={<Navigate to="dashboard" replace />} />
+          <Route path="dashboard" element={<Dashboard />} />
+          <Route path="itinerary" element={<Itinerary />} />
+          <Route path="family" element={<Family />} />
+          <Route path="tasks" element={<Tasks />} />
+          <Route path="budget" element={<Budget />} />
+          <Route path="travel" element={<Travel />} />
+          <Route path="packing" element={<Packing />} />
+          {/* Map merged into the itinerary — redirect old/bookmarked links. */}
+          <Route path="map" element={<Navigate to="../itinerary" replace />} />
+        </Route>
+      </Routes>
+    </Suspense>
   )
 }
 

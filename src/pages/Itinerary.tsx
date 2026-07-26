@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, lazy, Suspense } from 'react'
 import { useParams } from 'react-router-dom'
 import { useTripStore } from '@/stores/tripStore'
 import { useBreakpoint } from '@/hooks/useBreakpoint'
@@ -6,7 +6,8 @@ import { useWeather } from '@/hooks/useWeather'
 import DayColumn from '@/components/itinerary/DayColumn'
 import SmartAddBar from '@/components/itinerary/SmartAddBar'
 import GmailSyncInlineButton from '@/components/gmail/GmailSyncInlineButton'
-import AiItineraryModal from '@/components/ai/AiItineraryModal'
+// Lazy — see the note in AiChatDrawer: this modal drags Leaflet in with it.
+const AiItineraryModal = lazy(() => import('@/components/ai/AiItineraryModal'))
 import { Stack, Typography, Badge, Button, Grid } from 'myk-library'
 import { getTripDuration } from '@/utils/date'
 import { formatDateShort } from '@/utils/date'
@@ -72,7 +73,9 @@ export default function Itinerary() {
         </PageHeaderRow>
       </PageHeader>
       {showAiBuilder && (
-        <AiItineraryModal open={showAiBuilder} onClose={() => setShowAiBuilder(false)} tripId={trip.id} />
+        <Suspense fallback={null}>
+          <AiItineraryModal open={showAiBuilder} onClose={() => setShowAiBuilder(false)} tripId={trip.id} />
+        </Suspense>
       )}
 
       {pastVisits.length > 0 && !hidePastVisit && (

@@ -15,25 +15,21 @@ html, body, #root {
   max-width: 100vw;
 }
 
+/*
+ * Warm/cream base — this is what paints BEFORE React mounts, so it has to
+ * match the app the user ends up seeing. It used to be the old dark palette
+ * (#0c0e14 + a noise overlay) left over from before the warm redesign, which
+ * meant every cold PWA launch showed ~2s of a near-black screen that looks
+ * nothing like the app before the cream UI snapped in. Keep these values in
+ * sync with warmPageBackground / warmTheme.colors.gray[900] in
+ * src/theme/warmTheme.ts, and with theme-color + manifest background_color.
+ */
 body {
-  background-color: #0c0e14 !important;
-  background-image:
-    radial-gradient(ellipse 70% 55% at 88% 8%,  rgba(245,158,11,0.07) 0%, transparent 65%),
-    radial-gradient(ellipse 50% 40% at 8%  92%,  rgba(217,119, 6,0.05) 0%, transparent 55%),
-    radial-gradient(ellipse 40% 30% at 50% 50%,  rgba(245,158,11,0.02) 0%, transparent 70%) !important;
-  color: #f0f6fc !important;
+  background-color: #FBF3DF;
+  color: #2A2013;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   position: relative;
-}
-
-body::after {
-  content: '';
-  position: fixed;
-  inset: 0;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='250' height='250'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='250' height='250' filter='url(%23n)' opacity='0.038'/%3E%3C/svg%3E");
-  pointer-events: none;
-  z-index: 0;
 }
 
 #root {
@@ -45,33 +41,33 @@ body::after {
   direction: rtl;
 }
 
-/* Fix hardcoded dark text on dark backgrounds */
-h1, h2, h3, h4, h5, h6 {
-  color: #f0f6fc !important;
-}
-
 p, span, div, label {
   color: inherit;
 }
 
-/* Section titles that use gray[500] — readable in dark */
-[class*="SectionTitle"], [class*="section-title"] {
-  color: #8b949e !important;
-}
-
 /*
- * The trip app shell (AppLayout) renders on a warm/cream theme, not the dark
- * app-wide default above — those rules force near-white text (#f0f6fc) via
- * body/h1-h6, which is invisible on a cream background. Rescope to dark text
- * inside .warm-shell with higher specificity so it wins over the dark rules
- * above (same !important weight, but class+element beats plain element).
+ * Opt-in dark page. Only FamilyProfile still renders on the dark tripTheme
+ * (dark cards, dark inputs), so the dark background and the near-white
+ * heading override live here rather than on body — where they used to leak
+ * onto every page and made the Login title white-on-white.
  */
-.warm-shell,
-.warm-shell h1, .warm-shell h2, .warm-shell h3,
-.warm-shell h4, .warm-shell h5, .warm-shell h6 {
-  color: #2A2013 !important;
+.dark-page {
+  min-height: 100%;
+  background-color: #0c0e14;
+  background-image:
+    radial-gradient(ellipse 70% 55% at 88% 8%,  rgba(245,158,11,0.07) 0%, transparent 65%),
+    radial-gradient(ellipse 50% 40% at 8%  92%,  rgba(217,119, 6,0.05) 0%, transparent 55%),
+    radial-gradient(ellipse 40% 30% at 50% 50%,  rgba(245,158,11,0.02) 0%, transparent 70%);
+  color: #f0f6fc;
 }
 
-.warm-shell [class*="SectionTitle"], .warm-shell [class*="section-title"] {
-  color: #8F7B5C !important;
+/* Fix hardcoded dark text on dark backgrounds */
+.dark-page h1, .dark-page h2, .dark-page h3,
+.dark-page h4, .dark-page h5, .dark-page h6 {
+  color: #f0f6fc !important;
+}
+
+/* Section titles that use gray[500] — readable in dark */
+.dark-page [class*="SectionTitle"], .dark-page [class*="section-title"] {
+  color: #8b949e !important;
 }

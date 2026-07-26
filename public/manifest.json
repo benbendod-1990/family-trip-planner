@@ -4,8 +4,8 @@
   "description": "תכנן את הטיול המשפחתי הבא שלך",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#fafaf9",
-  "theme_color": "#f59e0b",
+  "background_color": "#FBF3DF",
+  "theme_color": "#FBF3DF",
   "lang": "he",
   "dir": "rtl",
   "icons": [
