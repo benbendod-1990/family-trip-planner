@@ -53,6 +53,8 @@ interface TripStore {
   removeTask: (tripId: string, taskId: string) => void
 
   setCoords: (tripId: string, coords: TripCoords) => void
+  setDocUrl: (tripId: string, docUrl: string) => void
+  markDocChecked: (tripId: string, at: string) => void
   setEventCoords: (tripId: string, eventId: string, coords: TripCoords) => void
   setAccommodationCoords: (tripId: string, accId: string, coords: TripCoords) => void
 
@@ -363,6 +365,21 @@ export const useTripStore = create<TripStore>()(
       setCoords: (tripId, coords) =>
         set(state => ({
           trips: updateTrip(state.trips, tripId, t => ({ ...t, coords })),
+        })),
+
+      // The linked Doc is shared trip content — both spouses should see it, so
+      // this one does touch.
+      setDocUrl: (tripId, docUrl) =>
+        set(state => ({
+          trips: updateTrip(state.trips, tripId, t => touch({ ...t, docUrl })),
+        })),
+
+      // Bypass `touch`: "I checked the Doc" is per-device bookkeeping, not a
+      // change to the plan. Touching here would let a read-only check win the
+      // newer-wins merge over the other device's real edits.
+      markDocChecked: (tripId, at) =>
+        set(state => ({
+          trips: updateTrip(state.trips, tripId, t => ({ ...t, docLastPulledAt: at })),
         })),
 
       // Bypass `touch` — pure geocode hydration shouldn't bump updatedAt and trigger cloud sync.

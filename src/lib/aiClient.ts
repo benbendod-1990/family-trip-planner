@@ -240,6 +240,24 @@ export function parseDocument(req: ParseDocumentRequest): Promise<ParseDocumentR
   return callAi('/api/gemini/parse-document', req)
 }
 
+// ── Trip Doc pull ───────────────────────────────────────────────────────────
+// The worker proxies the Google Doc txt export; docs.google.com sends no CORS
+// headers, so the browser can't fetch it itself.
+
+export interface DocPullRequest {
+  docUrl: string
+}
+
+export interface DocPullResponse {
+  docId: string
+  text: string
+  fetchedAt: string
+}
+
+export function pullTripDoc(req: DocPullRequest): Promise<DocPullResponse> {
+  return callAi('/api/docs/pull', req)
+}
+
 // Convenience: derive a DealsRequest from a TripPlan.
 export function tripToDealsRequest(trip: TripPlan): DealsRequest | null {
   const outbound = trip.flights.find(f => f.direction === 'outbound')

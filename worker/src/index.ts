@@ -9,6 +9,7 @@ import { runDealsScanGemini } from './dealsGemini'
 import { runBlogDigestGemini } from './blogGemini'
 import { runItineraryParseGemini } from './itineraryGemini'
 import { runParseDocument, type ParseDocumentRequest } from './parseDocument'
+import { pullDocText, type DocPullRequest } from './tripDoc'
 import { storeRefreshToken, getAccessToken } from './gmail'
 
 export interface Env {
@@ -62,6 +63,16 @@ export default {
           if ('error' in r) return json({ error: r.error, detail: r.detail }, r.status, cors)
           return json(r, 200, cors)
         }
+      }
+
+      // Trip Doc pull — a plain proxy for the Google Doc txt export (the
+      // browser can't fetch it directly, no CORS). No AI key needed, so it
+      // sits ahead of both the Gemini and Anthropic guards.
+      if (url.pathname === '/api/docs/pull') {
+        const body = (await req.json()) as DocPullRequest
+        const r = await pullDocText(body)
+        if ('error' in r) return json({ error: r.error, detail: r.detail }, r.status, cors)
+        return json(r, 200, cors)
       }
 
       // Gemini-backed routes (free tier — preferred per project's "100% free" rule).

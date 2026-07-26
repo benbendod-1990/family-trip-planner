@@ -12,6 +12,7 @@ import ReadinessCard from '@/components/dashboard/ReadinessCard'
 import WeatherPreview from '@/components/dashboard/WeatherPreview'
 import BookingsCard from '@/components/dashboard/BookingsCard'
 import UrgentTasksCard from '@/components/dashboard/UrgentTasksCard'
+import TripDocCard from '@/components/dashboard/TripDocCard'
 import TodayCard from '@/components/dashboard/TodayCard'
 import SpendingInsight from '@/components/dashboard/SpendingInsight'
 import QuickActions from '@/components/dashboard/QuickActions'
@@ -328,6 +329,9 @@ function DashboardContent() {
 
       {/* Urgent tasks */}
       {phase !== 'done' && <UrgentTasksCard trip={trip} />}
+
+      {/* Google Doc — source of truth for the plan */}
+      {phase !== 'done' && <TripDocCard trip={trip} />}
 
       {/* Family */}
       {trip.family.length > 0 && (
