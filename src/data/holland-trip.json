@@ -368,7 +368,8 @@
           "endTime": "14:00",
           "title": "🥞 Polles Keuken — מסעדת פנקייקים בפארק",
           "description": "מטבח \"חי\" ומסתובב. רק עם הזמנה מהאפליקציה.",
-          "category": "meal"
+          "category": "meal",
+          "location": "Polles Keuken, Efteling"
         },
         {
           "id": "e1819-0004-4000-8000-000000000004",
@@ -377,14 +378,16 @@
           "endTime": "17:00",
           "title": "🎠 מתקנים: Carnaval Festival, Symbolica, רכבת קיטור",
           "description": "מתקנים רגועים מותאמים לגילאי 3-4.",
-          "category": "activity"
+          "category": "activity",
+          "location": "Efteling, Kaatsheuvel"
         },
         {
           "id": "e1819-0005-4000-8000-000000000005",
           "dayId": "d2000000-0000-4000-8000-000000000819",
           "startTime": "17:00",
           "title": "😴 חזרה רגועה למלון למנוחה",
-          "category": "rest"
+          "category": "rest",
+          "location": "GuestHouse Hotel, Kaatsheuvel"
         }
       ]
     },
@@ -832,7 +835,8 @@
           "startTime": "08:30",
           "endTime": "09:00",
           "title": "🧳 צ׳ק-אאוט Beekse Bergen + אריזות סופיות",
-          "category": "rest"
+          "category": "rest",
+          "location": "Lake Resort Beekse Bergen"
         },
         {
           "id": "e1827-0002-4000-8000-000000000002",
@@ -863,7 +867,8 @@
           "startTime": "12:30",
           "endTime": "13:30",
           "title": "🥗 ארוחת צהריים אורגנית בחווה",
-          "category": "meal"
+          "category": "meal",
+          "location": "Geitenboerderij Ridammerhoeve, Amstelveen"
         },
         {
           "id": "e1827-0005-4000-8000-000000000005",
@@ -871,7 +876,8 @@
           "startTime": "13:30",
           "endTime": "14:00",
           "title": "🚗 החזרת רכב בסכיפהול",
-          "category": "transport"
+          "category": "transport",
+          "location": "Schiphol Airport"
         },
         {
           "id": "e1827-0006-4000-8000-000000000006",

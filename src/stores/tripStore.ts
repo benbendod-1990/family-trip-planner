@@ -503,6 +503,17 @@ export const useTripStore = create<TripStore>()(
                 )
               )
             )
+            // Content marker for the day-route fix: the refreshed seed fills in
+            // the locations that 19.8 (Efteling) and 27.8 (departure) were
+            // missing, without which those days can't draw a Google Maps route.
+            // A live copy where either still has fewer than two located events
+            // predates it — and after the swap both have three or more, so this
+            // can't fire twice.
+            const missingRouteStops = (t.days ?? []).some(
+              d =>
+                (d.date === '2026-08-19' || d.date === '2026-08-27') &&
+                (d.events ?? []).filter(e => e.location).length < 2
+            )
             // A fundamentally broken copy (wrong flight, wrong dates) predates
             // the good baseline — replace the whole trip.
             const isBroken = hasEasyJet || isEmptyItinerary || oldStart || hasUtcFlightTimes
@@ -512,7 +523,7 @@ export const useTripStore = create<TripStore>()(
             // the user's own tasks / budget / edits intact. Stamp "now" so the
             // swap beats any older cloud copy on the next newer-wins merge and
             // propagates to the other device instead of being clobbered back.
-            if (hasOldItinerary) {
+            if (hasOldItinerary || missingRouteStops) {
               return {
                 ...t,
                 days: freshHolland.days,

@@ -42,6 +42,34 @@ export function googleMapsUrl(input: string | MapTarget): string {
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}`
 }
 
+// A flight leg, written as an IATA pair: "Aegean A3624 ATH→AMS". The landing
+// event that starts a day on the ground ("🛬 נחיתה בסכיפהול + איסוף רכב") has
+// no such pair, which is exactly the line we want to draw: Schiphol is a real
+// first stop of the driving day, Tel Aviv → Athens is not.
+const FLIGHT_LEG = /\b[A-Z]{3}\s*(?:→|->)\s*[A-Z]{3}\b/
+
+export interface RouteStopSource {
+  title?: string
+  location?: string
+}
+
+/**
+ * The stops a day's driving route should actually pass through: located events
+ * in order, minus flight legs, minus consecutive repeats of the same place
+ * (staying at the resort all day shouldn't add the resort three times).
+ */
+export function routeStopsForDay(events: RouteStopSource[]): string[] {
+  const stops: string[] = []
+  for (const e of events) {
+    const loc = e.location?.trim()
+    if (!loc) continue
+    if (FLIGHT_LEG.test(e.title ?? '')) continue
+    if (stops[stops.length - 1] === loc) continue
+    stops.push(loc)
+  }
+  return stops
+}
+
 // One connected Google Maps directions link through every stop, in order. The
 // /maps/dir/A/B/C form opens the native Maps app on mobile and lets Google
 // geocode each stop itself — so plain address strings work, no coords needed.

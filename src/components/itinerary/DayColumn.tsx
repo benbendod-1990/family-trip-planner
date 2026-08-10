@@ -9,7 +9,7 @@ import WeatherBadge from './WeatherBadge'
 import { Plus, Pencil, Trash2, Navigation } from 'lucide-react'
 import styled from 'styled-components'
 import type { DayWeather } from '@/services/weatherService'
-import { wazeUrl, googleMapsUrl, googleMapsRouteUrl } from '@/utils/maps'
+import { wazeUrl, googleMapsUrl, googleMapsRouteUrl, routeStopsForDay } from '@/utils/maps'
 
 const CATEGORY_COLORS: Record<string, string> = {
   activity: '#f59e0b',
@@ -44,10 +44,9 @@ export default function DayColumn({ day, tripId, dayIndex, weather }: Props) {
   const [editEvent, setEditEvent] = useState<TripEvent | undefined>()
 
   const sortedEvents = [...day.events].sort((a, b) => a.startTime.localeCompare(b.startTime))
-  const dayRouteUrl = googleMapsRouteUrl(
-    sortedEvents.filter(e => e.location).map(e => e.location as string)
-  )
-  const routeStopCount = sortedEvents.filter(e => e.location).length
+  const routeStops = routeStopsForDay(sortedEvents)
+  const dayRouteUrl = googleMapsRouteUrl(routeStops)
+  const routeStopCount = routeStops.length
 
   const timelineItems: TimelineItem[] = sortedEvents.map(event => ({
     key: event.id,

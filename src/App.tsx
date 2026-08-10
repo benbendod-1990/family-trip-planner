@@ -20,6 +20,7 @@ const Budget = lazy(() => import('./pages/Budget'))
 const Travel = lazy(() => import('./pages/Travel'))
 const Tasks = lazy(() => import('./pages/Tasks'))
 const Packing = lazy(() => import('./pages/Packing'))
+const TripDoc = lazy(() => import('./pages/TripDoc'))
 
 function App() {
   return (
@@ -38,6 +39,7 @@ function App() {
           <Route path="budget" element={<Budget />} />
           <Route path="travel" element={<Travel />} />
           <Route path="packing" element={<Packing />} />
+          <Route path="doc" element={<TripDoc />} />
           {/* Map merged into the itinerary — redirect old/bookmarked links. */}
           <Route path="map" element={<Navigate to="../itinerary" replace />} />
         </Route>

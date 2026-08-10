@@ -9,7 +9,7 @@ import {
 } from 'myk-library'
 import { useTripStore } from '@/stores/tripStore'
 import styled, { ThemeProvider } from 'styled-components'
-import { Map, Wallet, Plane, Home, ListTodo, Users, Menu, LayoutDashboard, Backpack, User } from 'lucide-react'
+import { Map, Wallet, Plane, Home, ListTodo, Users, Menu, LayoutDashboard, Backpack, User, FileText } from 'lucide-react'
 import { useBreakpoint } from '@/hooks/useBreakpoint'
 import { warmTheme } from '@/theme/warmTheme'
 
@@ -64,6 +64,7 @@ const NavItems = [
   { label: 'משימות', path: 'tasks', icon: <ListTodo size={18} /> },
   { label: 'תקציב', path: 'budget', icon: <Wallet size={18} /> },
   { label: 'טיסות, לינה ורכב', path: 'travel', icon: <Plane size={18} /> },
+  { label: 'מסמכים', path: 'doc', icon: <FileText size={18} /> },
 ]
 
 export default function AppLayout() {
