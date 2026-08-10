@@ -10,6 +10,14 @@ const GMAIL_API = 'https://gmail.googleapis.com/gmail/v1/users/me'
 const GMAIL_CONCURRENCY = 3
 const GMAIL_MAX_RETRIES = 5
 
+export interface GmailAttachment {
+  /** Gmail's handle for the bytes — fetch them with fetchAttachment(). */
+  attachmentId: string
+  filename: string
+  mimeType: string
+  size: number
+}
+
 export interface GmailMessage {
   id: string
   subject: string
@@ -17,6 +25,8 @@ export interface GmailMessage {
   date: string
   body: string
   snippet: string
+  /** Document-like attachments (PDFs, images) on the booking email. */
+  attachments: GmailAttachment[]
 }
 
 async function gmailFetch(token: string, path: string): Promise<unknown> {
@@ -101,6 +111,59 @@ function getHeader(headers: Array<{ name: string; value: string }>, name: string
   return headers.find(h => h.name.toLowerCase() === name.toLowerCase())?.value ?? ''
 }
 
+// What actually counts as a travel document. Airlines and hotels send the
+// e-ticket as a PDF; some send a scanned image. Everything else on a booking
+// email is signature logos and tracking pixels, which is why inline parts
+// (those with a filename Gmail didn't set) never make it through.
+const DOCUMENT_MIME = /^(application\/pdf|image\/(png|jpe?g|heic|webp))$/i
+// Gmail counts base64 size; 10MB of attachment is already far past an e-ticket
+// and would be slow to round-trip through the browser on cellular.
+const MAX_ATTACHMENT_BYTES = 10 * 1024 * 1024
+
+function extractAttachments(payload: Record<string, unknown>): GmailAttachment[] {
+  const found: GmailAttachment[] = []
+  const walk = (part: Record<string, unknown>) => {
+    const body = part.body as Record<string, unknown> | undefined
+    const filename = (part.filename as string) ?? ''
+    const mimeType = (part.mimeType as string) ?? ''
+    if (filename && body?.attachmentId && DOCUMENT_MIME.test(mimeType)) {
+      const size = Number(body.size ?? 0)
+      if (size <= MAX_ATTACHMENT_BYTES) {
+        found.push({
+          attachmentId: body.attachmentId as string,
+          filename,
+          mimeType,
+          size,
+        })
+      }
+    }
+    for (const sub of (part.parts as Array<Record<string, unknown>> | undefined) ?? []) {
+      walk(sub)
+    }
+  }
+  walk(payload)
+  return found
+}
+
+/** The raw bytes of one attachment, as a Blob ready for Storage upload. */
+export async function fetchAttachment(
+  token: string,
+  messageId: string,
+  attachmentId: string,
+  mimeType: string,
+): Promise<Blob> {
+  const res = (await gmailFetch(
+    token,
+    `/messages/${messageId}/attachments/${attachmentId}`,
+  )) as { data?: string }
+  if (!res.data) throw new Error('Attachment had no data')
+  // Gmail returns base64url; atob needs standard base64.
+  const binary = atob(res.data.replace(/-/g, '+').replace(/_/g, '/'))
+  const bytes = new Uint8Array(binary.length)
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
+  return new Blob([bytes], { type: mimeType })
+}
+
 export interface FetchTravelEmailsOptions {
   // If set, only fetch messages received AFTER this Unix epoch (seconds).
   // Falls back to "newer_than:2y" when undefined — used for the very first sync.
@@ -178,6 +241,7 @@ export async function fetchTravelEmails(token: string, opts: FetchTravelEmailsOp
       date: getHeader(headers, 'Date'),
       snippet: (msg.snippet as string) ?? '',
       body: extractBody(payload),
+      attachments: extractAttachments(payload),
     }
   })
 }

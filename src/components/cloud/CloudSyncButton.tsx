@@ -289,12 +289,19 @@ export default function CloudSyncButton() {
       if (report.flightsAdded) parts.push(`${report.flightsAdded} טיסות`)
       if (report.hotelsAdded) parts.push(`${report.hotelsAdded} מלונות`)
       if (report.carsAdded) parts.push(`${report.carsAdded} רכבים`)
+      if (report.documentsAdded) parts.push(`${report.documentsAdded} מסמכים`)
       const summary = parts.length ? `הוסף: ${parts.join(', ')}` : 'לא נמצאו הזמנות חדשות'
       const ai = report.aiAugmented ? ` · 🤖 ${report.aiAugmented} שוחזרו ע״י AI` : ''
       const skipped = report.unmatched ? ` · דולגו ${report.unmatched} הזמנות שלא תאמו טיול קיים` : ''
       if (report.aiQuotaExceeded) {
         const more = report.aiSkipped ? ` · ${report.aiSkipped} לא נסרקו ע״י AI` : ''
         setToast({ kind: 'err', text: `⚠️ מכסת Gemini החינמית הסתיימה — נסה שוב בעוד דקה־שתיים. ${summary}${more}` })
+      } else if (report.documentsUnavailable) {
+        // Bookings still synced — only the attachment filing was skipped.
+        setToast({
+          kind: 'info',
+          text: `📧 ${summary} · אחסון המסמכים לא הוגדר עדיין, אז הקבצים לא נשמרו`,
+        })
       } else {
         setToast({ kind: 'ok', text: `📧 ${summary} (סרקתי ${report.scanned} מיילים${ai}${skipped})` })
       }

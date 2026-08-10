@@ -18,10 +18,11 @@
 //      "סנכרן" afterward to push the result to Supabase.
 
 import { useTripStore } from '@/stores/tripStore'
-import { fetchTravelEmails, type GmailMessage } from '@/services/gmail'
+import { fetchTravelEmails, fetchAttachment, type GmailMessage } from '@/services/gmail'
 import { parseEmails, type ParsedEmail } from '@/services/emailParser'
 import { parseDocument } from './aiClient'
 import { getSinceEpochSec, recordSync } from './gmailSyncState'
+import { uploadDocument, classifyDocument } from './tripDocuments'
 import { supabase } from './supabase'
 import { fetchGmailAccessToken } from './gmailToken'
 import { generateId } from '@/utils/id'
@@ -43,6 +44,8 @@ export interface GmailSyncReport {
   aiAugmented: number   // emails the regex parser missed/butchered, that AI rescued
   aiQuotaExceeded?: boolean  // true if Gemini returned 429 — sync stopped early
   aiSkipped?: number   // emails skipped because the AI loop was aborted on quota
+  documentsAdded?: number      // e-tickets/vouchers filed from email attachments
+  documentsUnavailable?: boolean  // Storage bucket missing — migration 0006 not run
 }
 
 async function getGmailContext(): Promise<{ token: string; userId?: string }> {
@@ -177,6 +180,52 @@ async function aiAugmentMissed(
   return { parsed: out, quotaExceeded: false, skipped: 0 }
 }
 
+/**
+ * Downloads the PDFs/images hanging off booking emails and files them under
+ * their trip. Failures here never fail the sync — the booking data is the
+ * valuable part, and the bucket may simply not exist yet (migration 0006).
+ */
+async function pullDocuments(
+  pending: Array<{ trip: TripPlan; msg: GmailMessage }>,
+  token: string,
+  report: GmailSyncReport,
+): Promise<number> {
+  let added = 0
+  for (const { trip, msg } of pending) {
+    trip.documents = trip.documents ?? []
+    for (const att of msg.attachments) {
+      // Same email + same filename means we already have it. Re-running a full
+      // sweep must not pile up duplicates of every e-ticket.
+      const already = trip.documents.some(
+        d => d.sourceMessageId === msg.id && d.filename === att.filename,
+      )
+      if (already) continue
+      try {
+        const blob = await fetchAttachment(token, msg.id, att.attachmentId, att.mimeType)
+        const doc = await uploadDocument(trip.id, {
+          filename: att.filename,
+          mimeType: att.mimeType,
+          blob,
+          kind: classifyDocument(msg.subject, msg.from, att.filename),
+          addedAt: new Date(msg.date).toISOString(),
+          sourceMessageId: msg.id,
+          sourceSubject: msg.subject,
+          sourceFrom: msg.from,
+        })
+        trip.documents.push(doc)
+        trip.updatedAt = new Date().toISOString()
+        added++
+      } catch (e) {
+        const err = e instanceof Error ? e.message : String(e)
+        // One recognisable reason is worth surfacing: the bucket isn't there.
+        if (/אחסון המסמכים לא הוגדר/.test(err)) report.documentsUnavailable = true
+        console.warn('[gmail] document pull failed for', att.filename, e)
+      }
+    }
+  }
+  return added
+}
+
 export interface SyncOptions {
   // Skip the incremental checkpoint and re-scan the full 2-year window.
   // Useful when existing trip data has placeholders that need AI upgrade —
@@ -216,12 +265,24 @@ export async function syncFromGmail(opts: SyncOptions = {}): Promise<GmailSyncRe
   const store = useTripStore.getState()
   const trips = [...store.trips]
 
+  // Attachments ride on the email that produced a booking, so we collect them
+  // as we match each parsed booking to a trip and upload once at the end —
+  // Storage round-trips are far slower than the in-memory merge below.
+  const msgById = new Map(messages.map(m => [m.id, m]))
+  const pendingDocs: Array<{ trip: TripPlan; msg: GmailMessage }> = []
+
   for (const p of parsed) {
     if (p.type === 'unknown') continue
     const date = primaryDate(p)
     if (!date) continue
 
     const trip = findTripByDate(trips, date)
+    if (trip) {
+      const msg = msgById.get(p.messageId.split(':')[0])
+      if (msg?.attachments.length && !pendingDocs.some(d => d.msg.id === msg.id)) {
+        pendingDocs.push({ trip, msg })
+      }
+    }
     if (!trip) {
       // Booking date doesn't fall inside any existing trip → skip.
       // User must create the destination trip first; bookings only attach
@@ -253,6 +314,8 @@ export async function syncFromGmail(opts: SyncOptions = {}): Promise<GmailSyncRe
     }
     trip.updatedAt = now
   }
+
+  report.documentsAdded = await pullDocuments(pendingDocs, token, report)
 
   useTripStore.setState({ trips })
   recordSync(userId, {
