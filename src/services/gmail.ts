@@ -116,6 +116,21 @@ function getHeader(headers: Array<{ name: string; value: string }>, name: string
 // email is signature logos and tracking pixels, which is why inline parts
 // (those with a filename Gmail didn't set) never make it through.
 const DOCUMENT_MIME = /^(application\/pdf|image\/(png|jpe?g|heic|webp))$/i
+// Senders routinely mislabel the type: Aegean's own invoice arrives as
+// "ΑΠΕ C 7559688.PDF" with mimeType application/octet-stream. Trusting the
+// mimeType alone silently dropped a real e-ticket, so the extension gets a
+// vote too.
+const DOCUMENT_EXT = /\.(pdf|png|jpe?g|heic|webp)$/i
+
+/** The type to store, ignoring a generic one the sender guessed wrong. */
+function effectiveMimeType(mimeType: string, filename: string): string {
+  if (DOCUMENT_MIME.test(mimeType)) return mimeType
+  const ext = filename.toLowerCase().match(DOCUMENT_EXT)?.[1]
+  if (ext === 'pdf') return 'application/pdf'
+  if (ext === 'jpg' || ext === 'jpeg') return 'image/jpeg'
+  if (ext) return `image/${ext}`
+  return mimeType
+}
 // Gmail counts base64 size; 10MB of attachment is already far past an e-ticket
 // and would be slow to round-trip through the browser on cellular.
 const MAX_ATTACHMENT_BYTES = 10 * 1024 * 1024
@@ -126,13 +141,14 @@ function extractAttachments(payload: Record<string, unknown>): GmailAttachment[]
     const body = part.body as Record<string, unknown> | undefined
     const filename = (part.filename as string) ?? ''
     const mimeType = (part.mimeType as string) ?? ''
-    if (filename && body?.attachmentId && DOCUMENT_MIME.test(mimeType)) {
+    const looksLikeDocument = DOCUMENT_MIME.test(mimeType) || DOCUMENT_EXT.test(filename)
+    if (filename && body?.attachmentId && looksLikeDocument) {
       const size = Number(body.size ?? 0)
       if (size <= MAX_ATTACHMENT_BYTES) {
         found.push({
           attachmentId: body.attachmentId as string,
           filename,
-          mimeType,
+          mimeType: effectiveMimeType(mimeType, filename),
           size,
         })
       }
@@ -197,9 +213,13 @@ export async function fetchTravelEmails(token: string, opts: FetchTravelEmailsOp
     'from:efteling.com',
     // Accommodations — Greek hotel chains Ben uses
     'from:aquilahotels.com', 'from:lyttosbeach.gr',
-    // Activities
+    // Activities — aggregators
     'from:getyourguide.com', 'from:viator.com', 'from:arbitrip.com', 'from:klook.com',
     'from:tiqets.com',
+    // Activities — the venues themselves, which sell direct and are the ones
+    // that actually attach the ticket PDF (spoorwegmuseum sends "tickets.pdf").
+    'from:spoorwegmuseum.nl', 'from:toverland.nl', 'from:hansengrietje.nl',
+    'from:dinoland.nl', 'from:smitgiethoorn.nl', 'from:ridammerhoeve.nl',
     // Car rentals — international
     'from:hertz.com', 'from:avis.com', 'from:budget.com', 'from:europcar.com',
     'from:sixt.com', 'from:alamo.com', 'from:enterprise.com', 'from:nationalcar.com',
@@ -218,7 +238,11 @@ export async function fetchTravelEmails(token: string, opts: FetchTravelEmailsOp
     'e-ticket OR eticket OR voucher OR PNR OR אישור OR הזמנה OR שובר OR "מסמכי נסיעה") ' +
     'AND subject:(hotel OR flight OR car OR rental OR stay OR check-in OR resort OR ' +
     'airline OR airways OR airport OR ' +
-    'מלון OR טיסה OR רכב OR לינה OR דירה OR נסיעה))'
+    // Attractions sell direct and their subjects say "museum"/"park", never
+    // "flight" — without these, "Your ticket(s) for the Railway Museum" (which
+    // carries the actual ticket PDF) never matches.
+    'museum OR park OR zoo OR attraction OR entrance OR admission OR ' +
+    'מלון OR טיסה OR רכב OR לינה OR דירה OR נסיעה OR מוזיאון OR פארק OR כרטיס))'
 
   const baseQuery = `((${senders}) OR ${subjectFallback})`
   // Incremental: prefer `after:<epoch>` (precise) over the broad `newer_than:2y`.

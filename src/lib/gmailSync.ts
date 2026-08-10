@@ -181,6 +181,42 @@ async function aiAugmentMissed(
 }
 
 /**
+ * Distinctive place names this trip already knows about — its destination, the
+ * hotels, and every itinerary stop. Used to file an attachment that produced no
+ * booking of its own.
+ */
+function tripPlaceTokens(trip: TripPlan): string[] {
+  const raw = [
+    trip.destination,
+    ...(trip.accommodations ?? []).map(a => a.name ?? ''),
+    ...(trip.days ?? []).flatMap(d => (d.events ?? []).map(e => e.location ?? '')),
+  ]
+  const tokens = new Set<string>()
+  for (const value of raw) {
+    for (const piece of value.split(/[,—–|]/)) {
+      const t = piece.trim()
+      // Short words ("Bar", "Zoo") collide with ordinary prose; long ones like
+      // "Spoorwegmuseum" or "Beekse Bergen" identify a trip almost uniquely.
+      if (t.length >= 8) tokens.add(t.toLowerCase())
+    }
+  }
+  return [...tokens]
+}
+
+/**
+ * Attraction tickets — a museum, a theme park — carry the PDF that matters but
+ * parse into no flight/hotel/car, so they never reach a trip through the
+ * booking path. Fall back to the trip whose own itinerary names a place the
+ * email mentions: the Railway Museum ticket says "Spoorwegmuseum", which is
+ * already a stop on 26.8. Deliberately strict — an unrecognised place files
+ * nowhere rather than onto a guess.
+ */
+function findTripByMentionedPlace(trips: TripPlan[], msg: GmailMessage): TripPlan | undefined {
+  const hay = `${msg.subject} ${msg.from} ${msg.body || msg.snippet}`.toLowerCase()
+  return trips.find(t => tripPlaceTokens(t).some(tok => hay.includes(tok)))
+}
+
+/**
  * Downloads the PDFs/images hanging off booking emails and files them under
  * their trip. Failures here never fail the sync — the booking data is the
  * valuable part, and the bucket may simply not exist yet (migration 0006).
@@ -313,6 +349,15 @@ export async function syncFromGmail(opts: SyncOptions = {}): Promise<GmailSyncRe
       if (outcome !== 'skipped') report.carsAdded++
     }
     trip.updatedAt = now
+  }
+
+  // Emails that carried a document but produced no booking — attraction
+  // tickets, mostly. File them by the places they name.
+  for (const msg of messages) {
+    if (!msg.attachments.length) continue
+    if (pendingDocs.some(d => d.msg.id === msg.id)) continue
+    const trip = findTripByMentionedPlace(trips, msg)
+    if (trip) pendingDocs.push({ trip, msg })
   }
 
   report.documentsAdded = await pullDocuments(pendingDocs, token, report)
