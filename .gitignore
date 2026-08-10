@@ -23,3 +23,6 @@ dist-ssr
 *.sln
 *.sw?
 CLAUDE.md
+
+# Supabase personal access token (never commit)
+.env.supabase
