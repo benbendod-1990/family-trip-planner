@@ -85,7 +85,7 @@
     },
     {
       "id": "c17816ec-a714-40b1-8cc3-f1abfcb694cc",
-      "name": "Lake Resort Beekse Bergen — Safari Hotel",
+      "name": "Safari Resort Beekse Bergen",
       "type": "hotel",
       "address": "Hilvarenbeek, Netherlands",
       "checkIn": "2026-08-20",
@@ -425,7 +425,7 @@
           "startTime": "13:00",
           "endTime": "15:00",
           "title": "🏨 צ׳ק-אין לווילה Safari Resort",
-          "location": "Lake Resort Beekse Bergen",
+          "location": "Safari Resort Beekse Bergen",
           "category": "rest",
           "coords": {
             "lat": 51.5203,
@@ -487,7 +487,7 @@
           "endTime": "16:30",
           "title": "🏊 בריכה מקורה ומחוממת (Majimoto)",
           "description": "בריכת הריזורט המקורה והמחוממת, או מנוחה במרפסת הווילה מול החיות.",
-          "location": "Lake Resort Beekse Bergen",
+          "location": "Safari Resort Beekse Bergen",
           "category": "activity",
           "coords": {
             "lat": 51.5203,
@@ -500,7 +500,7 @@
           "startTime": "18:30",
           "title": "🍽️ ארוחת ערב — MottoToko (מסעדת הריזורט)",
           "description": "ארוחה במסעדת הריזורט MottoToko או בווילה.",
-          "location": "Lake Resort Beekse Bergen",
+          "location": "Safari Resort Beekse Bergen",
           "category": "meal"
         }
       ]
@@ -832,17 +832,17 @@
         {
           "id": "e1827-0001-4000-8000-000000000001",
           "dayId": "d0000000-0000-4000-8000-000000000827",
-          "startTime": "08:30",
-          "endTime": "09:00",
+          "startTime": "07:45",
+          "endTime": "08:20",
           "title": "🧳 צ׳ק-אאוט Beekse Bergen + אריזות סופיות",
           "category": "rest",
-          "location": "Lake Resort Beekse Bergen"
+          "location": "Safari Resort Beekse Bergen"
         },
         {
           "id": "e1827-0002-4000-8000-000000000002",
           "dayId": "d0000000-0000-4000-8000-000000000827",
-          "startTime": "09:00",
-          "endTime": "10:15",
+          "startTime": "08:20",
+          "endTime": "09:35",
           "title": "🚗 נסיעה צפונה לכיוון אמסטרדם",
           "description": "1:15 שעות.",
           "category": "transport"
@@ -850,8 +850,8 @@
         {
           "id": "e1827-0003-4000-8000-000000000003",
           "dayId": "d0000000-0000-4000-8000-000000000827",
-          "startTime": "10:30",
-          "endTime": "12:30",
+          "startTime": "09:35",
+          "endTime": "10:45",
           "title": "🐐 חוות העיזים Ridammerhoeve — יער אמסטרדם",
           "description": "הילדים מאכילים גדיים בבקבוקי חלב. אורגני, נחמד, ללא צורך בהזמנה.",
           "location": "Geitenboerderij Ridammerhoeve, Amstelveen",
@@ -864,8 +864,8 @@
         {
           "id": "e1827-0004-4000-8000-000000000004",
           "dayId": "d0000000-0000-4000-8000-000000000827",
-          "startTime": "12:30",
-          "endTime": "13:30",
+          "startTime": "10:45",
+          "endTime": "11:15",
           "title": "🥗 ארוחת צהריים אורגנית בחווה",
           "category": "meal",
           "location": "Geitenboerderij Ridammerhoeve, Amstelveen"
@@ -873,11 +873,12 @@
         {
           "id": "e1827-0005-4000-8000-000000000005",
           "dayId": "d0000000-0000-4000-8000-000000000827",
-          "startTime": "13:30",
-          "endTime": "14:00",
-          "title": "🚗 החזרת רכב בסכיפהול",
+          "startTime": "11:15",
+          "endTime": "12:10",
+          "title": "🚗 החזרת רכב בסכיפהול + צ׳ק-אין לטיסה",
           "category": "transport",
-          "location": "Schiphol Airport"
+          "location": "Schiphol Airport",
+          "description": "להיות בטרמינל 2 שעות לפני ההמראה (14:10). כולל החזרת הרכב, מסירת כבודה ובידוק."
         },
         {
           "id": "e1827-0006-4000-8000-000000000006",

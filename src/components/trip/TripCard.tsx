@@ -26,12 +26,19 @@ const AccentBar = styled.div<{ $color: string }>`
   background: ${({ $color }) => $color};
 `
 
-const Name = styled.div`
+const Name = styled.div<{ $past: boolean }>`
   font-family: ${warmDisplayFont};
   font-size: 20px;
   font-weight: 500;
   text-align: center;
-  color: ${({ theme }) => theme.colors.gray[900]};
+  color: ${({ theme, $past }) => ($past ? theme.colors.gray[500] : theme.colors.gray[900])};
+  ${({ $past }) => $past && 'text-decoration: line-through; text-decoration-thickness: 1.5px;'}
+`
+
+/* A finished trip stays on the list as a memory, so it reads as done rather
+   than as something still being planned. */
+const PastDates = styled(Typography)<{ $past: boolean }>`
+  ${({ $past }) => $past && 'text-decoration: line-through;'}
 `
 
 interface Props {
@@ -49,6 +56,9 @@ export default function TripCard({ trip, index = 0 }: Props) {
   const { session } = useAuth()
   const isArchived = archivedTrips.some(a => a.id === trip.id)
   const accent = destinationColor(index)
+  // Same rule the Dashboard uses for its 'done' phase: the trip is over once
+  // today is past its last day.
+  const isPast = trip.endDate < new Date().toISOString().slice(0, 10)
 
   const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -100,13 +110,13 @@ export default function TripCard({ trip, index = 0 }: Props) {
 
       <Stack direction="column" spacing="sm" align="center">
         <Emoji>{trip.coverEmoji}</Emoji>
-        <Name>{trip.name}</Name>
+        <Name $past={isPast}>{trip.name}</Name>
         <Badge style={{ background: accent.bg, color: accent.fg }}>{trip.destination}</Badge>
         <Stack direction="row" spacing="xs" align="center">
           <Calendar size={14} />
-          <Typography variant="body2" style={{ color: '#8F7B5C' }}>
+          <PastDates $past={isPast} variant="body2" style={{ color: '#8F7B5C' }}>
             {formatDateShort(trip.startDate)} – {formatDateShort(trip.endDate)}
-          </Typography>
+          </PastDates>
         </Stack>
         <Chip size="sm" variant="default">{duration} ימים</Chip>
         {trip.family.length > 0 && (

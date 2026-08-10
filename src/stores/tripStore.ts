@@ -514,19 +514,40 @@ export const useTripStore = create<TripStore>()(
                 (d.date === '2026-08-19' || d.date === '2026-08-27') &&
                 (d.events ?? []).filter(e => e.location).length < 2
             )
+            // The 20–27.8 lodging was recorded as "Lake Resort Beekse Bergen"
+            // — a different property from the "Safari Resort Beekse Bergen" the
+            // Doc names, confirmed by Ben. The refreshed seed says Safari
+            // everywhere, so any surviving "Lake Resort" marks a stale copy.
+            const WRONG_RESORT = /Lake Resort Beekse Bergen/i
+            const hasWrongResort =
+              (t.accommodations ?? []).some(a => WRONG_RESORT.test(a.name ?? '')) ||
+              (t.days ?? []).some(d =>
+                (d.events ?? []).some(e => WRONG_RESORT.test(e.location ?? ''))
+              )
             // A fundamentally broken copy (wrong flight, wrong dates) predates
             // the good baseline — replace the whole trip.
             const isBroken = hasEasyJet || isEmptyItinerary || oldStart || hasUtcFlightTimes
             const now = new Date().toISOString()
             if (isBroken) return { ...freshHolland, updatedAt: now }
+            // Rename the booking in place rather than replacing it: the row
+            // carries the real confirmation number and price, which the seed
+            // shouldn't overwrite.
+            const accommodations = hasWrongResort
+              ? (t.accommodations ?? []).map(a =>
+                  WRONG_RESORT.test(a.name ?? '')
+                    ? { ...a, name: 'Safari Resort Beekse Bergen' }
+                    : a
+                )
+              : t.accommodations
             // Otherwise only the itinerary changed: swap just the days, keeping
             // the user's own tasks / budget / edits intact. Stamp "now" so the
             // swap beats any older cloud copy on the next newer-wins merge and
             // propagates to the other device instead of being clobbered back.
-            if (hasOldItinerary || missingRouteStops) {
+            if (hasOldItinerary || missingRouteStops || hasWrongResort) {
               return {
                 ...t,
                 days: freshHolland.days,
+                accommodations,
                 docUrl: t.docUrl ?? freshHolland.docUrl,
                 docLastPulledAt: freshHolland.docLastPulledAt,
                 updatedAt: now,
