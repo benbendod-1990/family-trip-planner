@@ -514,6 +514,18 @@ export const useTripStore = create<TripStore>()(
                 (d.date === '2026-08-19' || d.date === '2026-08-27') &&
                 (d.events ?? []).filter(e => e.location).length < 2
             )
+            // Content marker for the park-days rework: Toverland moved off
+            // Saturday 22.8 (90%+ crowd score) to Friday 21.8, and both park
+            // days got a stop-by-stop route. A live copy that still has
+            // Toverland on 22.8 predates it — and the refreshed seed puts
+            // Toverland on 21.8, so this can't fire twice.
+            const hasSaturdayToverland = (t.days ?? []).some(
+              d =>
+                d.date === '2026-08-22' &&
+                (d.events ?? []).some(e =>
+                  /Toverland/i.test(`${e.title ?? ''} ${e.location ?? ''}`)
+                )
+            )
             // The 20–27.8 lodging was recorded as "Lake Resort Beekse Bergen"
             // — a different property from the "Safari Resort Beekse Bergen" the
             // Doc names, confirmed by Ben. The refreshed seed says Safari
@@ -543,7 +555,7 @@ export const useTripStore = create<TripStore>()(
             // the user's own tasks / budget / edits intact. Stamp "now" so the
             // swap beats any older cloud copy on the next newer-wins merge and
             // propagates to the other device instead of being clobbered back.
-            if (hasOldItinerary || missingRouteStops || hasWrongResort) {
+            if (hasOldItinerary || missingRouteStops || hasWrongResort || hasSaturdayToverland) {
               return {
                 ...t,
                 days: freshHolland.days,

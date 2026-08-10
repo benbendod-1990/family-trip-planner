@@ -7,7 +7,7 @@
   "coverEmoji": "🌷",
   "docUrl": "https://docs.google.com/document/d/1H22xt-Q6VrHNQ4PMvF0UvSw7K5XBvVc5VzZgfyEeyjc/edit?tab=t.0",
   "createdAt": "2026-04-24T15:40:00.000Z",
-  "updatedAt": "2026-07-26T00:00:00.000Z",
+  "updatedAt": "2026-08-10T00:00:00.000Z",
   "family": [
     {
       "id": "87973dde-1f43-4571-862b-5ef5393e1734",
@@ -216,7 +216,7 @@
     },
     {
       "id": "a1b2c3d4-e5f6-4001-8001-100000000004",
-      "title": "כרטיסים מקוונים: Toverland ל-22.8",
+      "title": "כרטיסים מקוונים: Toverland ל-21.8 (הוזז משבת)",
       "description": "Toverland ל-22.8. לקנות מראש כדי לחסוך תורים בקופות וכסף.",
       "dueDate": "2026-07-15",
       "assignedTo": "87973dde-1f43-4571-862b-5ef5393e1734",
@@ -337,23 +337,29 @@
     {
       "id": "d2000000-0000-4000-8000-000000000819",
       "date": "2026-08-19",
-      "label": "Efteling — קסם של פארק אגדות",
+      "label": "Efteling — לולאה אחת, בלי חזרות",
       "events": [
         {
           "id": "e1819-0001-4000-8000-000000000001",
           "dayId": "d2000000-0000-4000-8000-000000000819",
-          "startTime": "09:00",
-          "title": "📱 09:00 בדיוק — הזמנת שולחן Polles Keuken באפליקציית Efteling",
-          "description": "חובה! חלון הזמנות נפתח בדיוק ב-09:00, שולחנות נחטפים תוך דקות. חובה להזמין שולחן באפליקציית Efteling ב-09:00 בבוקר יום הביקור. אופציה נוספת שבמסמך: Little Dutch — פנקייקים ליד גשר הנשרים.",
-          "category": "activity"
+          "startTime": "09:30",
+          "endTime": "10:00",
+          "title": "🚶 הליכה מהמלון לשער Efteling",
+          "description": "5 דקות הליכה. להיות בקרוסלות הכניסה 09:35 — מכניסים ל-Pardoes Promenade לפני 10:00. Bolderkar (עגלת עץ) להשכרה בכניסה, ~€4.50.",
+          "location": "GuestHouse Hotel, Kaatsheuvel",
+          "category": "transport",
+          "coords": {
+            "lat": 51.657,
+            "lon": 5.0404
+          }
         },
         {
           "id": "e1819-0002-4000-8000-000000000002",
           "dayId": "d2000000-0000-4000-8000-000000000819",
           "startTime": "10:00",
-          "endTime": "12:30",
-          "title": "🎢 Efteling — Sprookjesbos (יער האגדות)",
-          "description": "5 ד׳ הליכה מהמלון. התחלה ב-יער האגדות — קסם לקטנטנים. שכרו Bolderkar (עגלת עץ) בכניסה.",
+          "endTime": "10:45",
+          "title": "⭐ Symbolica (פנטזירייק) — ראשון!",
+          "description": "המתקן עם התור שמתפוצץ הכי מהר — עד 11:00 הוא מגיע ל-60-90 דקות. מתחת ל-120 ס״מ בליווי מבוגר, כלומר שניהם נכנסים. נמצא ב-Hartenhof, ממש מול הכניסה.",
           "location": "Efteling, Kaatsheuvel",
           "category": "activity",
           "coords": {
@@ -364,30 +370,183 @@
         {
           "id": "e1819-0003-4000-8000-000000000003",
           "dayId": "d2000000-0000-4000-8000-000000000819",
-          "startTime": "12:30",
-          "endTime": "14:00",
-          "title": "🥞 Polles Keuken — מסעדת פנקייקים בפארק",
-          "description": "מטבח \"חי\" ומסתובב. רק עם הזמנה מהאפליקציה.",
-          "category": "meal",
-          "location": "Polles Keuken, Efteling"
+          "startTime": "10:45",
+          "endTime": "11:20",
+          "title": "⭐ Droomvlucht (מארייק)",
+          "description": "5 ד׳ הליכה שמאלה מ-Hartenhof. התור השני שמתפוצץ מוקדם. 100 ס״מ בליווי.",
+          "location": "Efteling, Kaatsheuvel",
+          "category": "activity",
+          "coords": {
+            "lat": 51.65,
+            "lon": 5.0477
+          }
         },
         {
           "id": "e1819-0004-4000-8000-000000000004",
           "dayId": "d2000000-0000-4000-8000-000000000819",
-          "startTime": "14:00",
-          "endTime": "17:00",
-          "title": "🎠 מתקנים: Carnaval Festival, Symbolica, רכבת קיטור",
-          "description": "מתקנים רגועים מותאמים לגילאי 3-4.",
+          "startTime": "11:20",
+          "endTime": "12:05",
+          "title": "🎠 Anton Pieckplein + קרוסלת הקיטור (מארייק)",
+          "description": "כיכר כפרית עם קרוסלות קטנות ונדנדות. 100 ס״מ בליווי. ממש באזור של Polles Keuken — אפס סיכון לאחר להזמנה.",
+          "location": "Efteling, Kaatsheuvel",
           "category": "activity",
-          "location": "Efteling, Kaatsheuvel"
+          "coords": {
+            "lat": 51.65,
+            "lon": 5.0477
+          }
         },
         {
           "id": "e1819-0005-4000-8000-000000000005",
           "dayId": "d2000000-0000-4000-8000-000000000819",
+          "startTime": "12:05",
+          "endTime": "12:25",
+          "title": "🛝 Kindervreugd — גן שעשועים",
+          "description": "20 דקות פריקת אנרגיה בלי תור ובלי מגבלת גובה, 200 מטר מהמסעדה.",
+          "location": "Efteling, Kaatsheuvel",
+          "category": "activity",
+          "coords": {
+            "lat": 51.65,
+            "lon": 5.0477
+          }
+        },
+        {
+          "id": "e1819-0006-4000-8000-000000000006",
+          "dayId": "d2000000-0000-4000-8000-000000000819",
+          "startTime": "12:30",
+          "endTime": "13:30",
+          "title": "🥞 Polles Keuken — ✅ הוזמן 12:30",
+          "description": "מסעדת הפנקייקים עם המטבח ה\"חי\" והמסתובב. השולחן הוזמן.",
+          "location": "Polles Keuken, Efteling",
+          "category": "meal",
+          "coords": {
+            "lat": 51.65,
+            "lon": 5.0477
+          }
+        },
+        {
+          "id": "e1819-0007-4000-8000-000000000007",
+          "dayId": "d2000000-0000-4000-8000-000000000819",
+          "startTime": "13:30",
+          "endTime": "15:00",
+          "title": "⭐ יער האגדות (מארייק) — 90 דקות בצל",
+          "description": "הכניסה ליד חנות In den Oude Marskramer. 6 הקטרים של יער עבות עם 30 תפאורות אגדה — אין בו תור אף פעם, ולכן הוא נמצא דווקא בשעה הכי חמה. לכו על שביל הלבנים האדום ועקבו אחרי שלטי העץ. באמצע יש את כיכר Herautenplein.",
+          "location": "Efteling, Kaatsheuvel",
+          "category": "activity",
+          "coords": {
+            "lat": 51.65,
+            "lon": 5.0477
+          }
+        },
+        {
+          "id": "e1819-0008-4000-8000-000000000008",
+          "dayId": "d2000000-0000-4000-8000-000000000819",
+          "startTime": "15:00",
+          "endTime": "15:40",
+          "title": "🎪 Carnaval Festival (רייזנרייק)",
+          "description": "8 ד׳ הליכה. מסע של 8 דקות דרך 15 מדינות. 100 ס״מ בליווי.",
+          "location": "Efteling, Kaatsheuvel",
+          "category": "activity",
+          "coords": {
+            "lat": 51.65,
+            "lon": 5.0477
+          }
+        },
+        {
+          "id": "e1819-0009-4000-8000-000000000009",
+          "dayId": "d2000000-0000-4000-8000-000000000819",
+          "startTime": "15:40",
+          "endTime": "16:15",
+          "title": "🛝 Kleuterhof (רייזנרייק)",
+          "description": "גן שעשועים צבעוני ליד מסעדת Kashba. בלי מגבלת גובה — הפסקת ריצה ושתייה.",
+          "location": "Efteling, Kaatsheuvel",
+          "category": "activity",
+          "coords": {
+            "lat": 51.65,
+            "lon": 5.0477
+          }
+        },
+        {
+          "id": "e1819-0010-4000-8000-000000000010",
+          "dayId": "d2000000-0000-4000-8000-000000000819",
+          "startTime": "16:15",
+          "endTime": "17:00",
+          "title": "⭐ Max & Moritz + Fata Morgana (אנדרייק)",
+          "description": "Max & Moritz — רכבת המשפחה, 90 ס״מ בליווי (בן+עומר, ואם ארי מעל 90 גם הוא). Fata Morgana — שיט מזרחי רגוע וממוזג, 120 ס״מ בליווי, כלומר כולם. בקשו Wisselservice (baby switch) כדי ששני ההורים ירכבו בלי לעמוד פעמיים.",
+          "location": "Efteling, Kaatsheuvel",
+          "category": "activity",
+          "coords": {
+            "lat": 51.65,
+            "lon": 5.0477
+          }
+        },
+        {
+          "id": "e1819-0011-4000-8000-000000000011",
+          "dayId": "d2000000-0000-4000-8000-000000000819",
           "startTime": "17:00",
-          "title": "😴 חזרה רגועה למלון למנוחה",
+          "endTime": "17:20",
+          "title": "🚂 רכבת הקיטור חזרה ליציאה",
+          "description": "חוסכת 15 דקות הליכה על רגליים גמורות. 100 ס״מ בליווי.",
+          "location": "Efteling, Kaatsheuvel",
+          "category": "transport",
+          "coords": {
+            "lat": 51.65,
+            "lon": 5.0477
+          }
+        },
+        {
+          "id": "e1819-0012-4000-8000-000000000012",
+          "dayId": "d2000000-0000-4000-8000-000000000819",
+          "startTime": "17:20",
+          "endTime": "19:15",
+          "title": "😴 מנוחה במלון",
+          "description": "5 דקות הליכה. השינה הזאת היא תנאי לחזרה בערב.",
+          "location": "GuestHouse Hotel, Kaatsheuvel",
           "category": "rest",
-          "location": "GuestHouse Hotel, Kaatsheuvel"
+          "coords": {
+            "lat": 51.657,
+            "lon": 5.0404
+          }
+        },
+        {
+          "id": "e1819-0013-4000-8000-000000000013",
+          "dayId": "d2000000-0000-4000-8000-000000000819",
+          "startTime": "19:30",
+          "endTime": "20:40",
+          "title": "🌙 אופציונלי: Nest! (רויגרייק)",
+          "description": "רק אם ארי ישן אחה״צ. יער משחקים ענק בלי מגבלת גובה — הלהיט הגדול של הגילאים האלה. הכניסה לפארק עם אותו כרטיס יומי.",
+          "location": "Efteling, Kaatsheuvel",
+          "category": "activity",
+          "coords": {
+            "lat": 51.65,
+            "lon": 5.0477
+          }
+        },
+        {
+          "id": "e1819-0014-4000-8000-000000000014",
+          "dayId": "d2000000-0000-4000-8000-000000000819",
+          "startTime": "20:45",
+          "endTime": "21:05",
+          "title": "💦 Aquanura — מופע המים",
+          "description": "מופע המים והאור על האגם, תמיד בשעת הסגירה. בלי תור, בלי מגבלת גובה. השעה המדויקת מתפרסמת באפליקציה.",
+          "location": "Efteling, Kaatsheuvel",
+          "category": "activity",
+          "coords": {
+            "lat": 51.65,
+            "lon": 5.0477
+          }
+        },
+        {
+          "id": "e1819-0015-4000-8000-000000000015",
+          "dayId": "d2000000-0000-4000-8000-000000000819",
+          "startTime": "21:15",
+          "title": "🏨 חזרה למלון",
+          "description": "5 דקות הליכה למיטה.",
+          "location": "GuestHouse Hotel, Kaatsheuvel",
+          "category": "rest",
+          "coords": {
+            "lat": 51.657,
+            "lon": 5.0404
+          }
         }
       ]
     },
@@ -464,11 +623,184 @@
     {
       "id": "d4000000-0000-4000-8000-000000000821",
       "date": "2026-08-21",
-      "label": "יום ריזורט — ספארי סירה ובריכה",
+      "label": "Toverland — הועבר לשישי (שבת = 90% עומס)",
       "events": [
         {
           "id": "e1821-0001-4000-8000-000000000001",
           "dayId": "d4000000-0000-4000-8000-000000000821",
+          "startTime": "09:00",
+          "endTime": "09:45",
+          "title": "🚗 נסיעה ל-Toverland",
+          "description": "כ-45 דקות דרומה. להגיע לפני הפתיחה ב-10:00.",
+          "location": "Safari Resort Beekse Bergen",
+          "category": "transport",
+          "coords": {
+            "lat": 51.5203,
+            "lon": 5.1387
+          }
+        },
+        {
+          "id": "e1821-0002-4000-8000-000000000002",
+          "dayId": "d4000000-0000-4000-8000-000000000821",
+          "startTime": "10:00",
+          "endTime": "10:40",
+          "title": "⭐ Merlin's Quest (אבלון) — ראשון!",
+          "description": "אבלון צמוד לכניסה (Port Laguna). שיט סירות בלי מגבלת גובה בליווי — שניהם נכנסים. התור גדל מהר, לכן ראשון.",
+          "location": "Toverland, Sevenum",
+          "category": "activity",
+          "coords": {
+            "lat": 51.3982,
+            "lon": 5.9838
+          }
+        },
+        {
+          "id": "e1821-0003-4000-8000-000000000003",
+          "dayId": "d4000000-0000-4000-8000-000000000821",
+          "startTime": "10:40",
+          "endTime": "11:15",
+          "title": "🐉 Dragonwatch + Jumping Juna (אבלון)",
+          "description": "Dragonwatch — מגדל נפילה משפחתי, 80 ס״מ בליווי. Jumping Juna — קרוסלה דינמית, 0 ס״מ בליווי.",
+          "location": "Toverland, Sevenum",
+          "category": "activity",
+          "coords": {
+            "lat": 51.3982,
+            "lon": 5.9838
+          }
+        },
+        {
+          "id": "e1821-0004-4000-8000-000000000004",
+          "dayId": "d4000000-0000-4000-8000-000000000821",
+          "startTime": "11:15",
+          "endTime": "11:50",
+          "title": "🛝 Little Dragons + Arthur's Tournament (אבלון)",
+          "description": "גן שעשועים ייעודי לפעוטות. בלי מגבלת גובה.",
+          "location": "Toverland, Sevenum",
+          "category": "activity",
+          "coords": {
+            "lat": 51.3982,
+            "lon": 5.9838
+          }
+        },
+        {
+          "id": "e1821-0005-4000-8000-000000000005",
+          "dayId": "d4000000-0000-4000-8000-000000000821",
+          "startTime": "12:00",
+          "endTime": "13:15",
+          "title": "⭐ Land van Toos — לב היום (עולם מקורה)",
+          "description": "7 ד׳ הליכה פנימה. Toos-Express (רכבת ילדים, 90 ס״מ בליווי) · Klokhuis (0 ס״מ) · Morrels Truckjes (0 ס״מ) · ספלי תה (90 ס״מ) · Djinn (100 ס״מ — עומר).",
+          "location": "Toverland, Sevenum",
+          "category": "activity",
+          "coords": {
+            "lat": 51.3982,
+            "lon": 5.9838
+          }
+        },
+        {
+          "id": "e1821-0006-4000-8000-000000000006",
+          "dayId": "d4000000-0000-4000-8000-000000000821",
+          "startTime": "13:15",
+          "endTime": "14:15",
+          "title": "🍕 צהריים בתוך האולם המקורר",
+          "location": "Toverland, Sevenum",
+          "category": "meal",
+          "coords": {
+            "lat": 51.3982,
+            "lon": 5.9838
+          }
+        },
+        {
+          "id": "e1821-0007-4000-8000-000000000007",
+          "dayId": "d4000000-0000-4000-8000-000000000821",
+          "startTime": "14:15",
+          "endTime": "15:00",
+          "title": "🏰 Speelkasteel + Sim sa la Klim + Dwaalhof",
+          "description": "שעה שקטה וממוזגת אחרי האוכל: משחקייה מקורה, הר טיפוס ומבוך. הכול באותו אולם, בלי מגבלות גובה.",
+          "location": "Toverland, Sevenum",
+          "category": "activity",
+          "coords": {
+            "lat": 51.3982,
+            "lon": 5.9838
+          }
+        },
+        {
+          "id": "e1821-0008-4000-8000-000000000008",
+          "dayId": "d4000000-0000-4000-8000-000000000821",
+          "startTime": "15:00",
+          "endTime": "15:45",
+          "title": "🎡 Wunderwald (העולם המקורה השני)",
+          "description": "Karussell (0 ס״מ בליווי) · Wirbelbaum — גלגל ענק (0 ס״מ) · Kletterabenteuer — טיפוס מקורה · Maximus' Wunderball.",
+          "location": "Toverland, Sevenum",
+          "category": "activity",
+          "coords": {
+            "lat": 51.3982,
+            "lon": 5.9838
+          }
+        },
+        {
+          "id": "e1821-0009-4000-8000-000000000009",
+          "dayId": "d4000000-0000-4000-8000-000000000821",
+          "startTime": "15:45",
+          "endTime": "16:15",
+          "title": "🎢 Villa Fiasko + Expedition Zork (בן+עומר)",
+          "description": "Villa Fiasko — בית מצחיקים, 100 ס״מ בליווי. Expedition Zork — מתקן מים, 90 ס״מ בליווי. יוצאים רטובים.",
+          "location": "Toverland, Sevenum",
+          "category": "activity",
+          "coords": {
+            "lat": 51.3982,
+            "lon": 5.9838
+          }
+        },
+        {
+          "id": "e1821-0010-4000-8000-000000000010",
+          "dayId": "d4000000-0000-4000-8000-000000000821",
+          "startTime": "16:15",
+          "endTime": "17:30",
+          "title": "💦 Waku Waku + Fort Boreas + Tolly Molly (העמק הקסום)",
+          "description": "כאן צריך את בגדי הים והמגבות. משחקיית מים, גן שעשועים, וקרוסלת מים (0 ס״מ בליווי). החלק הכי טוב ביום באוגוסט — קירור ופריקת האנרגיה האחרונה.",
+          "location": "Toverland, Sevenum",
+          "category": "activity",
+          "coords": {
+            "lat": 51.3982,
+            "lon": 5.9838
+          }
+        },
+        {
+          "id": "e1821-0011-4000-8000-000000000011",
+          "dayId": "d4000000-0000-4000-8000-000000000821",
+          "startTime": "18:00",
+          "endTime": "19:15",
+          "title": "🍽️ The Flaming Feather — פונדק אבירים",
+          "description": "שימו לב: המסעדה נמצאת בתוך הפארק, באזור אבלון ליד הכניסה — אוכלים לפני היציאה, לא אחריה.",
+          "location": "The Flaming Feather, Toverland",
+          "category": "meal",
+          "coords": {
+            "lat": 51.3982,
+            "lon": 5.9838
+          }
+        },
+        {
+          "id": "e1821-0012-4000-8000-000000000012",
+          "dayId": "d4000000-0000-4000-8000-000000000821",
+          "startTime": "19:15",
+          "endTime": "20:00",
+          "title": "🚗 חזרה לריזורט",
+          "location": "Safari Resort Beekse Bergen",
+          "category": "transport",
+          "coords": {
+            "lat": 51.5203,
+            "lon": 5.1387
+          }
+        }
+      ]
+    },
+    {
+      "id": "d5000000-0000-4000-8000-000000000822",
+      "date": "2026-08-22",
+      "label": "יום ריזורט — ספארי סירה ובריכה",
+      "events": [
+        {
+          "id": "e1822-0001-4000-8000-000000000001",
+          "dayId": "d5000000-0000-4000-8000-000000000822",
           "startTime": "10:00",
           "endTime": "12:00",
           "title": "🚤 ספארי סירה — Beekse Bergen",
@@ -481,8 +813,8 @@
           }
         },
         {
-          "id": "e1821-0002-4000-8000-000000000002",
-          "dayId": "d4000000-0000-4000-8000-000000000821",
+          "id": "e1822-0002-4000-8000-000000000002",
+          "dayId": "d5000000-0000-4000-8000-000000000822",
           "startTime": "13:00",
           "endTime": "16:30",
           "title": "🏊 בריכה מקורה ומחוממת (Majimoto)",
@@ -495,79 +827,16 @@
           }
         },
         {
-          "id": "e1821-0003-4000-8000-000000000003",
-          "dayId": "d4000000-0000-4000-8000-000000000821",
+          "id": "e1822-0003-4000-8000-000000000003",
+          "dayId": "d5000000-0000-4000-8000-000000000822",
           "startTime": "18:30",
           "title": "🍽️ ארוחת ערב — MottoToko (מסעדת הריזורט)",
           "description": "ארוחה במסעדת הריזורט MottoToko או בווילה.",
           "location": "Safari Resort Beekse Bergen",
-          "category": "meal"
-        }
-      ]
-    },
-    {
-      "id": "d5000000-0000-4000-8000-000000000822",
-      "date": "2026-08-22",
-      "label": "Toverland — גן עדן לפעוטות",
-      "events": [
-        {
-          "id": "e1822-0001-4000-8000-000000000001",
-          "dayId": "d5000000-0000-4000-8000-000000000822",
-          "startTime": "09:00",
-          "endTime": "09:45",
-          "title": "🚗 נסיעה ל-Toverland",
-          "description": "כ-45 דקות לכיוון דרום.",
-          "category": "transport"
-        },
-        {
-          "id": "e1822-0002-4000-8000-000000000002",
-          "dayId": "d5000000-0000-4000-8000-000000000822",
-          "startTime": "10:00",
-          "endTime": "13:00",
-          "title": "🎡 Toverland — Land van Toos",
-          "description": "האזור המקורה והקסום (הגנה מושלמת מגשם/שמש): רכבות קטנות, קרוסלות ומתקני טיפוס. הפארק המושלם לגילאי הגן, פחות עמוס מאפטלינג.",
-          "location": "Toverland, Sevenum",
-          "category": "activity",
-          "coords": {
-            "lat": 51.3982,
-            "lon": 5.9838
-          }
-        },
-        {
-          "id": "e1822-0003-4000-8000-000000000003",
-          "dayId": "d5000000-0000-4000-8000-000000000822",
-          "startTime": "13:00",
-          "endTime": "14:00",
-          "title": "🍕 צהריים בפארק",
-          "category": "meal"
-        },
-        {
-          "id": "e1822-0004-4000-8000-000000000004",
-          "dayId": "d5000000-0000-4000-8000-000000000822",
-          "startTime": "14:00",
-          "endTime": "16:30",
-          "title": "🎢 המשך מתקנים ב-Toverland",
-          "category": "activity"
-        },
-        {
-          "id": "e1822-0005-4000-8000-000000000005",
-          "dayId": "d5000000-0000-4000-8000-000000000822",
-          "startTime": "16:30",
-          "endTime": "17:15",
-          "title": "🚗 חזרה לריזורט",
-          "category": "transport"
-        },
-        {
-          "id": "e1822-0006-4000-8000-000000000006",
-          "dayId": "d5000000-0000-4000-8000-000000000822",
-          "startTime": "18:30",
-          "title": "🍽️ ארוחת ערב — The Flaming Feather (פונדק אבירים בפארק) או בווילה",
-          "description": "המסעדה המושקעת שבתוך Toverland, או חזרה ישירה לריזורט.",
-          "location": "The Flaming Feather, Toverland",
           "category": "meal",
           "coords": {
-            "lat": 51.3982,
-            "lon": 5.9838
+            "lat": 51.5203,
+            "lon": 5.1387
           }
         }
       ]
