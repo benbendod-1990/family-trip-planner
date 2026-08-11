@@ -100,7 +100,24 @@
       }
     }
   ],
-  "carRentals": [],
+  "carRentals": [
+    {
+      "id": "c1000000-0000-4000-8000-000000009735",
+      "company": "SIXT",
+      "carModel": "Kia Sportage / Opel Grandland / Peugeot 3008 או דומה",
+      "carCategory": "suv",
+      "pickupLocation": "Amsterdam Schiphol Airport — Schiphol Plaza",
+      "dropoffLocation": "Amsterdam Schiphol Airport — Herbergierstraat, 1118 CZ",
+      "pickupDate": "2026-08-18T11:00:00.000",
+      "dropoffDate": "2026-08-27T15:00:00.000",
+      "cost": 602.3,
+      "currency": "EUR",
+      "confirmationNumber": "9735028799",
+      "driverName": "Ben Ben David",
+      "includesInsurance": true,
+      "notes": "שולם מראש 602.30€. אוטומט, 5 מושבים, 4 מזוודות, ק\"מ ללא הגבלה. ⚠️ הקבלה ב-11:00 אבל הטיסה נוחתת ב-11:20 — לדחות ל-12:00. ל-SIXT יש חלון חסד של 60 דקות בלבד. פיקדון זמני 300€ בכרטיס. השתתפות עצמית 1400€ מכוסה ע\"י RentalCover (אסמכתא FT5F-DQ93-INS). להביא רישיון פיזי, דרכון וכרטיס אשראי פיזי ע\"ש בן."
+    }
+  ],
   "budget": {
     "currency": "EUR",
     "totalBudget": 5000,
@@ -124,6 +141,15 @@
         "paidBy": "87973dde-1f43-4571-862b-5ef5393e1734"
       },
       {
+        "id": "3c7d1e90-4b28-4f6a-9d31-5e8a2f0c7b44",
+        "category": "transport",
+        "label": "SIXT — רכב שכור 18–27.8 (9735028799)",
+        "planned": 602.3,
+        "actual": 602.3,
+        "date": "2026-06-06",
+        "paidBy": "87973dde-1f43-4571-862b-5ef5393e1734"
+      },
+      {
         "id": "50b4b0b8-7fae-4180-bc35-dc98ddc07e76",
         "category": "other",
         "label": "ביטוח נסיעות PassportCard",
@@ -144,8 +170,8 @@
     },
     {
       "id": "52489398-f1b1-4d25-b419-9e5c1780ee16",
-      "title": "להזמין רכב שכור לאמסטרדם",
-      "description": "איסוף בשדה Schiphol ב-18.8 11:20, החזרה ב-27/8 לפני 14:10. SUV/van עבור 2 מבוגרים + 2 ילדים + כבודה. בדוק Sixt/Europcar/Hertz.",
+      "title": "🚨 לדחות קבלת רכב SIXT ל-12:00 (מוזמן 11:00, נחיתה 11:20)",
+      "description": "הזמנה 9735028799. חלון החסד של SIXT הוא 60 דקות — עם דרכונים ומזוודות ל-4 לא נגיע ל-Schiphol Plaza לפני 12:15. לשנות באפליקציית SIXT או בקישור Modify במייל האישור.",
       "dueDate": "2026-06-01",
       "assignedTo": "87973dde-1f43-4571-862b-5ef5393e1734",
       "done": false,

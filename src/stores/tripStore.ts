@@ -605,6 +605,43 @@ export const useTripStore = create<TripStore>()(
           })
         }
 
+        // One-shot: backfill the SIXT rental (booking 9735028799), found in
+        // Gmail after the plan had shipped with an empty carRentals and a
+        // "book a car" reminder that was already done. Each half is guarded on
+        // its own absence, so this can't fire twice or clobber later edits.
+        const CAR_TASK_ID = '52489398-f1b1-4d25-b419-9e5c1780ee16'
+        const CAR_BUDGET_ID = '3c7d1e90-4b28-4f6a-9d31-5e8a2f0c7b44'
+        if (freshHolland) {
+          state.trips = state.trips.map(t => {
+            if (t.id !== HOLLAND_ID) return t
+            const needsCar = (t.carRentals ?? []).length === 0
+            const seedTask = (freshHolland.tasks ?? []).find(s => s.id === CAR_TASK_ID)
+            const staleTask = (t.tasks ?? []).find(
+              x => x.id === CAR_TASK_ID && !!seedTask && x.title !== seedTask.title
+            )
+            const seedLine = (freshHolland.budget?.items ?? []).find(s => s.id === CAR_BUDGET_ID)
+            const needsLine =
+              !!seedLine && !(t.budget?.items ?? []).some(x => x.id === CAR_BUDGET_ID)
+            if (!needsCar && !staleTask && !needsLine) return t
+            return {
+              ...t,
+              carRentals: needsCar ? freshHolland.carRentals : t.carRentals,
+              // Keep done-state: Ben may already have pushed the pickup time.
+              tasks: staleTask
+                ? (t.tasks ?? []).map(x =>
+                    x.id === CAR_TASK_ID
+                      ? { ...seedTask!, done: x.done, completedAt: x.completedAt }
+                      : x
+                  )
+                : t.tasks,
+              budget: needsLine
+                ? { ...t.budget, items: [...(t.budget?.items ?? []), seedLine!] }
+                : t.budget,
+              updatedAt: new Date().toISOString(),
+            }
+          })
+        }
+
         // One-shot: replace stale Crete trip — original seed assumed a 7-night
         // stay (21–28/5) based on partial Aquila correspondence; actual trip
         // was 21–24/5. Detect stale by old endDate.
