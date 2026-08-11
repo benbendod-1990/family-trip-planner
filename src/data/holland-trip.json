@@ -7,7 +7,7 @@
   "coverEmoji": "🌷",
   "docUrl": "https://docs.google.com/document/d/1H22xt-Q6VrHNQ4PMvF0UvSw7K5XBvVc5VzZgfyEeyjc/edit?tab=t.0",
   "createdAt": "2026-04-24T15:40:00.000Z",
-  "updatedAt": "2026-08-10T00:00:00.000Z",
+  "updatedAt": "2026-08-11T00:00:00.000Z",
   "family": [
     {
       "id": "87973dde-1f43-4571-862b-5ef5393e1734",
@@ -75,13 +75,14 @@
       "address": "Kaatsheuvel, Netherlands",
       "checkIn": "2026-08-18",
       "checkOut": "2026-08-20",
-      "cost": 0,
+      "cost": 630.34,
       "currency": "EUR",
-      "notes": "ליד Efteling — 2 לילות (18-20.8). 10 ד׳ נסיעה לפינת החי 't Erf בוואלוויק. בדוק תאריכי check-in/out בהזמנה.",
+      "notes": "ליד Efteling — 2 לילות (18-20.8), BunkHouse Room 4. חבילת Efteling Package Small: כוללת כניסה ליום אחד לאפטלינג + ארוחת בוקר. ⚠️ הכרטיסים מתוארכים ומחכים בקבלה — חובה לוודא שרשום 19.8. ניתן לשנות עד 48 שעות לפני ההגעה, כלומר עד 16.8. חניה חינם במלון, 5 ד׳ הליכה לפארק.",
       "coords": {
         "lat": 51.657,
         "lon": 5.0404
-      }
+      },
+      "confirmationNumber": "216783"
     },
     {
       "id": "c17816ec-a714-40b1-8cc3-f1abfcb694cc",
@@ -154,6 +155,24 @@
         "category": "other",
         "label": "ביטוח נסיעות PassportCard",
         "planned": 0
+      },
+      {
+        "id": "8f2a1b04-6c93-4e17-b528-0a4d9e13f7c2",
+        "category": "accommodation",
+        "label": "GuestHouse Kaatsheuvel + כניסה לאפטלינג (216783)",
+        "planned": 630.34,
+        "actual": 630.34,
+        "date": "2025-10-22",
+        "paidBy": "87973dde-1f43-4571-862b-5ef5393e1734"
+      },
+      {
+        "id": "d6b30f85-21ac-4e9f-9c07-3b1e5a7d2049",
+        "category": "activities",
+        "label": "Toverland — 4 כרטיסים + חניה (Platina)",
+        "planned": 166.5,
+        "actual": 166.5,
+        "date": "2026-07-02",
+        "paidBy": "87973dde-1f43-4571-862b-5ef5393e1734"
       }
     ]
   },
@@ -232,8 +251,8 @@
     },
     {
       "id": "a1b2c3d4-e5f6-4001-8001-100000000003",
-      "title": "🚨 קריטי: כרטיסי Efteling ל-19.8",
-      "description": "לקנות כרטיסים לפארק מראש. שולחן ל-Polles Keuken מזמינים דרך האפליקציה ב-09:00 בבוקר יום הביקור (19.8).",
+      "title": "🚨 עד 16.8: לוודא מול GuestHouse שתאריך אפטלינג רשום 19.8",
+      "description": "הכרטיסים כלולים בחבילה ומחכים בקבלה, אבל התאריך נקבע לפי מה שנרשם ב-notes של ההזמנה (אישור 216783). שינוי אפשרי רק עד 48 שעות לפני ההגעה — כלומר עד 16.8. מייל: info@guesthousehotels.nl, טלפון: +31 416 273 567.",
       "dueDate": "2026-07-01",
       "assignedTo": "87973dde-1f43-4571-862b-5ef5393e1734",
       "done": false,
@@ -242,8 +261,8 @@
     },
     {
       "id": "a1b2c3d4-e5f6-4001-8001-100000000004",
-      "title": "כרטיסים מקוונים: Toverland ל-21.8 (הוזז משבת)",
-      "description": "Toverland ל-22.8. לקנות מראש כדי לחסוך תורים בקופות וכסף.",
+      "title": "לוודא את התאריך ב-PDF של כרטיסי Toverland",
+      "description": "נקנו 2.7 דרך globalticket, 166.50€: חניה + 2 מבוגר/ילד ≥140 + 2 ילד 90-140, הכול Platina. התאריך מופיע רק בקובץ Tickets.pdf שבמייל. טוברלנד לא מאפשר שינוי תאריך אלא מסיבות חריגות (רפואי/פטירה), ולכן הביקור נשאר 22.8.",
       "dueDate": "2026-07-15",
       "assignedTo": "87973dde-1f43-4571-862b-5ef5393e1734",
       "done": false,
@@ -649,184 +668,11 @@
     {
       "id": "d4000000-0000-4000-8000-000000000821",
       "date": "2026-08-21",
-      "label": "Toverland — הועבר לשישי (שבת = 90% עומס)",
+      "label": "יום ריזורט — ספארי סירה ובריכה",
       "events": [
         {
           "id": "e1821-0001-4000-8000-000000000001",
           "dayId": "d4000000-0000-4000-8000-000000000821",
-          "startTime": "09:00",
-          "endTime": "09:45",
-          "title": "🚗 נסיעה ל-Toverland",
-          "description": "כ-45 דקות דרומה. להגיע לפני הפתיחה ב-10:00.",
-          "location": "Safari Resort Beekse Bergen",
-          "category": "transport",
-          "coords": {
-            "lat": 51.5203,
-            "lon": 5.1387
-          }
-        },
-        {
-          "id": "e1821-0002-4000-8000-000000000002",
-          "dayId": "d4000000-0000-4000-8000-000000000821",
-          "startTime": "10:00",
-          "endTime": "10:40",
-          "title": "⭐ Merlin's Quest (אבלון) — ראשון!",
-          "description": "אבלון צמוד לכניסה (Port Laguna). שיט סירות בלי מגבלת גובה בליווי — שניהם נכנסים. התור גדל מהר, לכן ראשון.",
-          "location": "Toverland, Sevenum",
-          "category": "activity",
-          "coords": {
-            "lat": 51.3982,
-            "lon": 5.9838
-          }
-        },
-        {
-          "id": "e1821-0003-4000-8000-000000000003",
-          "dayId": "d4000000-0000-4000-8000-000000000821",
-          "startTime": "10:40",
-          "endTime": "11:15",
-          "title": "🐉 Dragonwatch + Jumping Juna (אבלון)",
-          "description": "Dragonwatch — מגדל נפילה משפחתי, 80 ס״מ בליווי. Jumping Juna — קרוסלה דינמית, 0 ס״מ בליווי.",
-          "location": "Toverland, Sevenum",
-          "category": "activity",
-          "coords": {
-            "lat": 51.3982,
-            "lon": 5.9838
-          }
-        },
-        {
-          "id": "e1821-0004-4000-8000-000000000004",
-          "dayId": "d4000000-0000-4000-8000-000000000821",
-          "startTime": "11:15",
-          "endTime": "11:50",
-          "title": "🛝 Little Dragons + Arthur's Tournament (אבלון)",
-          "description": "גן שעשועים ייעודי לפעוטות. בלי מגבלת גובה.",
-          "location": "Toverland, Sevenum",
-          "category": "activity",
-          "coords": {
-            "lat": 51.3982,
-            "lon": 5.9838
-          }
-        },
-        {
-          "id": "e1821-0005-4000-8000-000000000005",
-          "dayId": "d4000000-0000-4000-8000-000000000821",
-          "startTime": "12:00",
-          "endTime": "13:15",
-          "title": "⭐ Land van Toos — לב היום (עולם מקורה)",
-          "description": "7 ד׳ הליכה פנימה. Toos-Express (רכבת ילדים, 90 ס״מ בליווי) · Klokhuis (0 ס״מ) · Morrels Truckjes (0 ס״מ) · ספלי תה (90 ס״מ) · Djinn (100 ס״מ — עומר).",
-          "location": "Toverland, Sevenum",
-          "category": "activity",
-          "coords": {
-            "lat": 51.3982,
-            "lon": 5.9838
-          }
-        },
-        {
-          "id": "e1821-0006-4000-8000-000000000006",
-          "dayId": "d4000000-0000-4000-8000-000000000821",
-          "startTime": "13:15",
-          "endTime": "14:15",
-          "title": "🍕 צהריים בתוך האולם המקורר",
-          "location": "Toverland, Sevenum",
-          "category": "meal",
-          "coords": {
-            "lat": 51.3982,
-            "lon": 5.9838
-          }
-        },
-        {
-          "id": "e1821-0007-4000-8000-000000000007",
-          "dayId": "d4000000-0000-4000-8000-000000000821",
-          "startTime": "14:15",
-          "endTime": "15:00",
-          "title": "🏰 Speelkasteel + Sim sa la Klim + Dwaalhof",
-          "description": "שעה שקטה וממוזגת אחרי האוכל: משחקייה מקורה, הר טיפוס ומבוך. הכול באותו אולם, בלי מגבלות גובה.",
-          "location": "Toverland, Sevenum",
-          "category": "activity",
-          "coords": {
-            "lat": 51.3982,
-            "lon": 5.9838
-          }
-        },
-        {
-          "id": "e1821-0008-4000-8000-000000000008",
-          "dayId": "d4000000-0000-4000-8000-000000000821",
-          "startTime": "15:00",
-          "endTime": "15:45",
-          "title": "🎡 Wunderwald (העולם המקורה השני)",
-          "description": "Karussell (0 ס״מ בליווי) · Wirbelbaum — גלגל ענק (0 ס״מ) · Kletterabenteuer — טיפוס מקורה · Maximus' Wunderball.",
-          "location": "Toverland, Sevenum",
-          "category": "activity",
-          "coords": {
-            "lat": 51.3982,
-            "lon": 5.9838
-          }
-        },
-        {
-          "id": "e1821-0009-4000-8000-000000000009",
-          "dayId": "d4000000-0000-4000-8000-000000000821",
-          "startTime": "15:45",
-          "endTime": "16:15",
-          "title": "🎢 Villa Fiasko + Expedition Zork (בן+עומר)",
-          "description": "Villa Fiasko — בית מצחיקים, 100 ס״מ בליווי. Expedition Zork — מתקן מים, 90 ס״מ בליווי. יוצאים רטובים.",
-          "location": "Toverland, Sevenum",
-          "category": "activity",
-          "coords": {
-            "lat": 51.3982,
-            "lon": 5.9838
-          }
-        },
-        {
-          "id": "e1821-0010-4000-8000-000000000010",
-          "dayId": "d4000000-0000-4000-8000-000000000821",
-          "startTime": "16:15",
-          "endTime": "17:30",
-          "title": "💦 Waku Waku + Fort Boreas + Tolly Molly (העמק הקסום)",
-          "description": "כאן צריך את בגדי הים והמגבות. משחקיית מים, גן שעשועים, וקרוסלת מים (0 ס״מ בליווי). החלק הכי טוב ביום באוגוסט — קירור ופריקת האנרגיה האחרונה.",
-          "location": "Toverland, Sevenum",
-          "category": "activity",
-          "coords": {
-            "lat": 51.3982,
-            "lon": 5.9838
-          }
-        },
-        {
-          "id": "e1821-0011-4000-8000-000000000011",
-          "dayId": "d4000000-0000-4000-8000-000000000821",
-          "startTime": "18:00",
-          "endTime": "19:15",
-          "title": "🍽️ The Flaming Feather — פונדק אבירים",
-          "description": "שימו לב: המסעדה נמצאת בתוך הפארק, באזור אבלון ליד הכניסה — אוכלים לפני היציאה, לא אחריה.",
-          "location": "The Flaming Feather, Toverland",
-          "category": "meal",
-          "coords": {
-            "lat": 51.3982,
-            "lon": 5.9838
-          }
-        },
-        {
-          "id": "e1821-0012-4000-8000-000000000012",
-          "dayId": "d4000000-0000-4000-8000-000000000821",
-          "startTime": "19:15",
-          "endTime": "20:00",
-          "title": "🚗 חזרה לריזורט",
-          "location": "Safari Resort Beekse Bergen",
-          "category": "transport",
-          "coords": {
-            "lat": 51.5203,
-            "lon": 5.1387
-          }
-        }
-      ]
-    },
-    {
-      "id": "d5000000-0000-4000-8000-000000000822",
-      "date": "2026-08-22",
-      "label": "יום ריזורט — ספארי סירה ובריכה",
-      "events": [
-        {
-          "id": "e1822-0001-4000-8000-000000000001",
-          "dayId": "d5000000-0000-4000-8000-000000000822",
           "startTime": "10:00",
           "endTime": "12:00",
           "title": "🚤 ספארי סירה — Beekse Bergen",
@@ -839,8 +685,8 @@
           }
         },
         {
-          "id": "e1822-0002-4000-8000-000000000002",
-          "dayId": "d5000000-0000-4000-8000-000000000822",
+          "id": "e1821-0002-4000-8000-000000000002",
+          "dayId": "d4000000-0000-4000-8000-000000000821",
           "startTime": "13:00",
           "endTime": "16:30",
           "title": "🏊 בריכה מקורה ומחוממת (Majimoto)",
@@ -853,13 +699,173 @@
           }
         },
         {
-          "id": "e1822-0003-4000-8000-000000000003",
-          "dayId": "d5000000-0000-4000-8000-000000000822",
+          "id": "e1821-0003-4000-8000-000000000003",
+          "dayId": "d4000000-0000-4000-8000-000000000821",
           "startTime": "18:30",
           "title": "🍽️ ארוחת ערב — MottoToko (מסעדת הריזורט)",
           "description": "ארוחה במסעדת הריזורט MottoToko או בווילה.",
           "location": "Safari Resort Beekse Bergen",
           "category": "meal",
+          "coords": {
+            "lat": 51.5203,
+            "lon": 5.1387
+          }
+        }
+      ]
+    },
+    {
+      "id": "d5000000-0000-4000-8000-000000000822",
+      "date": "2026-08-22",
+      "label": "Toverland — שבת עמוסה, אבל לא במתקנים שלנו",
+      "events": [
+        {
+          "id": "e1822-0001-4000-8000-000000000001",
+          "dayId": "d5000000-0000-4000-8000-000000000822",
+          "startTime": "08:30",
+          "endTime": "09:30",
+          "title": "🚗 יציאה מוקדמת ל-Toverland",
+          "description": "45 ד׳ נסיעה. בשבת של אוגוסט השעה הראשונה שווה שעתיים — להיות בשער ב-09:30. החניה כבר שולמה מראש (13.50€ בהזמנה).",
+          "location": "Safari Resort Beekse Bergen",
+          "category": "transport",
+          "coords": {
+            "lat": 51.5203,
+            "lon": 5.1387
+          }
+        },
+        {
+          "id": "e1822-0002-4000-8000-000000000002",
+          "dayId": "d5000000-0000-4000-8000-000000000822",
+          "startTime": "10:00",
+          "endTime": "10:35",
+          "title": "⭐ Merlin's Quest (אבלון) — ראשון!",
+          "description": "אבלון צמוד לכניסה. שיט סירות, 0 ס״מ בליווי — שניהם נכנסים. מתקן המשפחה שהתור שלו גדל הכי מהר.",
+          "location": "Toverland, Sevenum",
+          "category": "activity",
+          "coords": {
+            "lat": 51.3982,
+            "lon": 5.9838
+          }
+        },
+        {
+          "id": "e1822-0003-4000-8000-000000000003",
+          "dayId": "d5000000-0000-4000-8000-000000000822",
+          "startTime": "10:35",
+          "endTime": "11:10",
+          "title": "⭐ Toos-Express (ארץ טוס)",
+          "description": "המתקן השני שרגיש לתור בגילאים האלה. לעשות לפני 11:30. 90 ס״מ בליווי.",
+          "location": "Toverland, Sevenum",
+          "category": "activity",
+          "coords": {
+            "lat": 51.3982,
+            "lon": 5.9838
+          }
+        },
+        {
+          "id": "e1822-0004-4000-8000-000000000004",
+          "dayId": "d5000000-0000-4000-8000-000000000822",
+          "startTime": "11:10",
+          "endTime": "12:00",
+          "title": "🎠 שאר ארץ טוס",
+          "description": "Klokhuis (0 ס״מ) · Morrels Truckjes (0 ס״מ) · ספלי תה (90) · Djinn (100, עומר). התורים כאן קצרים יחסית — אלה לא המתקנים שקהל של שבת בא בשבילם.",
+          "location": "Toverland, Sevenum",
+          "category": "activity",
+          "coords": {
+            "lat": 51.3982,
+            "lon": 5.9838
+          }
+        },
+        {
+          "id": "e1822-0005-4000-8000-000000000005",
+          "dayId": "d5000000-0000-4000-8000-000000000822",
+          "startTime": "12:00",
+          "endTime": "13:00",
+          "title": "🍕 צהריים מוקדם",
+          "description": "לאכול ב-12:00 ולא ב-13:00 — בשבת של אוגוסט המסעדות נחנקות בדיוק בשעה הזאת.",
+          "location": "Toverland, Sevenum",
+          "category": "meal",
+          "coords": {
+            "lat": 51.3982,
+            "lon": 5.9838
+          }
+        },
+        {
+          "id": "e1822-0006-4000-8000-000000000006",
+          "dayId": "d5000000-0000-4000-8000-000000000822",
+          "startTime": "13:00",
+          "endTime": "14:30",
+          "title": "🏰 משחקיות מקורות — מקלט משעת השיא",
+          "description": "Speelkasteel · Sim sa la Klim · Dwaalhof. אפס תורים, ממוזג, והילדים פורקים אנרגיה בדיוק כשבחוץ הפארק הכי צפוף. זה הטריק המרכזי ליום שבת.",
+          "location": "Toverland, Sevenum",
+          "category": "activity",
+          "coords": {
+            "lat": 51.3982,
+            "lon": 5.9838
+          }
+        },
+        {
+          "id": "e1822-0007-4000-8000-000000000007",
+          "dayId": "d5000000-0000-4000-8000-000000000822",
+          "startTime": "14:30",
+          "endTime": "15:45",
+          "title": "🎡 Wunderwald",
+          "description": "Karussell (0) · Wirbelbaum — גלגל ענק (0) · Kletterabenteuer — טיפוס מקורה · Maximus' Wunderball. Villa Fiasko (100) ו-Expedition Zork (90, רטוב) לבן ולעומר.",
+          "location": "Toverland, Sevenum",
+          "category": "activity",
+          "coords": {
+            "lat": 51.3982,
+            "lon": 5.9838
+          }
+        },
+        {
+          "id": "e1822-0008-4000-8000-000000000008",
+          "dayId": "d5000000-0000-4000-8000-000000000822",
+          "startTime": "15:45",
+          "endTime": "17:15",
+          "title": "💦 Waku Waku + Fort Boreas + Tolly Molly (העמק הקסום)",
+          "description": "בגדי ים, מגבות והחלפה מלאה. אחה״צ הקהל מתדלדל, ובאוגוסט זה החלק הכי טוב ביום.",
+          "location": "Toverland, Sevenum",
+          "category": "activity",
+          "coords": {
+            "lat": 51.3982,
+            "lon": 5.9838
+          }
+        },
+        {
+          "id": "e1822-0009-4000-8000-000000000009",
+          "dayId": "d5000000-0000-4000-8000-000000000822",
+          "startTime": "17:15",
+          "endTime": "18:00",
+          "title": "🛝 Little Dragons + Arthur's Tournament (אבלון)",
+          "description": "גן שעשועים לפעוטות בדרך החוצה, צמוד למסעדה.",
+          "location": "Toverland, Sevenum",
+          "category": "activity",
+          "coords": {
+            "lat": 51.3982,
+            "lon": 5.9838
+          }
+        },
+        {
+          "id": "e1822-0010-4000-8000-000000000010",
+          "dayId": "d5000000-0000-4000-8000-000000000822",
+          "startTime": "18:00",
+          "endTime": "19:15",
+          "title": "🍽️ The Flaming Feather",
+          "description": "המסעדה נמצאת בתוך הפארק, באזור אבלון ליד הכניסה — אוכלים לפני היציאה, לא אחריה.",
+          "location": "The Flaming Feather, Toverland",
+          "category": "meal",
+          "coords": {
+            "lat": 51.3982,
+            "lon": 5.9838
+          }
+        },
+        {
+          "id": "e1822-0011-4000-8000-000000000011",
+          "dayId": "d5000000-0000-4000-8000-000000000822",
+          "startTime": "19:15",
+          "endTime": "20:00",
+          "title": "🚗 חזרה לריזורט",
+          "location": "Safari Resort Beekse Bergen",
+          "category": "transport",
           "coords": {
             "lat": 51.5203,
             "lon": 5.1387

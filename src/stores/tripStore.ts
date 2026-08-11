@@ -514,14 +514,16 @@ export const useTripStore = create<TripStore>()(
                 (d.date === '2026-08-19' || d.date === '2026-08-27') &&
                 (d.events ?? []).filter(e => e.location).length < 2
             )
-            // Content marker for the park-days rework: Toverland moved off
-            // Saturday 22.8 (90%+ crowd score) to Friday 21.8, and both park
-            // days got a stop-by-stop route. A live copy that still has
-            // Toverland on 22.8 predates it — and the refreshed seed puts
-            // Toverland on 21.8, so this can't fire twice.
-            const hasSaturdayToverland = (t.days ?? []).some(
+            // Content marker for the park-days rework. An earlier version of
+            // this moved Toverland to Friday 21.8 to dodge the Saturday crowds,
+            // before the tickets turned up in Gmail — already bought, dated,
+            // and non-transferable except for medical reasons. The visit is
+            // back on 22.8, so any live copy showing Toverland on 21.8 came
+            // from that short-lived version and needs pulling back. The seed
+            // now has Toverland on 22.8, so this can't fire twice.
+            const hasFridayToverland = (t.days ?? []).some(
               d =>
-                d.date === '2026-08-22' &&
+                d.date === '2026-08-21' &&
                 (d.events ?? []).some(e =>
                   /Toverland/i.test(`${e.title ?? ''} ${e.location ?? ''}`)
                 )
@@ -555,7 +557,7 @@ export const useTripStore = create<TripStore>()(
             // the user's own tasks / budget / edits intact. Stamp "now" so the
             // swap beats any older cloud copy on the next newer-wins merge and
             // propagates to the other device instead of being clobbered back.
-            if (hasOldItinerary || missingRouteStops || hasWrongResort || hasSaturdayToverland) {
+            if (hasOldItinerary || missingRouteStops || hasWrongResort || hasFridayToverland) {
               return {
                 ...t,
                 days: freshHolland.days,
@@ -636,6 +638,44 @@ export const useTripStore = create<TripStore>()(
                 : t.tasks,
               budget: needsLine
                 ? { ...t.budget, items: [...(t.budget?.items ?? []), seedLine!] }
+                : t.budget,
+              updatedAt: new Date().toISOString(),
+            }
+          })
+        }
+
+        // One-shot: backfill what the confirmation emails turned out to hold —
+        // the GuestHouse stay's real price and the fact that it bundles the
+        // Efteling entry, plus the two prepaid lines the budget never had
+        // (that stay, and the Toverland tickets). Guarded per-field so it
+        // settles after one pass.
+        const GH_BUDGET_ID = '8f2a1b04-6c93-4e17-b528-0a4d9e13f7c2'
+        const TOV_BUDGET_ID = 'd6b30f85-21ac-4e9f-9c07-3b1e5a7d2049'
+        if (freshHolland) {
+          state.trips = state.trips.map(t => {
+            if (t.id !== HOLLAND_ID) return t
+            const seedGh = (freshHolland.accommodations ?? []).find(a =>
+              a.name.startsWith('GuestHouse')
+            )
+            const staleGh = (t.accommodations ?? []).some(
+              a => a.name.startsWith('GuestHouse') && !a.confirmationNumber
+            )
+            const seedLines = (freshHolland.budget?.items ?? []).filter(
+              s => s.id === GH_BUDGET_ID || s.id === TOV_BUDGET_ID
+            )
+            const have = new Set((t.budget?.items ?? []).map(x => x.id))
+            const missing = seedLines.filter(s => !have.has(s.id))
+            if ((!staleGh || !seedGh) && !missing.length) return t
+            return {
+              ...t,
+              accommodations:
+                staleGh && seedGh
+                  ? (t.accommodations ?? []).map(a =>
+                      a.name.startsWith('GuestHouse') ? { ...a, ...seedGh, id: a.id } : a
+                    )
+                  : t.accommodations,
+              budget: missing.length
+                ? { ...t.budget, items: [...(t.budget?.items ?? []), ...missing] }
                 : t.budget,
               updatedAt: new Date().toISOString(),
             }
