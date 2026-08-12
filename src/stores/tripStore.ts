@@ -528,6 +528,15 @@ export const useTripStore = create<TripStore>()(
                   /Toverland/i.test(`${e.title ?? ''} ${e.location ?? ''}`)
                 )
             )
+            // Content marker for the Beekse Bergen rework. The old plan sent
+            // them on a bus safari on 25.8, but that safari is seasonal and
+            // runs 1.10–31.3 — it does not exist in August, so any live copy
+            // still showing it is stale. The refreshed seed replaces it with
+            // the Gamedrive and never mentions a bus safari, so this can't
+            // fire twice.
+            const hasAugustBusSafari = (t.days ?? []).some(d =>
+              (d.events ?? []).some(e => /ספארי אוטובוס/.test(e.title ?? ''))
+            )
             // The 20–27.8 lodging was recorded as "Lake Resort Beekse Bergen"
             // — a different property from the "Safari Resort Beekse Bergen" the
             // Doc names, confirmed by Ben. The refreshed seed says Safari
@@ -557,7 +566,13 @@ export const useTripStore = create<TripStore>()(
             // the user's own tasks / budget / edits intact. Stamp "now" so the
             // swap beats any older cloud copy on the next newer-wins merge and
             // propagates to the other device instead of being clobbered back.
-            if (hasOldItinerary || missingRouteStops || hasWrongResort || hasFridayToverland) {
+            if (
+              hasOldItinerary ||
+              missingRouteStops ||
+              hasWrongResort ||
+              hasFridayToverland ||
+              hasAugustBusSafari
+            ) {
               return {
                 ...t,
                 days: freshHolland.days,
