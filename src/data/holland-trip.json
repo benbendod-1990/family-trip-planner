@@ -7,7 +7,7 @@
   "coverEmoji": "🌷",
   "docUrl": "https://docs.google.com/document/d/1H22xt-Q6VrHNQ4PMvF0UvSw7K5XBvVc5VzZgfyEeyjc/edit?tab=t.0",
   "createdAt": "2026-04-24T15:40:00.000Z",
-  "updatedAt": "2026-08-12T18:46:28.736Z",
+  "updatedAt": "2026-08-12T19:21:11.291Z",
   "family": [
     {
       "id": "87973dde-1f43-4571-862b-5ef5393e1734",
@@ -86,7 +86,7 @@
     },
     {
       "id": "c17816ec-a714-40b1-8cc3-f1abfcb694cc",
-      "name": "Safari Resort Beekse Bergen",
+      "name": "Safari Hotel Beekse Bergen",
       "type": "hotel",
       "address": "Hilvarenbeek, Netherlands",
       "checkIn": "2026-08-20",
@@ -94,7 +94,7 @@
       "cost": 1558.55,
       "currency": "EUR",
       "confirmationNumber": "09526000923",
-      "notes": "שולם 22/10/2025. סאפרי + מלון, 7 לילות (20-27.8). ⚠️ מחיר 1558€ צריך אימות — לפי ה-confirmation זה ל-7 לילות או רק חלק?",
+      "notes": "הזמנה 09526000923, שולם 22/10/2025. Savanne Room — 42 מ״ר, 2 חדרי שינה, עד 5 נפשות. מרפסת עם נוף פתוח לסוואנת Wongo: זברות, ג׳ירפות, יעני וקרנפים. ארוחת בוקר כלולה. Attraction Pass כלול. ⚠️ אין מטבח — כל הארוחות בחוץ. הכניסה לחדר מ-16:00, קוד PIN נשלח 3 ימים לפני.",
       "coords": {
         "lat": 51.5203,
         "lon": 5.1387
@@ -303,9 +303,9 @@
     },
     {
       "id": "task-gamedrive-beekse",
-      "title": "🚙 להזמין Gamedrive ל-21.8, 15:15",
-      "notes": "Exclusieve Gamedrive, €170 לרכב, 2 מבוגרים + 2 ילדים. ⚠️ נבדק בלוח ההזמנות: 22–27.8 מלאים לגמרי — 21.8 הוא אחד משני התאריכים היחידים בשהייה עם מקום. הסלוטים הפנויים ב-21.8: 12:00, 12:45, 15:15. נבחר 15:15 כי בצהריים החיות בצל. דרך My Beekse Bergen באתר, לא מהאפליקציה.",
-      "done": false,
+      "title": "🚙 Gamedrive — הוזמן ✅ 21.8 15:15 (382911)",
+      "notes": "Private Gamedrive, הזמנה 382911. שישי 21.8, 15:15–16:00, 4 נפשות, €170 שולם. עלייה וסיום ב-Opstapplaats Hogon House (Safari Hotel). להיות שם 15:10.",
+      "done": true,
       "category": "booking"
     }
   ],
@@ -673,10 +673,10 @@
           "dayId": "d3000000-0000-4000-8000-000000000820",
           "startTime": "16:00",
           "endTime": "17:00",
-          "title": "🏨 כניסה לחדר — Safari Resort (Savanne Room)",
-          "description": "⚠️ הכניסה מ-16:00, לא מוקדם יותר. קוד PIN נשלח 3 ימים לפני. ההזמנה היא Savanne Room (חדר עם נוף לסוואנה), לא וילה. עד 16:00 המתקנים פתוחים בכל מקרה.",
+          "title": "🏨 כניסה לחדר — Safari Hotel (Savanne Room)",
+          "description": "⚠️ הכניסה מ-16:00, לא מוקדם יותר. קוד PIN נשלח 3 ימים לפני. Savanne Room: 42 מ״ר, 2 חדרי שינה, מרפסת עם נוף לסוואנה. ארוחת בוקר כלולה. אין מטבח. עד 16:00 המתקנים פתוחים בכל מקרה.",
           "category": "rest",
-          "location": "Safari Resort Beekse Bergen",
+          "location": "Safari Hotel Beekse Bergen",
           "coords": {
             "lat": 51.5203,
             "lon": 5.1387
@@ -740,9 +740,9 @@
           "startTime": "13:30",
           "endTime": "14:45",
           "title": "😴 מנוחה בחדר",
-          "description": "קריטי: ארי צריך לישון לפני ה-Gamedrive, אחרת 45 דקות בג׳יפ ייגמרו רע.",
+          "description": "קריטי: ארי צריך לישון לפני ה-Gamedrive, אחרת 45 דקות בג׳יפ ייגמרו רע. המרפסת פונה לסוואנה — הילדים יכולים לראות ג׳ירפות וזברות מהחדר, וזה הופך את המנוחה למשהו שהם מסכימים לו.",
           "category": "rest",
-          "location": "Safari Resort Beekse Bergen",
+          "location": "Safari Hotel Beekse Bergen",
           "coords": {
             "lat": 51.5203,
             "lon": 5.1387
@@ -753,10 +753,10 @@
           "dayId": "d4000000-0000-4000-8000-000000000821",
           "startTime": "15:15",
           "endTime": "16:00",
-          "title": "🚙 ⭐ Gamedrive — ג׳יפ פתוח עם ריינג׳ר",
-          "description": "לנד קרוזר פתוח, ריינג׳ר מלווה. 45 דקות. ⚠️ להגיע לנקודת העלייה 15 דקות מראש. ילדים חייבים לשבת לבד בחגורה, אסור על הברכיים. €170 לרכב, 2+2.",
+          "title": "🚙 ⭐ Private Gamedrive — הוזמן ✅ (382911)",
+          "description": "הזמנה 382911, 4 נפשות, €170 שולם. לנד קרוזר פתוח עם ריינג׳ר (Ranger Gamedrive 3). ⚠️ העלייה היא 15:15–15:20 — להיות שם 15:10, לא 15:15. נקודת העלייה Hogon House היא גם נקודת הסיום, אז חוזרים לאותו מקום. ילדים חייבים לשבת לבד בחגורה, אסור על הברכיים. טלפון בזמן השהייה: 088-9000323.",
           "category": "activity",
-          "location": "Safaripark Beekse Bergen",
+          "location": "Opstapplaats Hogon House, Safari Hotel",
           "coords": {
             "lat": 51.5185,
             "lon": 5.1087
@@ -770,7 +770,7 @@
           "title": "🏊 בריכה מקורה ומחוממת (Majimoto)",
           "description": "להירגע אחרי הג׳יפ. מקורה ומחוממת, עובדת בכל מזג אוויר.",
           "category": "activity",
-          "location": "Safari Resort Beekse Bergen",
+          "location": "Safari Hotel Beekse Bergen",
           "coords": {
             "lat": 51.5203,
             "lon": 5.1387
@@ -783,7 +783,7 @@
           "title": "🍽️ ארוחת ערב — MottoToko",
           "description": "מסעדת הריזורט, או ארוחה בחדר.",
           "category": "meal",
-          "location": "Safari Resort Beekse Bergen",
+          "location": "Safari Hotel Beekse Bergen",
           "coords": {
             "lat": 51.5203,
             "lon": 5.1387
@@ -803,7 +803,7 @@
           "endTime": "09:30",
           "title": "🚗 יציאה מוקדמת ל-Toverland",
           "description": "45 ד׳ נסיעה. בשבת של אוגוסט השעה הראשונה שווה שעתיים — להיות בשער ב-09:30. החניה כבר שולמה מראש (13.50€ בהזמנה).",
-          "location": "Safari Resort Beekse Bergen",
+          "location": "Safari Hotel Beekse Bergen",
           "category": "transport",
           "coords": {
             "lat": 51.5203,
@@ -942,7 +942,7 @@
           "startTime": "19:15",
           "endTime": "20:00",
           "title": "🚗 חזרה לריזורט",
-          "location": "Safari Resort Beekse Bergen",
+          "location": "Safari Hotel Beekse Bergen",
           "category": "transport",
           "coords": {
             "lat": 51.5203,
@@ -1003,7 +1003,7 @@
           "dayId": "d6000000-0000-4000-8000-000000000823",
           "startTime": "19:00",
           "title": "🍽️ ארוחת ערב קלילה",
-          "description": "בווילה או בהילברנבק.",
+          "description": "בהילברנבק. אין מטבח בחדר, אז ארוחות ערב תמיד בחוץ.",
           "category": "meal"
         }
       ]
@@ -1106,7 +1106,7 @@
           "title": "🎶 Dance your fit with the Rangers",
           "description": "פעילות חינם של הריזורט ב-Ranger Basecamp, מתוך התוכנית היומית באפליקציית ביקסה ברגן.",
           "category": "activity",
-          "location": "Safari Resort Beekse Bergen",
+          "location": "Safari Hotel Beekse Bergen",
           "coords": {
             "lat": 51.5203,
             "lon": 5.1387
@@ -1146,9 +1146,9 @@
           "startTime": "13:00",
           "endTime": "17:00",
           "title": "😴 מנוחה, בריכה ואריזה",
-          "description": "היום שלפני אוטרכט — לא להעמיס.",
+          "description": "היום שלפני אוטרכט — לא להעמיס. המרפסת פונה לסוואנה — הילדים יכולים לראות ג׳ירפות וזברות מהחדר, וזה הופך את המנוחה למשהו שהם מסכימים לו.",
           "category": "rest",
-          "location": "Safari Resort Beekse Bergen",
+          "location": "Safari Hotel Beekse Bergen",
           "coords": {
             "lat": 51.5203,
             "lon": 5.1387
@@ -1251,7 +1251,7 @@
           "endTime": "08:20",
           "title": "🧳 צ׳ק-אאוט Beekse Bergen + אריזות סופיות",
           "category": "rest",
-          "location": "Safari Resort Beekse Bergen"
+          "location": "Safari Hotel Beekse Bergen"
         },
         {
           "id": "e1827-0002-4000-8000-000000000002",
