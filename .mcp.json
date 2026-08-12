@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "google-docs": {
+      "type": "stdio",
+      "command": "node",
+      "args": [
+        "tools/mcp-google-docs/server.mjs"
+      ],
+      "env": {}
+    }
+  }
+}
