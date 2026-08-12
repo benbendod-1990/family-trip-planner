@@ -537,11 +537,13 @@ export const useTripStore = create<TripStore>()(
             const hasAugustBusSafari = (t.days ?? []).some(d =>
               (d.events ?? []).some(e => /ספארי אוטובוס/.test(e.title ?? ''))
             )
-            // The 20–27.8 lodging was recorded as "Lake Resort Beekse Bergen"
-            // — a different property from the "Safari Resort Beekse Bergen" the
-            // Doc names, confirmed by Ben. The refreshed seed says Safari
-            // everywhere, so any surviving "Lake Resort" marks a stale copy.
-            const WRONG_RESORT = /Lake Resort Beekse Bergen/i
+            // The 20–27.8 lodging has been recorded under two wrong names now.
+            // It was "Lake Resort Beekse Bergen", then got renamed to "Safari
+            // Resort" — both wrong. The Gamedrive confirmation (382911) and
+            // every mail from Libéma say Safari *Hotel*, and the booked room
+            // type settles it: a Savanne Room is a Safari Hotel room. Both old
+            // names therefore mark a stale copy, and the seed carries neither.
+            const WRONG_RESORT = /(Lake|Safari) Resort Beekse Bergen/i
             const hasWrongResort =
               (t.accommodations ?? []).some(a => WRONG_RESORT.test(a.name ?? '')) ||
               (t.days ?? []).some(d =>
@@ -558,7 +560,7 @@ export const useTripStore = create<TripStore>()(
             const accommodations = hasWrongResort
               ? (t.accommodations ?? []).map(a =>
                   WRONG_RESORT.test(a.name ?? '')
-                    ? { ...a, name: 'Safari Resort Beekse Bergen' }
+                    ? { ...a, name: 'Safari Hotel Beekse Bergen' }
                     : a
                 )
               : t.accommodations
