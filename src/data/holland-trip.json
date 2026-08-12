@@ -7,7 +7,7 @@
   "coverEmoji": "🌷",
   "docUrl": "https://docs.google.com/document/d/1H22xt-Q6VrHNQ4PMvF0UvSw7K5XBvVc5VzZgfyEeyjc/edit?tab=t.0",
   "createdAt": "2026-04-24T15:40:00.000Z",
-  "updatedAt": "2026-08-12T20:48:46.004Z",
+  "updatedAt": "2026-08-12T20:53:23.324Z",
   "family": [
     {
       "id": "87973dde-1f43-4571-862b-5ef5393e1734",
@@ -774,10 +774,10 @@
           "dayId": "d4000000-0000-4000-8000-000000000821",
           "startTime": "16:15",
           "endTime": "18:00",
-          "title": "🏊 בריכה מקורה ומחוממת (Majimoto)",
-          "description": "להירגע אחרי הג׳יפ. מקורה ומחוממת, עובדת בכל מזג אוויר.",
+          "title": "🏊 בריכת Maji Springs (Karibu Town)",
+          "description": "בריכה מקורה ומחוממת עם נוף לסוואנה. יש בריכת פעוטות נפרדת, אזור משחקי מים, ומגלשת משפחה — Wild River, כ-34 מ׳ מגובה 3 מ׳. כלולה ב-Attraction Pass. ⚠️ הבריכה נמצאת ב-Karibu Town בצד ה-Safari Resort, לא במלון שלנו — צריך לעבור לשם, זה לא ״לרדת למטה״.",
           "category": "activity",
-          "location": "Safari Hotel Beekse Bergen",
+          "location": "Maji Springs, Karibu Town, Safari Resort Beekse Bergen",
           "coords": {
             "lat": 51.5203,
             "lon": 5.1387
