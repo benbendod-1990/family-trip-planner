@@ -7,7 +7,7 @@
   "coverEmoji": "🌷",
   "docUrl": "https://docs.google.com/document/d/1H22xt-Q6VrHNQ4PMvF0UvSw7K5XBvVc5VzZgfyEeyjc/edit?tab=t.0",
   "createdAt": "2026-04-24T15:40:00.000Z",
-  "updatedAt": "2026-08-12T20:37:06.977Z",
+  "updatedAt": "2026-08-12T20:48:46.004Z",
   "family": [
     {
       "id": "87973dde-1f43-4571-862b-5ef5393e1734",
@@ -321,7 +321,7 @@
     {
       "id": "d1000000-0000-4000-8000-000000000818",
       "date": "2026-08-18",
-      "label": "נחיתה ונחיתה רכה",
+      "label": "נחיתה, גדיים ונחיתה רכה",
       "events": [
         {
           "id": "e1818-0001-4000-8000-000000000001",
@@ -347,7 +347,7 @@
           "id": "e1818-0003-4000-8000-000000000003",
           "dayId": "d1000000-0000-4000-8000-000000000818",
           "startTime": "11:20",
-          "endTime": "13:30",
+          "endTime": "12:30",
           "title": "🛬 נחיתה בסכיפהול + איסוף רכב ומזוודות (SIXT 12:00, כולל 2 כיסאות)",
           "location": "Schiphol Airport",
           "category": "transport",
@@ -357,39 +357,39 @@
           }
         },
         {
+          "id": "e1818-0006-4000-8000-000000000006",
+          "dayId": "d1000000-0000-4000-8000-000000000818",
+          "startTime": "12:30",
+          "endTime": "14:00",
+          "title": "🐐 חוות העיזים Ridammerhoeve — יער אמסטרדם",
+          "description": "15 דקות מסכיפהול, בדרך ממילא. הילדים מאכילים גדיים בבקבוקי חלב. ארוחת צהריים אורגנית מתוצרת החווה. אין צורך להזמין. הועברה לכאן מ-27.8 — ביום החזרה היא לחצה את הטיסה, וכאן היא בדיוק מה שצריך אחרי טיסה: אוויר, חיות, ואפס נסיעה נוספת.",
+          "location": "Geitenboerderij Ridammerhoeve, Amstelveen",
+          "category": "activity",
+          "coords": {
+            "lat": 52.3128,
+            "lon": 4.8213
+          }
+        },
+        {
           "id": "e1818-0004-4000-8000-000000000004",
           "dayId": "d1000000-0000-4000-8000-000000000818",
-          "startTime": "13:30",
-          "endTime": "14:45",
+          "startTime": "14:15",
+          "endTime": "15:30",
           "title": "🚗 נסיעה ל-GuestHouse Kaatsheuvel",
-          "description": "1:15 שעות נסיעה מהשדה למלון.",
+          "description": "שעה ורבע דרומה לקאטסהובל.",
           "category": "transport"
         },
         {
           "id": "e1818-0005-4000-8000-000000000005",
           "dayId": "d1000000-0000-4000-8000-000000000818",
-          "startTime": "14:45",
-          "endTime": "16:00",
+          "startTime": "15:30",
+          "endTime": "16:30",
           "title": "🏨 צ׳ק-אין GuestHouse Hotel + התארגנות",
           "location": "GuestHouse Hotel, Kaatsheuvel",
           "category": "rest",
           "coords": {
             "lat": 51.657,
             "lon": 5.0404
-          }
-        },
-        {
-          "id": "e1818-0006-4000-8000-000000000006",
-          "dayId": "d1000000-0000-4000-8000-000000000818",
-          "startTime": "16:00",
-          "endTime": "18:30",
-          "title": "🐐 פינת חי Kinderboerderij 't Erf — וואלוויק",
-          "description": "10 ד׳ נסיעה ל-Waalwijk. פינת ליטוף מטופחת: טרקטורים קטנים, מתקני עץ וחיות משק באווירה שלווה — מושלם לפריקת אנרגיה אחרי הטיסה (בלי להתלכלך בחול).",
-          "location": "Kinderboerderij 't Erf, Waalwijk",
-          "category": "activity",
-          "coords": {
-            "lat": 51.6886,
-            "lon": 5.0719
           }
         },
         {
@@ -1263,13 +1263,13 @@
     {
       "id": "d0000000-0000-4000-8000-000000000827",
       "date": "2026-08-27",
-      "label": "חוות עיזים + טיסת חזור",
+      "label": "צ׳ק-אאוט וטיסת חזור",
       "events": [
         {
           "id": "e1827-0001-4000-8000-000000000001",
           "dayId": "d0000000-0000-4000-8000-000000000827",
-          "startTime": "07:45",
-          "endTime": "08:20",
+          "startTime": "08:30",
+          "endTime": "09:15",
           "title": "🧳 צ׳ק-אאוט Beekse Bergen + אריזות סופיות",
           "category": "rest",
           "location": "Safari Hotel Beekse Bergen"
@@ -1277,44 +1277,21 @@
         {
           "id": "e1827-0002-4000-8000-000000000002",
           "dayId": "d0000000-0000-4000-8000-000000000827",
-          "startTime": "08:20",
-          "endTime": "09:35",
-          "title": "🚗 נסיעה צפונה לכיוון אמסטרדם",
-          "description": "1:15 שעות.",
-          "category": "transport"
-        },
-        {
-          "id": "e1827-0003-4000-8000-000000000003",
-          "dayId": "d0000000-0000-4000-8000-000000000827",
-          "startTime": "09:35",
+          "startTime": "09:15",
           "endTime": "10:45",
-          "title": "🐐 חוות העיזים Ridammerhoeve — יער אמסטרדם",
-          "description": "הילדים מאכילים גדיים בבקבוקי חלב. אורגני, נחמד, ללא צורך בהזמנה.",
-          "location": "Geitenboerderij Ridammerhoeve, Amstelveen",
-          "category": "activity",
-          "coords": {
-            "lat": 52.3128,
-            "lon": 4.8244
-          }
-        },
-        {
-          "id": "e1827-0004-4000-8000-000000000004",
-          "dayId": "d0000000-0000-4000-8000-000000000827",
-          "startTime": "10:45",
-          "endTime": "11:15",
-          "title": "🥗 ארוחת צהריים אורגנית בחווה",
-          "category": "meal",
-          "location": "Geitenboerderij Ridammerhoeve, Amstelveen"
+          "title": "🚗 נסיעה לסכיפהול",
+          "description": "שעה וחצי, עם מרווח לפקקים.",
+          "category": "transport"
         },
         {
           "id": "e1827-0005-4000-8000-000000000005",
           "dayId": "d0000000-0000-4000-8000-000000000827",
-          "startTime": "11:15",
-          "endTime": "12:10",
+          "startTime": "10:45",
+          "endTime": "12:00",
           "title": "🚗 החזרת רכב בסכיפהול + צ׳ק-אין לטיסה",
           "category": "transport",
           "location": "Schiphol Airport",
-          "description": "להיות בטרמינל 2 שעות לפני ההמראה (14:10). כולל החזרת הרכב, מסירת כבודה ובידוק."
+          "description": "שעה ורבע להחזרת הרכב ולצ׳ק-אין, במקום 55 דקות. הטיסה ב-14:10."
         },
         {
           "id": "e1827-0006-4000-8000-000000000006",
