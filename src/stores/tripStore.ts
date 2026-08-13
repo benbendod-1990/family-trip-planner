@@ -549,6 +549,19 @@ export const useTripStore = create<TripStore>()(
               (t.days ?? []).some(d =>
                 (d.events ?? []).some(e => WRONG_RESORT.test(e.location ?? ''))
               )
+            // Content marker for the 19.8 Efteling route fix: Pagode was added
+            // to the Reizenrijk block (enclosed + seated, and the plan already
+            // stands on that square), Tufferbaan/Kinderspoor folded into the
+            // Anton Pieckplein block, and Nest! pulled back to 20:25 because
+            // Ruigrijk -> Aquanura isn't the 5 minutes the old plan assumed.
+            // A 19.8 with no Pagode predates it; the seed now has one, so this
+            // can't fire twice.
+            const missingEftelingPagode = (t.days ?? []).some(
+              d =>
+                d.date === '2026-08-19' &&
+                (d.events ?? []).length > 0 &&
+                !(d.events ?? []).some(e => /Pagode/i.test(e.title ?? ''))
+            )
             // A fundamentally broken copy (wrong flight, wrong dates) predates
             // the good baseline — replace the whole trip.
             const isBroken = hasEasyJet || isEmptyItinerary || oldStart || hasUtcFlightTimes
@@ -573,7 +586,8 @@ export const useTripStore = create<TripStore>()(
               missingRouteStops ||
               hasWrongResort ||
               hasFridayToverland ||
-              hasAugustBusSafari
+              hasAugustBusSafari ||
+              missingEftelingPagode
             ) {
               return {
                 ...t,
