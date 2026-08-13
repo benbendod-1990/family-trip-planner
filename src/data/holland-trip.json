@@ -7,7 +7,7 @@
   "coverEmoji": "🌷",
   "docUrl": "https://docs.google.com/document/d/1H22xt-Q6VrHNQ4PMvF0UvSw7K5XBvVc5VzZgfyEeyjc/edit?tab=t.0",
   "createdAt": "2026-04-24T15:40:00.000Z",
-  "updatedAt": "2026-08-12T20:53:23.324Z",
+  "updatedAt": "2026-08-13T04:59:36.718Z",
   "family": [
     {
       "id": "87973dde-1f43-4571-862b-5ef5393e1734",
@@ -666,8 +666,8 @@
           "dayId": "d3000000-0000-4000-8000-000000000820",
           "startTime": "13:15",
           "endTime": "16:00",
-          "title": "💦 Speelland — פארק מים ומשחקים",
-          "description": "פתוח 1.4–30.9. חוף חול, מים רדודים, טרמפולינות, מגלשות ומכוניות מיני. ה-Attraction Pass כולל גם Eindhoven Zoo, ZooParc Overloon, Aviodrome ו-AquaZoo Leeuwarden — ללא תוספת תשלום, אם רוצים יום מחוץ לריזורט.",
+          "title": "🎪 Speelland — Indoor (ומתקנים יבשים בחוץ)",
+          "description": "Speelland Indoor: Little Lagoon לגילאי 0–4 — משטח נמוך, קוביות ובריכת כדורים, בול לארי. Bouncy Beach, Jungle Rush, Super Slides ו-Tiki Tower לגילאי 4–14, בול לעומר. ⚠️ חובה גרביים. ההורים יכולים לשבת בבית הקפה ולהשגיח. ⚠️ באגם החיצוני דווח על ירידה באיכות המים והשחייה בו היא על אחריות המבקר — לבדוק ב-zwemwater.nl לפני. את המתקנים היבשים בחוץ (טרמפולינות, מסלול הבאגי, אי ההרפתקאות, חוף החול) אפשר בלי להיכנס למים.",
           "category": "activity",
           "location": "Speelland Beekse Bergen",
           "coords": {
@@ -996,8 +996,8 @@
           "dayId": "d6000000-0000-4000-8000-000000000823",
           "startTime": "14:00",
           "endTime": "17:30",
-          "title": "💦 Speelland — חוף ומים",
-          "description": "החלק הרטוב: Waverider, מים רדודים לקטנים, וחוף החול. בגדי ים והחלפה מלאה.",
+          "title": "🎪 Speelland — Indoor (ומתקנים יבשים בחוץ)",
+          "description": "Speelland Indoor: Little Lagoon לגילאי 0–4 — משטח נמוך, קוביות ובריכת כדורים, בול לארי. Bouncy Beach, Jungle Rush, Super Slides ו-Tiki Tower לגילאי 4–14, בול לעומר. ⚠️ חובה גרביים. ההורים יכולים לשבת בבית הקפה ולהשגיח. ⚠️ באגם החיצוני דווח על ירידה באיכות המים והשחייה בו היא על אחריות המבקר — לבדוק ב-zwemwater.nl לפני. את המתקנים היבשים בחוץ (טרמפולינות, מסלול הבאגי, אי ההרפתקאות, חוף החול) אפשר בלי להיכנס למים.",
           "category": "activity",
           "location": "Speelland Beekse Bergen",
           "coords": {
@@ -1162,9 +1162,23 @@
           }
         },
         {
+          "id": "d8000000-cs09-4000-8000-000000000825",
+          "dayId": "d8000000-0000-4000-8000-000000000825",
+          "startTime": "13:15",
+          "endTime": "14:15",
+          "title": "🦒 ספארי רכב — הסיבוב השני, בדרך החוצה",
+          "description": "אחרי הליכת הקרנפים חוזרים לרכב ועושים את ספארי הרכב כדרך היציאה מהפארק — אפס נסיעה נוספת. כלול ב-Attraction Pass, פתוח 09:30–18:30. בשעה הזאת החיות בצל, אז זה סיבוב הנאה ולא צפייה רצינית; את זה כבר עשיתם ב-20.8 בבוקר.",
+          "category": "activity",
+          "location": "Safaripark Beekse Bergen",
+          "coords": {
+            "lat": 51.5185,
+            "lon": 5.1087
+          }
+        },
+        {
           "id": "d8000000-rh05-4000-8000-000000000825",
           "dayId": "d8000000-0000-4000-8000-000000000825",
-          "startTime": "13:30",
+          "startTime": "14:30",
           "endTime": "17:00",
           "title": "😴 מנוחה, בריכה ואריזה",
           "description": "היום שלפני אוטרכט. המרפסת פונה לסוואנה — הילדים יכולים לראות ג׳ירפות וזברות מהחדר.",
