@@ -189,7 +189,13 @@ function tripPlaceTokens(trip: TripPlan): string[] {
   const raw = [
     trip.destination,
     ...(trip.accommodations ?? []).map(a => a.name ?? ''),
-    ...(trip.days ?? []).flatMap(d => (d.events ?? []).map(e => e.location ?? '')),
+    // Transport stops are excluded on purpose: they're airports and stations
+    // ("נמל התעופה בן גוריון", "Athens (ATH)") that every trip passes through,
+    // so they identify the traveller, not the trip. Only where he actually
+    // goes tells the trips apart.
+    ...(trip.days ?? []).flatMap(d =>
+      (d.events ?? []).filter(e => e.category !== 'transport').map(e => e.location ?? ''),
+    ),
   ]
   const tokens = new Set<string>()
   for (const value of raw) {
@@ -204,16 +210,48 @@ function tripPlaceTokens(trip: TripPlan): string[] {
 }
 
 /**
- * Attraction tickets — a museum, a theme park — carry the PDF that matters but
- * parse into no flight/hotel/car, so they never reach a trip through the
- * booking path. Fall back to the trip whose own itinerary names a place the
- * email mentions: the Railway Museum ticket says "Spoorwegmuseum", which is
- * already a stop on 26.8. Deliberately strict — an unrecognised place files
- * nowhere rather than onto a guess.
+ * Every confirmation code this trip already knows — from its flights, hotels
+ * and cars. A booking code is the one token in an e-ticket email that belongs
+ * to exactly one trip, which makes it the most reliable way to file a PDF.
  */
-function findTripByMentionedPlace(trips: TripPlan[], msg: GmailMessage): TripPlan | undefined {
+function tripConfirmationCodes(trip: TripPlan): string[] {
+  const raw = [
+    ...(trip.flights ?? []).map(f => f.confirmationNumber ?? ''),
+    ...(trip.accommodations ?? []).map(a => a.confirmationNumber ?? ''),
+    ...(trip.carRentals ?? []).map(c => c.confirmationNumber ?? ''),
+  ]
+  const codes = new Set<string>()
+  for (const value of raw) {
+    // A cell may hold several codes ("ZHU9F6 / ZH8EWV") — one per passenger.
+    for (const piece of value.split(/[\s,/|]+/)) {
+      const t = piece.trim()
+      // Under 5 chars matches by accident (a room number, a price); PNRs and
+      // Booking.com references are all longer than that.
+      if (t.length >= 5) codes.add(t.toLowerCase())
+    }
+  }
+  return [...codes]
+}
+
+/**
+ * Which trip an attachment-carrying email belongs to, for the emails that never
+ * reach a trip through the booking path. Two independent signals, strongest
+ * first — a confirmation code the trip already holds, then a place its
+ * itinerary names. Both are deliberately strict: an email we can't tie to a
+ * trip is left unfiled rather than filed onto a guess.
+ */
+function findTripForDocument(trips: TripPlan[], msg: GmailMessage): TripPlan | undefined {
   const hay = `${msg.subject} ${msg.from} ${msg.body || msg.snippet}`.toLowerCase()
-  return trips.find(t => tripPlaceTokens(t).some(tok => hay.includes(tok)))
+  return (
+    trips.find(t => tripConfirmationCodes(t).some(code => hay.includes(code))) ??
+    trips.find(t => tripPlaceTokens(t).some(tok => hay.includes(tok)))
+  )
+}
+
+interface DocumentPullOutcome {
+  added: number
+  /** Storage bucket missing — migration 0006 hasn't been run. */
+  unavailable: boolean
 }
 
 /**
@@ -224,9 +262,8 @@ function findTripByMentionedPlace(trips: TripPlan[], msg: GmailMessage): TripPla
 async function pullDocuments(
   pending: Array<{ trip: TripPlan; msg: GmailMessage }>,
   token: string,
-  report: GmailSyncReport,
-): Promise<number> {
-  let added = 0
+): Promise<DocumentPullOutcome> {
+  const out: DocumentPullOutcome = { added: 0, unavailable: false }
   for (const { trip, msg } of pending) {
     trip.documents = trip.documents ?? []
     for (const att of msg.attachments) {
@@ -250,16 +287,78 @@ async function pullDocuments(
         })
         trip.documents.push(doc)
         trip.updatedAt = new Date().toISOString()
-        added++
+        out.added++
       } catch (e) {
         const err = e instanceof Error ? e.message : String(e)
         // One recognisable reason is worth surfacing: the bucket isn't there.
-        if (/אחסון המסמכים לא הוגדר/.test(err)) report.documentsUnavailable = true
+        if (/אחסון המסמכים לא הוגדר/.test(err)) out.unavailable = true
         console.warn('[gmail] document pull failed for', att.filename, e)
       }
     }
   }
-  return added
+  return out
+}
+
+export interface DocumentPullReport {
+  /** Travel emails fetched. */
+  scanned: number
+  /** …of those, how many carried a PDF or scan. */
+  withAttachments: number
+  added: number
+  /** Attachments whose email couldn't be tied to any trip. */
+  unmatched: number
+  documentsUnavailable?: boolean
+}
+
+/**
+ * Files every travel document Gmail is holding, across all trips.
+ *
+ * Separate from syncFromGmail() on purpose. That one runs incrementally off a
+ * checkpoint, so it only ever sees mail that arrived since the last sync — and
+ * document filing was added long after the bookings themselves landed, which
+ * left every existing e-ticket permanently out of reach behind the checkpoint.
+ * This sweeps the full window and touches nothing but attachments, so it is
+ * safe to re-run: a document already filed is recognised by its source email
+ * and skipped.
+ */
+export async function pullAllDocuments(): Promise<DocumentPullReport> {
+  const { token } = await getGmailContext()
+  const messages = await fetchTravelEmails(token, { maxResults: 200 })
+  const trips = [...useTripStore.getState().trips]
+
+  const report: DocumentPullReport = {
+    scanned: messages.length,
+    withAttachments: 0,
+    added: 0,
+    unmatched: 0,
+  }
+
+  // Dates inside the bookings are what place an email on a trip; the regex
+  // parser is enough for that and, unlike the AI path, costs no quota.
+  const parsed = parseEmails(messages)
+  const tripByMsgId = new Map<string, TripPlan>()
+  for (const p of parsed) {
+    const date = primaryDate(p)
+    if (!date) continue
+    const trip = findTripByDate(trips, date)
+    if (trip) tripByMsgId.set(p.messageId.split(':')[0], trip)
+  }
+
+  const pending: Array<{ trip: TripPlan; msg: GmailMessage }> = []
+  for (const msg of messages) {
+    if (!msg.attachments.length) continue
+    report.withAttachments++
+    const trip = tripByMsgId.get(msg.id) ?? findTripForDocument(trips, msg)
+    if (trip) pending.push({ trip, msg })
+    else report.unmatched++
+  }
+
+  const outcome = await pullDocuments(pending, token)
+  report.added = outcome.added
+  if (outcome.unavailable) report.documentsUnavailable = true
+
+  useTripStore.setState({ trips })
+  return report
 }
 
 export interface SyncOptions {
@@ -352,15 +451,17 @@ export async function syncFromGmail(opts: SyncOptions = {}): Promise<GmailSyncRe
   }
 
   // Emails that carried a document but produced no booking — attraction
-  // tickets, mostly. File them by the places they name.
+  // tickets, mostly. File them by their confirmation code or the places they name.
   for (const msg of messages) {
     if (!msg.attachments.length) continue
     if (pendingDocs.some(d => d.msg.id === msg.id)) continue
-    const trip = findTripByMentionedPlace(trips, msg)
+    const trip = findTripForDocument(trips, msg)
     if (trip) pendingDocs.push({ trip, msg })
   }
 
-  report.documentsAdded = await pullDocuments(pendingDocs, token, report)
+  const docOutcome = await pullDocuments(pendingDocs, token)
+  report.documentsAdded = docOutcome.added
+  if (docOutcome.unavailable) report.documentsUnavailable = true
 
   useTripStore.setState({ trips })
   recordSync(userId, {

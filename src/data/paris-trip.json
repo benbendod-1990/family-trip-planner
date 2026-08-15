@@ -6,10 +6,10 @@
   "endDate": "2026-10-19",
   "coverEmoji": "🗼",
   "createdAt": "2026-05-17T00:00:00.000Z",
-  "updatedAt": "2026-05-17T00:00:00.000Z",
+  "updatedAt": "2026-08-15T00:00:00.000Z",
   "family": [
-    { "id": "87973dde-1f43-4571-862b-5ef5393e1734", "name": "בן", "emoji": "👨", "isChild": false },
-    { "id": "cc9b60f1-4149-4b61-b429-83bb80ddd5e9", "name": "גל", "emoji": "👩", "isChild": false }
+    { "id": "a7df3695-3448-4158-ac56-dcfd6bbb7d7e", "name": "בן", "emoji": "👨", "isChild": false },
+    { "id": "28196e87-6f2d-4b5c-a324-8ee24fe844e8", "name": "גל", "emoji": "👩", "isChild": false }
   ],
   "flights": [
     {
@@ -18,8 +18,8 @@
       "flightNumber": "LY 325",
       "departureAirport": "TLV",
       "arrivalAirport": "CDG",
-      "departureTime": "2026-10-15T16:05:00.000Z",
-      "arrivalTime": "2026-10-15T19:55:00.000Z",
+      "departureTime": "2026-10-15T16:05:00.000",
+      "arrivalTime": "2026-10-15T19:55:00.000",
       "cost": 0,
       "currency": "ILS",
       "direction": "outbound",
@@ -34,8 +34,8 @@
       "flightNumber": "LY 328",
       "departureAirport": "CDG",
       "arrivalAirport": "TLV",
-      "departureTime": "2026-10-19T17:35:00.000Z",
-      "arrivalTime": "2026-10-19T22:55:00.000Z",
+      "departureTime": "2026-10-19T17:35:00.000",
+      "arrivalTime": "2026-10-19T22:55:00.000",
       "cost": 0,
       "currency": "ILS",
       "direction": "return",
@@ -57,7 +57,7 @@
         "label": "אל על TLV-CDG-TLV ×2 (ZHU9F6 + ZH8EWV)",
         "planned": 0,
         "date": "2026-05-01",
-        "paidBy": "87973dde-1f43-4571-862b-5ef5393e1734"
+        "paidBy": "a7df3695-3448-4158-ac56-dcfd6bbb7d7e"
       }
     ]
   },
@@ -67,7 +67,7 @@
       "title": "להזין עלות טיסות אל על מהקבצי PDF (ZHU9F6 + ZH8EWV)",
       "description": "Booking codes ZHU9F6 (Gל) ו-ZH8EWV (בן). הוזמן 1/5/2026 דרך Call Center. שני כרטיסים נפרדים על אותן טיסות.",
       "dueDate": "2026-05-31",
-      "assignedTo": "87973dde-1f43-4571-862b-5ef5393e1734",
+      "assignedTo": "a7df3695-3448-4158-ac56-dcfd6bbb7d7e",
       "done": false,
       "createdAt": "2026-05-17T00:00:00.000Z",
       "updatedAt": "2026-05-17T00:00:00.000Z"
@@ -77,7 +77,7 @@
       "title": "להזמין מלון/Airbnb בפריז (4 לילות)",
       "description": "15-19/10/2026, 2 מבוגרים. שקול אזורי Le Marais / Saint-Germain / Montmartre.",
       "dueDate": "2026-07-01",
-      "assignedTo": "cc9b60f1-4149-4b61-b429-83bb80ddd5e9",
+      "assignedTo": "28196e87-6f2d-4b5c-a324-8ee24fe844e8",
       "done": false,
       "createdAt": "2026-05-17T00:00:00.000Z",
       "updatedAt": "2026-05-17T00:00:00.000Z"
@@ -87,7 +87,7 @@
       "title": "להסדיר שמרטף/הורה לילדים בזמן הנסיעה",
       "description": "הילדים נשארים בארץ. לתאם עם סבא/סבתא או שמרטפית ל-15-19/10.",
       "dueDate": "2026-09-15",
-      "assignedTo": "cc9b60f1-4149-4b61-b429-83bb80ddd5e9",
+      "assignedTo": "28196e87-6f2d-4b5c-a324-8ee24fe844e8",
       "done": false,
       "createdAt": "2026-05-17T00:00:00.000Z",
       "updatedAt": "2026-05-17T00:00:00.000Z"

@@ -1,0 +1,184 @@
+{
+  "id": "30a5d517-0db3-427f-adfa-92ef125e1f8f",
+  "name": "רומא — נובמבר 2026",
+  "destination": "רומא, איטליה",
+  "startDate": "2026-11-26",
+  "endDate": "2026-12-01",
+  "coverEmoji": "🏛️",
+  "createdAt": "2026-08-10T20:46:45.000Z",
+  "updatedAt": "2026-08-15T00:00:00.000Z",
+  "coords": { "lat": 41.9028, "lon": 12.4964 },
+  "family": [
+    {
+      "id": "925743d0-3153-44be-a6e3-0717f5521373",
+      "name": "בן",
+      "emoji": "👨",
+      "isChild": false
+    }
+  ],
+  "flights": [
+    {
+      "id": "3ea75436-f0d2-48ab-9519-072af07050a7",
+      "airline": "El Al",
+      "flightNumber": "LY 383",
+      "departureAirport": "TLV",
+      "arrivalAirport": "FCO",
+      "departureTime": "2026-11-26T18:15:00.000",
+      "arrivalTime": "2026-11-26T21:00:00.000",
+      "cost": 87.67,
+      "currency": "USD",
+      "direction": "outbound",
+      "cabinClass": "economy",
+      "confirmationNumber": "ZYKJ6K",
+      "baggageIncluded": true,
+      "notes": "נתב״ג טרמינל 3 → Fiumicino טרמינל 3. Economy Classic (O), מושב 40K, כבודה 1PC. כרטיס 1142495833207 ע״ש Ben David Ben. FF 10627097. משך 03:45. הכרטיס הונפק 10/8/2026 (Internet Booking). המחיר 87.67$ הוא מסים בלבד — התעריף עצמו 0 (כרטיס נקודות), והוא כולל את שני הכיוונים."
+    },
+    {
+      "id": "3c245512-ba7c-494c-9622-316b842a1834",
+      "airline": "El Al",
+      "flightNumber": "LY 386",
+      "departureAirport": "FCO",
+      "arrivalAirport": "TLV",
+      "departureTime": "2026-12-01T10:05:00.000",
+      "arrivalTime": "2026-12-01T14:25:00.000",
+      "cost": 0,
+      "currency": "USD",
+      "direction": "return",
+      "cabinClass": "economy",
+      "confirmationNumber": "ZYKJ6K",
+      "baggageIncluded": true,
+      "notes": "Fiumicino טרמינל 3 → נתב״ג טרמינל 3. Economy Classic (G), מושב 40K, כבודה 1PC. משך 03:20. אותו כרטיס כמו ההלוך — העלות נרשמה כולה על סקטור ההלוך."
+    }
+  ],
+  "accommodations": [],
+  "carRentals": [],
+  "budget": {
+    "currency": "EUR",
+    "totalBudget": 2000,
+    "items": [
+      {
+        "id": "b6159d89-e2e0-44b1-ab20-9dae0168d0e4",
+        "category": "flights",
+        "label": "אל על TLV-FCO-TLV (ZYKJ6K) — מסים בלבד",
+        "planned": 76,
+        "actual": 76,
+        "date": "2026-08-10",
+        "paidBy": "925743d0-3153-44be-a6e3-0717f5521373",
+        "notes": "87.67$ מסים על כרטיס נקודות. הומר ל-EUR לפי ~0.87 — לעדכן לפי החיוב בפועל בכרטיס האשראי."
+      }
+    ]
+  },
+  "tasks": [
+    {
+      "id": "42f26a51-3f8e-4604-87c4-6f711ecf7a9a",
+      "title": "להחליט מי טס לרומא — יש רק כרטיס אחד (ZYKJ6K, ע״ש בן)",
+      "description": "אישור אל על מ-10/8/2026 מכיל נוסע אחד בלבד. אם גל/הילדים מצטרפים — צריך להזמין כרטיסים נוספים ולעדכן את רשימת המשפחה בטיול.",
+      "dueDate": "2026-09-15",
+      "assignedTo": "925743d0-3153-44be-a6e3-0717f5521373",
+      "done": false,
+      "createdAt": "2026-08-15T00:00:00.000Z",
+      "updatedAt": "2026-08-15T00:00:00.000Z"
+    },
+    {
+      "id": "7a5e64af-0b96-464f-8631-4863562decc2",
+      "title": "להזמין לינה ברומא (5 לילות, 26.11–1.12)",
+      "description": "אזורים נוחים להליכה: Centro Storico / Monti / Trastevere. נחיתה 21:00 ב-FCO — לוודא צ׳ק-אין מאוחר או קבלה 24/7.",
+      "dueDate": "2026-09-30",
+      "assignedTo": "925743d0-3153-44be-a6e3-0717f5521373",
+      "done": false,
+      "createdAt": "2026-08-15T00:00:00.000Z",
+      "updatedAt": "2026-08-15T00:00:00.000Z"
+    },
+    {
+      "id": "d6b89869-5dd8-45da-80bd-5127be3e9473",
+      "title": "להזמין כרטיסים לקולוסיאום / מוזיאוני הוותיקן",
+      "description": "שניהם נמכרים מראש ונגמרים. גם בנובמבר כדאי להזמין חלון שעה מראש.",
+      "dueDate": "2026-10-31",
+      "assignedTo": "925743d0-3153-44be-a6e3-0717f5521373",
+      "done": false,
+      "createdAt": "2026-08-15T00:00:00.000Z",
+      "updatedAt": "2026-08-15T00:00:00.000Z"
+    },
+    {
+      "id": "0c9f3138-cc7e-4d90-868a-69a43fc49924",
+      "title": "ביטוח נסיעות + לבדוק תוקף דרכון",
+      "description": "הדרכון חייב להיות בתוקף 3 חודשים אחרי החזרה (1.12.2026) — כלומר לפחות עד מרץ 2027.",
+      "dueDate": "2026-11-01",
+      "assignedTo": "925743d0-3153-44be-a6e3-0717f5521373",
+      "done": false,
+      "createdAt": "2026-08-15T00:00:00.000Z",
+      "updatedAt": "2026-08-15T00:00:00.000Z"
+    }
+  ],
+  "packingItems": [],
+  "days": [
+    {
+      "id": "003833cd-3630-474c-9528-c87d15afab41",
+      "date": "2026-11-26",
+      "label": "טיסה לרומא — נחיתה 21:00",
+      "events": [
+        {
+          "id": "b4cb6c63-afeb-43f4-b846-a24c2c67701c",
+          "dayId": "003833cd-3630-474c-9528-c87d15afab41",
+          "startTime": "15:15",
+          "endTime": "18:15",
+          "title": "✈️ נתב״ג טרמינל 3 — LY383",
+          "description": "להגיע 3 שעות לפני. המראה 18:15, נחיתה ב-Fiumicino 21:00.",
+          "location": "נמל התעופה בן גוריון, טרמינל 3",
+          "category": "transport"
+        },
+        {
+          "id": "582e257f-dec5-4a7c-809e-54af6896ad93",
+          "dayId": "003833cd-3630-474c-9528-c87d15afab41",
+          "startTime": "21:00",
+          "endTime": "22:30",
+          "title": "🚆 מ-Fiumicino למרכז",
+          "description": "Leonardo Express ל-Termini — 32 דק׳, ~€14, יוצא כל 15 דק׳ עד 22:35. אחרי זה רק מונית (~€55 תעריף קבוע למרכז).",
+          "location": "Aeroporto di Fiumicino (FCO)",
+          "category": "transport"
+        }
+      ]
+    },
+    {
+      "id": "de34f4f9-1a00-4fb0-85bb-4937b984bd39",
+      "date": "2026-11-27",
+      "label": "",
+      "events": []
+    },
+    {
+      "id": "97a22128-db70-4aaf-98c4-4b5aee859ede",
+      "date": "2026-11-28",
+      "label": "",
+      "events": []
+    },
+    {
+      "id": "a8853420-ff98-4757-b454-94eb56a3ede0",
+      "date": "2026-11-29",
+      "label": "",
+      "events": []
+    },
+    {
+      "id": "22c4bb29-1173-43c8-8256-6d7344f23d8c",
+      "date": "2026-11-30",
+      "label": "",
+      "events": []
+    },
+    {
+      "id": "fb6b8eac-7a4e-44ed-b590-5b36505ad8f8",
+      "date": "2026-12-01",
+      "label": "חזרה הביתה — המראה 10:05",
+      "events": [
+        {
+          "id": "0f1e2d3c-4b5a-4697-8899-aabbccddeeff",
+          "dayId": "fb6b8eac-7a4e-44ed-b590-5b36505ad8f8",
+          "startTime": "07:00",
+          "endTime": "10:05",
+          "title": "✈️ Fiumicino טרמינל 3 — LY386",
+          "description": "אל על מבקשת 3 שעות לפני. Leonardo Express הראשון מ-Termini יוצא 05:20. נחיתה בנתב״ג 14:25.",
+          "location": "Aeroporto di Fiumicino (FCO)",
+          "category": "transport"
+        }
+      ]
+    }
+  ]
+}

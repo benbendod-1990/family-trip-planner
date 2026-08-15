@@ -12,8 +12,10 @@ export interface TripCoords {
 
 /**
  * A travel document — an e-ticket, voucher or booking PDF. The file itself
- * lives in the `trip-documents` Storage bucket; this metadata rides inside the
- * trip so it syncs to both phones with everything else.
+ * lives in the `trip-documents` Storage bucket and this metadata in the
+ * `trip_documents` table, read and written on its own rather than through
+ * save_trip() — which has no documents key and used to drop them. See
+ * migration 0007.
  */
 export interface TripDocument {
   id: ID
@@ -23,6 +25,12 @@ export interface TripDocument {
   mimeType: string
   /** Bytes, for showing size and refusing oversized attachments. */
   size: number
+  /**
+   * SHA-256 of the bytes. The dedup key: the same e-ticket reaches us from the
+   * airline and again from a forward, under two message ids and often two
+   * filenames, but the bytes are identical.
+   */
+  sha256?: string
   /** Set when the document was pulled automatically out of Gmail. */
   sourceMessageId?: string
   sourceSubject?: string

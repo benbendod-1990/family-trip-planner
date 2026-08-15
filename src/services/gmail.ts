@@ -135,13 +135,34 @@ function effectiveMimeType(mimeType: string, filename: string): string {
 // and would be slow to round-trip through the browser on cellular.
 const MAX_ATTACHMENT_BYTES = 10 * 1024 * 1024
 
+/**
+ * An image the HTML body draws, not a document the sender attached — a logo in
+ * a signature, a spacer, the hotel photo in a Booking.com banner. Gmail gives
+ * these a filename and an attachmentId like any other part, so the only thing
+ * telling them apart is that the body references them: they carry a Content-ID
+ * and are marked `inline`. Without this check a single hotel thread files two
+ * dozen `image001.png` into a trip and buries the actual voucher.
+ *
+ * Scoped to images on purpose. A PDF is never a decoration, and some senders do
+ * mark the real e-ticket `inline`.
+ */
+function isInlineImage(part: Record<string, unknown>, mimeType: string): boolean {
+  if (!/^image\//i.test(mimeType)) return false
+  const headers = (part.headers as Array<{ name: string; value: string }> | undefined) ?? []
+  const header = (name: string) =>
+    headers.find(h => h.name.toLowerCase() === name)?.value ?? ''
+  return Boolean(header('content-id')) || /^inline/i.test(header('content-disposition'))
+}
+
 function extractAttachments(payload: Record<string, unknown>): GmailAttachment[] {
   const found: GmailAttachment[] = []
   const walk = (part: Record<string, unknown>) => {
     const body = part.body as Record<string, unknown> | undefined
     const filename = (part.filename as string) ?? ''
     const mimeType = (part.mimeType as string) ?? ''
-    const looksLikeDocument = DOCUMENT_MIME.test(mimeType) || DOCUMENT_EXT.test(filename)
+    const looksLikeDocument =
+      (DOCUMENT_MIME.test(mimeType) || DOCUMENT_EXT.test(filename)) &&
+      !isInlineImage(part, mimeType)
     if (filename && body?.attachmentId && looksLikeDocument) {
       const size = Number(body.size ?? 0)
       if (size <= MAX_ATTACHMENT_BYTES) {

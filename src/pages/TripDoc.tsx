@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { Stack, Typography, Button, EmptyState, Spinner, Badge, Card } from 'myk-library'
-import { FileText, BookOpen, Upload, Trash2, ExternalLink, Image as ImageIcon } from 'lucide-react'
+import { FileText, BookOpen, Upload, Trash2, ExternalLink, Image as ImageIcon, MailSearch } from 'lucide-react'
 import styled from 'styled-components'
 import { useTripStore } from '@/stores/tripStore'
 import { useBreakpoint } from '@/hooks/useBreakpoint'
 import { fetchDocText } from '@/lib/tripDoc'
 import { documentUrl, deleteDocument, uploadDocument, classifyDocument } from '@/lib/tripDocuments'
+import { pullAllDocuments } from '@/lib/gmailSync'
 import TripDocCard from '@/components/dashboard/TripDocCard'
 import type { TripDocument } from '@/types/trip-plan'
 
@@ -97,6 +98,9 @@ export default function TripDoc() {
   const [planBusy, setPlanBusy] = useState(false)
   const [planError, setPlanError] = useState<string | null>(null)
 
+  const [pullBusy, setPullBusy] = useState(false)
+  const [pullNote, setPullNote] = useState<string | null>(null)
+
   const documents = useMemo(
     () => [...(trip?.documents ?? [])].sort((a, b) => b.addedAt.localeCompare(a.addedAt)),
     [trip?.documents],
@@ -152,10 +156,34 @@ export default function TripDoc() {
     }
   }
 
+  // Deliberately sweeps every trip, not just this one: the e-tickets sit in one
+  // inbox, and filing them one trip at a time would mean re-scanning the same
+  // two years of mail for each.
+  const onPull = async () => {
+    setPullBusy(true)
+    setPullNote(null)
+    setDocError(null)
+    try {
+      const r = await pullAllDocuments()
+      if (r.documentsUnavailable) {
+        setDocError('אחסון המסמכים לא הוגדר — צריך להריץ את migration 0006 בפרויקט Supabase.')
+      } else if (r.added) {
+        setPullNote(`✓ צורפו ${r.added} מסמכים לכל הטיולים (מתוך ${r.scanned} מיילים שנסרקו).`)
+      } else {
+        const skipped = r.unmatched ? ` · ${r.unmatched} מיילים עם קבצים לא שויכו לטיול` : ''
+        setPullNote(`לא נמצאו מסמכים חדשים (${r.scanned} מיילים נסרקו${skipped}).`)
+      }
+    } catch (e) {
+      setDocError(e instanceof Error ? e.message : 'משיכת המסמכים נכשלה')
+    } finally {
+      setPullBusy(false)
+    }
+  }
+
   const onDelete = async (doc: TripDocument) => {
     if (!confirm(`למחוק את "${doc.filename}"?`)) return
     try {
-      await deleteDocument(doc.path)
+      await deleteDocument(doc)
     } catch {
       // Metadata is what the UI reads; drop it even if the object is already gone.
     }
@@ -191,7 +219,7 @@ export default function TripDoc() {
           <Typography variant="body1" style={{ fontWeight: 600 }}>
             מסמכי הנסיעה ({documents.length})
           </Typography>
-          <>
+          <Stack direction="row" spacing="xs" align="center">
             <input
               ref={fileInput}
               type="file"
@@ -200,6 +228,12 @@ export default function TripDoc() {
               style={{ display: 'none' }}
               onChange={e => void onUpload(e.target.files)}
             />
+            <Button size="sm" variant="ghost" disabled={pullBusy} onClick={() => void onPull()}>
+              <Stack direction="row" spacing="xs" align="center">
+                {pullBusy ? <Spinner size="sm" /> : <MailSearch size={14} />}
+                <span>{pullBusy ? 'שואב…' : 'שאב מ-Gmail'}</span>
+              </Stack>
+            </Button>
             <Button
               size="sm"
               variant="ghost"
@@ -211,12 +245,17 @@ export default function TripDoc() {
                 <span>{busyUpload ? 'מעלה…' : 'העלה'}</span>
               </Stack>
             </Button>
-          </>
+          </Stack>
         </Stack>
 
         <Typography variant="body2" style={{ color: '#8F7B5C' }}>
-          כרטיסי טיסה, שוברים ואישורי הזמנה נשמרים כאן אוטומטית כשמריצים "סנכרן Gmail".
+          כרטיסי טיסה, שוברים ואישורי הזמנה. "שאב מ-Gmail" סורק שנתיים אחורה ומצרף
+          את הקבצים לכל הטיולים — לא רק לזה שפתוח.
         </Typography>
+
+        {pullNote && (
+          <Typography variant="body2" style={{ color: '#8F7B5C' }}>{pullNote}</Typography>
+        )}
 
         {docError && (
           <Typography variant="body2" style={{ color: '#b91c1c' }}>{docError}</Typography>

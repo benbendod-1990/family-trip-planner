@@ -8,10 +8,10 @@
   "createdAt": "2026-05-17T00:00:00.000Z",
   "updatedAt": "2099-12-31T23:59:59.999Z",
   "family": [
-    { "id": "87973dde-1f43-4571-862b-5ef5393e1734", "name": "בן", "emoji": "👨", "isChild": false },
-    { "id": "cc9b60f1-4149-4b61-b429-83bb80ddd5e9", "name": "גל", "emoji": "👩", "isChild": false },
-    { "id": "17c85afc-3e0a-447b-b913-04931a0a4d13", "name": "עומר", "emoji": "👦", "isChild": true },
-    { "id": "c7251151-bcac-4eea-8b32-7d1c93e1de3a", "name": "ארי", "emoji": "👶", "isChild": true }
+    { "id": "87b6a3a2-a6bc-4196-a52a-a3f351faa3cb", "name": "בן", "emoji": "👨", "isChild": false },
+    { "id": "adb919b1-dde5-4c25-9d1d-6a767b95d1f3", "name": "גל", "emoji": "👩", "isChild": false },
+    { "id": "35f5074c-3b91-4bc6-bfc1-630dfdb63445", "name": "עומר", "emoji": "👦", "isChild": true },
+    { "id": "b029cf79-7e54-4626-b625-7946df667689", "name": "ארי", "emoji": "👶", "isChild": true }
   ],
   "flights": [
     {
@@ -67,7 +67,7 @@
         "label": "Taxi מלון↔HER ×2 (€98 כל כיוון)",
         "planned": 196,
         "date": "2026-05-21",
-        "paidBy": "87973dde-1f43-4571-862b-5ef5393e1734"
+        "paidBy": "87b6a3a2-a6bc-4196-a52a-a3f351faa3cb"
       },
       {
         "id": "a7b80920-1e2f-3a4b-5c6d-7e8091a2b3c4",
@@ -83,7 +83,7 @@
       "title": "🚖 לאשר טרנספר Aquila מהשדה (€98)",
       "description": "להחזיר תשובה ל-info.rb@aquilahotels.com שהמחיר €98 בסדר. תשלום במזומן ישירות במלון. הנהג יחכה עם שלט.",
       "dueDate": "2026-05-19",
-      "assignedTo": "87973dde-1f43-4571-862b-5ef5393e1734",
+      "assignedTo": "87b6a3a2-a6bc-4196-a52a-a3f351faa3cb",
       "done": false,
       "createdAt": "2026-05-17T00:00:00.000Z",
       "updatedAt": "2026-05-17T00:00:00.000Z"
@@ -93,7 +93,7 @@
       "title": "📋 לבצע Pre check-in למלון",
       "description": "https://myhotel-wallet.com:22350/precheckin/barcode?h=24dbbfd45a — מאפשר שיוך חדר מהיר בהגעה.",
       "dueDate": "2026-05-20",
-      "assignedTo": "cc9b60f1-4149-4b61-b429-83bb80ddd5e9",
+      "assignedTo": "adb919b1-dde5-4c25-9d1d-6a767b95d1f3",
       "done": false,
       "createdAt": "2026-05-17T00:00:00.000Z",
       "updatedAt": "2026-05-17T00:00:00.000Z"
@@ -103,7 +103,7 @@
       "title": "✈️ להזין פרטי טיסת חזור + עלויות מתוך Voucher.pdf",
       "description": "ה-Voucher PDF שהועבר אליך 17/5 מכיל: מספר הזמנה, פרטי טיסת חזור (תאריך/שעה/מספר), עלות חבילה כוללת.",
       "dueDate": "2026-05-19",
-      "assignedTo": "87973dde-1f43-4571-862b-5ef5393e1734",
+      "assignedTo": "87b6a3a2-a6bc-4196-a52a-a3f351faa3cb",
       "done": false,
       "createdAt": "2026-05-17T00:00:00.000Z",
       "updatedAt": "2026-05-17T00:00:00.000Z"
@@ -113,7 +113,7 @@
       "title": "💺 להזמין כיסאות תינוק לטקסי (גילאי 3 ו-4)",
       "description": "המלון מודיע שדורש Baby seats — לוודא שמוזמן מראש.",
       "dueDate": "2026-05-19",
-      "assignedTo": "87973dde-1f43-4571-862b-5ef5393e1734",
+      "assignedTo": "87b6a3a2-a6bc-4196-a52a-a3f351faa3cb",
       "done": false,
       "createdAt": "2026-05-17T00:00:00.000Z",
       "updatedAt": "2026-05-17T00:00:00.000Z"

@@ -7,19 +7,10 @@ import type { TripTask } from '@/types/task'
 import type { PackingItem } from '@/types/packing'
 import { supabase } from './supabase'
 import { normalizeSeedTimestamp } from './seedNormalize'
+import { rowToDocument } from './tripDocuments'
+import { fromDb, tripToPayload } from './tripPayload'
 
 type Row = Record<string, unknown>
-
-const snake = (s: string) => s.replace(/[A-Z]/g, c => `_${c.toLowerCase()}`)
-const camel = (s: string) => s.replace(/_([a-z])/g, (_, c) => c.toUpperCase())
-
-function keys(obj: object, toKey: (k: string) => string): Row {
-  const out: Row = {}
-  for (const [k, v] of Object.entries(obj)) out[toKey(k)] = v
-  return out
-}
-const toDb = (o: object) => keys(o, snake)
-const fromDb = (o: object) => keys(o, camel)
 
 function describe(e: unknown, prefix?: string): Error {
   if (e instanceof Error) return prefix ? new Error(`${prefix}: ${e.message}`) : e
@@ -45,7 +36,7 @@ export async function listTrips(): Promise<TripPlan[]> {
 
 async function hydrateTrip(t: Row): Promise<TripPlan> {
   const tripId = t.id as string
-  const [days, events, budget, flights, acc, cars, fam, tasks, packing] = await Promise.all([
+  const [days, events, budget, flights, acc, cars, fam, tasks, packing, docs] = await Promise.all([
     supabase.from('days').select('*').eq('trip_id', tripId).order('date'),
     supabase.from('events').select('*').eq('trip_id', tripId),
     supabase.from('budget_items').select('*').eq('trip_id', tripId),
@@ -55,6 +46,10 @@ async function hydrateTrip(t: Row): Promise<TripPlan> {
     supabase.from('family_members').select('*').eq('trip_id', tripId),
     supabase.from('tasks').select('*').eq('trip_id', tripId),
     supabase.from('packing_items').select('*').eq('trip_id', tripId),
+    // Documents live in their own table rather than inside the trip payload:
+    // save_trip() nukes-and-replaces its children, so a phone pushing a stale
+    // trip would wipe documents the Mac had just filed. See migration 0007.
+    supabase.from('trip_documents').select('*').eq('trip_id', tripId),
   ])
 
   const eventRows = (events.data ?? []) as Row[]
@@ -90,6 +85,7 @@ async function hydrateTrip(t: Row): Promise<TripPlan> {
     flights: ((flights.data ?? []) as Row[]).map(x => fromDb(x) as unknown as Flight),
     carRentals: ((cars.data ?? []) as Row[]).map(x => fromDb(x) as unknown as CarRental),
     packingItems: ((packing.data ?? []) as Row[]).map(x => fromDb(x) as unknown as PackingItem),
+    documents: ((docs.data ?? []) as Row[]).map(rowToDocument),
     coords: t.coords as TripPlan['coords'],
     createdAt: t.created_at as string,
     updatedAt: t.updated_at as string,
@@ -100,33 +96,6 @@ async function hydrateTrip(t: Row): Promise<TripPlan> {
 // Upsert a full trip (seed an existing localStorage plan into Supabase).
 // Used once for migration; after that, individual CRUD is preferred.
 // ────────────────────────────────────────────────────────────────────────────
-// Build the snake_case JSONB payload that save_trip(jsonb) expects.
-function tripToPayload(plan: TripPlan): Record<string, unknown> {
-  const events = plan.days.flatMap(d =>
-    d.events.map(e => ({ ...toDb({ ...e }), day_id: d.id }))
-  )
-  return {
-    id: plan.id,
-    name: plan.name,
-    destination: plan.destination,
-    start_date: plan.startDate,
-    end_date: plan.endDate,
-    cover_emoji: plan.coverEmoji,
-    total_budget: plan.budget?.totalBudget ?? 0,
-    currency: plan.budget?.currency ?? 'EUR',
-    coords: plan.coords ?? null,
-    days: plan.days.map(d => ({ id: d.id, date: d.date, label: d.label ?? null })),
-    events,
-    family_members: plan.family.map(f => toDb(f)),
-    tasks: plan.tasks.map(t => toDb(t)),
-    accommodations: plan.accommodations.map(a => toDb(a)),
-    flights: plan.flights.map(f => toDb(f)),
-    car_rentals: (plan.carRentals ?? []).map(c => toDb(c)),
-    budget_items: plan.budget.items.map(b => toDb(b)),
-    packing_items: (plan.packingItems ?? []).map(p => toDb(p)),
-  }
-}
-
 // Single-RPC upsert: bypasses per-table RLS by going through a security-
 // definer function. The function still verifies auth.uid() and ownership
 // internally, so no security regression.

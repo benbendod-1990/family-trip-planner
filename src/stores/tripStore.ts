@@ -562,6 +562,18 @@ export const useTripStore = create<TripStore>()(
                 (d.events ?? []).length > 0 &&
                 !(d.events ?? []).some(e => /Pagode/i.test(e.title ?? ''))
             )
+            // Content marker for the resort-days meal rework. The old plan sent
+            // them to "De Pannenkoekenbakker" in Hilvarenbeek — which does not
+            // exist, the chain's nearest branch (Tilburg) closed in July 2025 —
+            // and to "MottoToko", which is not a venue at all but a conflation
+            // of restaurant Moto and the Karibu Town sandwich counter. Either
+            // name proves the live copy predates the rework; the seed now names
+            // real places and carries neither, so this can't fire twice.
+            const hasPhantomMeals = (t.days ?? []).some(d =>
+              (d.events ?? []).some(e =>
+                /Pannenkoekenbakker|MottoToko/i.test(`${e.title ?? ''} ${e.location ?? ''}`)
+              )
+            )
             // A fundamentally broken copy (wrong flight, wrong dates) predates
             // the good baseline — replace the whole trip.
             const isBroken = hasEasyJet || isEmptyItinerary || oldStart || hasUtcFlightTimes
@@ -587,7 +599,8 @@ export const useTripStore = create<TripStore>()(
               hasWrongResort ||
               hasFridayToverland ||
               hasAugustBusSafari ||
-              missingEftelingPagode
+              missingEftelingPagode ||
+              hasPhantomMeals
             ) {
               return {
                 ...t,
@@ -725,6 +738,60 @@ export const useTripStore = create<TripStore>()(
             return oldEnd ? freshCrete : t
           })
         }
+
+        // One-shot: the Paris seed shipped its El Al times as UTC (Z-suffixed),
+        // so the app rendered a 16:05 departure as 19:05 in Israel TZ. The
+        // fixed seed stores local airport time like every other trip. Swap the
+        // flights only — tasks, budget and any itinerary the user has since
+        // written stay put. Self-limiting: after the swap no time ends in Z.
+        const PARIS_ID = 'a1f4e9b2-3c8d-4e6a-9b7c-1d5e8f7a2b34'
+        const freshParis = DEMO_TRIPS.find(t => t.id === PARIS_ID)
+        if (freshParis) {
+          state.trips = state.trips.map(t => {
+            if (t.id !== PARIS_ID) return t
+            const hasUtcFlightTimes = (t.flights ?? []).some(f =>
+              (f.departureTime ?? '').endsWith('Z') || (f.arrivalTime ?? '').endsWith('Z')
+            )
+            if (!hasUtcFlightTimes) return t
+            return { ...t, flights: freshParis.flights, updatedAt: new Date().toISOString() }
+          })
+        }
+
+        // One-shot: every seed shipped the same family-member UUIDs, but
+        // family_members.id is a global primary key — so only the first trip to
+        // reach Supabase could hold them. That is the whole reason Crete and
+        // Paris never synced: their push died on a duplicate-key error that
+        // surfaced as a generic sync failure. Holland got there first and keeps
+        // the original ids; the other seeds now carry their own, and this
+        // remaps any live copy still holding the collided ones.
+        const HOLLAND_FAMILY = new Set(
+          (DEMO_TRIPS.find(t => t.id === HOLLAND_ID)?.family ?? []).map(m => m.id)
+        )
+        state.trips = state.trips.map(t => {
+          if (t.id === HOLLAND_ID) return t
+          const seed = DEMO_TRIPS.find(s => s.id === t.id)
+          if (!seed) return t
+          const collides = (t.family ?? []).some(m => HOLLAND_FAMILY.has(m.id))
+          if (!collides) return t
+          // Names are what survive the id change, and within one family they're
+          // unique — "בן", "גל", "עומר", "ארי".
+          const byName = new Map(seed.family.map(m => [m.name, m.id]))
+          const remap = new Map(
+            (t.family ?? [])
+              .map(m => [m.id, byName.get(m.name)] as const)
+              .filter((p): p is readonly [string, string] => Boolean(p[1]))
+          )
+          const to = (id?: string) => (id && remap.get(id)) || id
+          return {
+            ...t,
+            family: (t.family ?? []).map(m => ({ ...m, id: to(m.id) ?? m.id })),
+            tasks: (t.tasks ?? []).map(x => ({ ...x, assignedTo: to(x.assignedTo) })),
+            budget: {
+              ...t.budget,
+              items: (t.budget?.items ?? []).map(x => ({ ...x, paidBy: to(x.paidBy) })),
+            },
+          }
+        })
 
         state.trips = state.trips.map(t => ({
           ...t,
