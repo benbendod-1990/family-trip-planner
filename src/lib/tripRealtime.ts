@@ -1,6 +1,6 @@
 import type { RealtimeChannel } from '@supabase/supabase-js'
 import { supabase } from './supabase'
-import { listTrips } from './tripRepo'
+import { listTrips, mergeRemoteTrips } from './tripRepo'
 import { useTripStore } from '@/stores/tripStore'
 import { suppressNextPush } from './tripAutoSync'
 
@@ -20,6 +20,9 @@ const TABLES = [
   'family_members',
   'tasks',
   'packing_items',
+  // Without this, a document filed by scripts/pull-documents.ts on the Mac sits
+  // in the table until something else on the trip happens to change.
+  'trip_documents',
 ] as const
 
 let channel: RealtimeChannel | null = null
@@ -32,17 +35,10 @@ function scheduleRefetch() {
     try {
       const remote = await listTrips()
       const localTrips = useTripStore.getState().trips
-      const remoteById = new Map(remote.map(t => [t.id, t]))
       // Merge by updatedAt — preserve unsynced local edits when the cloud
       // changes (auto-push is off; only pushed-or-newer cloud rows should
-      // overwrite local ones).
-      const merged = localTrips.map(local => {
-        const r = remoteById.get(local.id)
-        return r && new Date(r.updatedAt) > new Date(local.updatedAt) ? r : local
-      })
-      for (const r of remote) {
-        if (!merged.some(t => t.id === r.id)) merged.push(r)
-      }
+      // overwrite local ones) — except documents, which the server owns.
+      const merged = mergeRemoteTrips(localTrips, remote)
       suppressNextPush()
       useTripStore.setState({ trips: merged })
     } catch (e) {

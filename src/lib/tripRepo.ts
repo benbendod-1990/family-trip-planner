@@ -92,6 +92,33 @@ async function hydrateTrip(t: Row): Promise<TripPlan> {
   })
 }
 
+/**
+ * Fold a cloud read into the local trips: newer-wins on trip content, but
+ * documents always come from the server.
+ *
+ * The exception is not a special case, it's the only correct rule. Documents
+ * live in their own table and never travel through save_trip(), so the local
+ * copy has no way to learn about one filed anywhere else — by the puller on the
+ * Mac, or by the other phone. Plain newer-wins threw the remote trip away
+ * whenever local was newer, which is nearly always, and took the only copy of
+ * the document list with it: the tab stayed empty no matter how often you
+ * synced. Server state is authoritative here in both directions, so a document
+ * deleted on the other phone stays deleted rather than being resurrected.
+ */
+export function mergeRemoteTrips(local: TripPlan[], remote: TripPlan[]): TripPlan[] {
+  const remoteById = new Map(remote.map(t => [t.id, t]))
+  const merged = local.map(l => {
+    const r = remoteById.get(l.id)
+    if (!r) return l
+    const winner = new Date(r.updatedAt) > new Date(l.updatedAt) ? r : l
+    return { ...winner, documents: r.documents ?? [] }
+  })
+  for (const r of remote) {
+    if (!merged.some(t => t.id === r.id)) merged.push(r)
+  }
+  return merged
+}
+
 // ────────────────────────────────────────────────────────────────────────────
 // Upsert a full trip (seed an existing localStorage plan into Supabase).
 // Used once for migration; after that, individual CRUD is preferred.

@@ -47,7 +47,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const wireUp = async () => {
       const [
         { persistGmailRefreshToken },
-        { listTrips, pushLocalToRemote },
+        { listTrips, pushLocalToRemote, mergeRemoteTrips },
         { startTripAutoSync, suppressNextPush },
         { startTripRealtime },
       ] = await Promise.all([
@@ -63,13 +63,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const remote = await listTrips()
         const localTrips = useTripStore.getState().trips
         const remoteById = new Map(remote.map(t => [t.id, t]))
-        const merged = localTrips.map(local => {
-          const r = remoteById.get(local.id)
-          return r && new Date(r.updatedAt) > new Date(local.updatedAt) ? r : local
-        })
-        for (const r of remote) {
-          if (!merged.some(t => t.id === r.id)) merged.push(r)
-        }
+        const merged = mergeRemoteTrips(localTrips, remote)
         const localOnly = localTrips.filter(t => !remoteById.has(t.id))
         if (localOnly.length) {
           await pushLocalToRemote(localOnly)

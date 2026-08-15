@@ -5,7 +5,7 @@ import { CloudOff, Loader2, Check, AlertCircle, RefreshCw, Mail } from 'lucide-r
 import styled from 'styled-components'
 import { useAuth } from '@/lib/AuthContext'
 import { useTripStore } from '@/stores/tripStore'
-import { pushLocalToRemote, listTrips, deleteTrip } from '@/lib/tripRepo'
+import { pushLocalToRemote, listTrips, deleteTrip, mergeRemoteTrips } from '@/lib/tripRepo'
 import { suppressNextPush } from '@/lib/tripAutoSync'
 import { syncFromGmail, type GmailSyncReport } from '@/lib/gmailSync'
 import { GmailAuthError } from '@/lib/gmailToken'
@@ -180,15 +180,7 @@ export default function CloudSyncButton() {
         // Step 1 — pull from cloud first. The cloud may already have fresher
         // data (admin edits, other devices) that supersedes local stubs.
         const remote = await listTrips()
-        const remoteById = new Map(remote.map(t => [t.id, t]))
-        const merged = trips.map(local => {
-          const r = remoteById.get(local.id)
-          if (!r) return local
-          return new Date(r.updatedAt).getTime() > new Date(local.updatedAt).getTime() ? r : local
-        })
-        for (const r of remote) {
-          if (!merged.some(t => t.id === r.id)) merged.push(r)
-        }
+        const merged = mergeRemoteTrips(trips, remote)
         suppressNextPush()
         useTripStore.setState({ trips: merged })
         if (cancelled) return
@@ -247,15 +239,8 @@ export default function CloudSyncButton() {
       const remote = await listTrips()
       const remoteById = new Map(remote.map(t => [t.id, t]))
       // Local wins on conflict (user's recent edits) — pick newer updatedAt.
-      const merged = [...trips]
-      for (const r of remote) {
-        const local = trips.find(t => t.id === r.id)
-        if (!local) merged.push(r)
-        else if (new Date(r.updatedAt) > new Date(local.updatedAt)) {
-          const idx = merged.findIndex(t => t.id === r.id)
-          merged[idx] = r
-        }
-      }
+      // Documents are the exception: the server owns them. See mergeRemoteTrips.
+      const merged = mergeRemoteTrips(trips, remote)
       suppressNextPush()
       useTripStore.setState({ trips: merged })
 
