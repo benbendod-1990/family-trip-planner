@@ -7,7 +7,10 @@ import { tripTheme } from './theme/tripTheme'
 import App from './App'
 import { AuthProvider } from './lib/AuthContext'
 import PwaUpdatePrompt from './components/pwa/PwaUpdatePrompt'
+import { installBootShellFailsafe } from './boot'
 import './index.css'
+
+installBootShellFailsafe()
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

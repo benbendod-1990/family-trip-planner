@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { lazy, Suspense, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Container, Grid, EmptyState, Button, Stack, Typography } from 'myk-library'
 import { ThemeProvider } from 'styled-components'
@@ -10,14 +10,27 @@ import styled from 'styled-components'
 import { importTripFromFile } from '@/utils/export'
 import { generateId } from '@/utils/id'
 import { useBreakpoint } from '@/hooks/useBreakpoint'
-import CloudSyncButton from '@/components/cloud/CloudSyncButton'
 import type { TripPlan } from '@/types/trip-plan'
 import { DEMO_TRIPS } from '@/data/demoData'
 import { warmTheme, warmDisplayFont, warmPageBackground } from '@/theme/warmTheme'
 
+/*
+ * Home is eager (it is the start_url), so anything it imports statically lands
+ * in the entry bundle. CloudSyncButton pulls gmailSync → aiClient → supabase,
+ * roughly 215kB that nothing on this screen needs in order to paint. Lazy, it
+ * arrives a beat later in its own chunk, which is the right trade for a button
+ * nobody taps in the first second.
+ */
+const CloudSyncButton = lazy(() => import('@/components/cloud/CloudSyncButton'))
+
 const PageBg = styled.div`
   min-height: 100vh;
   background: ${warmPageBackground};
+`
+
+/* Holds the button's footprint so the row doesn't reflow when it arrives. */
+const CloudSyncSlot = styled.div`
+  min-height: 44px;
 `
 
 const Header = styled.div<{ $mobile: boolean }>`
@@ -94,7 +107,9 @@ export default function Home() {
           </Typography>
         </Stack>
         <ButtonRow $mobile={isMobile}>
-          <CloudSyncButton />
+          <Suspense fallback={<CloudSyncSlot />}>
+            <CloudSyncButton />
+          </Suspense>
           <Button variant="ghost" onClick={() => navigate('/profile')} title="הפרופיל המשפחתי שלנו">
             <Stack direction="row" spacing="xs" align="center">
               <span>🧬</span>

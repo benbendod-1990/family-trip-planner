@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { lazy, Suspense, useState } from 'react'
 import { Card, Badge, Stack, Chip, ActionIcon, Typography } from 'myk-library'
 import { useNavigate } from 'react-router-dom'
 import { Trash2, Calendar, Download, Archive, Users } from 'lucide-react'
@@ -7,11 +7,19 @@ import { formatDateShort, getTripDuration } from '@/utils/date'
 import styled from 'styled-components'
 import type { TripPlan } from '@/types/trip-plan'
 import { exportTripAsJSON } from '@/utils/export'
-import PostTripDebriefModal from '@/components/archive/PostTripDebriefModal'
 import { useArchiveStore } from '@/stores/archiveStore'
-import InviteMemberModal from '@/components/cloud/InviteMemberModal'
 import { useAuth } from '@/lib/AuthContext'
 import { destinationColor, warmDisplayFont } from '@/theme/warmTheme'
+
+/*
+ * Both modals are lazy because TripCard renders on Home, the eager start_url.
+ * InviteMemberModal in particular reaches tripRepo → supabase (~186kB), which
+ * was landing in the entry bundle and blocking first paint for a dialog that
+ * only opens on a deliberate tap. They already render behind state flags, so
+ * the chunk is not requested until the modal is actually opened.
+ */
+const PostTripDebriefModal = lazy(() => import('@/components/archive/PostTripDebriefModal'))
+const InviteMemberModal = lazy(() => import('@/components/cloud/InviteMemberModal'))
 
 const Emoji = styled.div`
   font-size: 48px;
@@ -131,19 +139,23 @@ export default function TripCard({ trip, index = 0 }: Props) {
     </Card>
 
     {showDebrief && (
-      <PostTripDebriefModal
-        open={showDebrief}
-        onClose={() => setShowDebrief(false)}
-        trip={trip}
-      />
+      <Suspense fallback={null}>
+        <PostTripDebriefModal
+          open={showDebrief}
+          onClose={() => setShowDebrief(false)}
+          trip={trip}
+        />
+      </Suspense>
     )}
     {showInvite && (
-      <InviteMemberModal
-        open={showInvite}
-        onClose={() => setShowInvite(false)}
-        tripId={trip.id}
-        tripName={trip.name}
-      />
+      <Suspense fallback={null}>
+        <InviteMemberModal
+          open={showInvite}
+          onClose={() => setShowInvite(false)}
+          tripId={trip.id}
+          tripName={trip.name}
+        />
+      </Suspense>
     )}
     </>
   )

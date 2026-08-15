@@ -22,25 +22,11 @@ export default defineConfig({
         // revalidation path, or a deploy can strand users on an old build.
         cleanupOutdatedCaches: true,
         navigateFallback: 'index.html',
-        runtimeCaching: [
-          {
-            // Google Fonts stylesheet — revalidate in the background so the
-            // first paint never blocks on the network.
-            urlPattern: /^https:\/\/fonts\.googleapis\.com\//,
-            handler: 'StaleWhileRevalidate',
-            options: { cacheName: 'google-fonts-stylesheets' },
-          },
-          {
-            // The font files themselves are immutable — cache them for a year.
-            urlPattern: /^https:\/\/fonts\.gstatic\.com\//,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'google-fonts-files',
-              expiration: { maxEntries: 20, maxAgeSeconds: 60 * 60 * 24 * 365 },
-              cacheableResponse: { statuses: [0, 200] },
-            },
-          },
-        ],
+        // Heebo and Frank Ruhl Libre are served from public/fonts and picked up
+        // by globPatterns above, so they precache alongside the shell. The old
+        // runtimeCaching rules for fonts.googleapis.com / fonts.gstatic.com are
+        // gone with the <link> that used to need them: a runtime cache can only
+        // help on the *second* launch, and the first one was the problem.
       },
       devOptions: {
         // Keep the SW out of `npm run dev` — a precaching SW during development

@@ -1,8 +1,9 @@
-import { lazy, Suspense } from 'react'
+import { lazy, Suspense, useEffect } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import Home from './pages/Home'
 import Login from './pages/Login'
 import RouteFallback from './components/layout/RouteFallback'
+import { dismissBootShell } from './boot'
 
 /*
  * Home and Login load eagerly — they are the two entry points, so putting them
@@ -23,6 +24,13 @@ const Packing = lazy(() => import('./pages/Packing'))
 const TripDoc = lazy(() => import('./pages/TripDoc'))
 
 function App() {
+  /*
+   * Hand the screen over from the boot shell in index.html. Effects run
+   * bottom-up, so by the time this fires the routed page below has already
+   * committed — the shell uncovers a real frame, not an empty one.
+   */
+  useEffect(dismissBootShell, [])
+
   return (
     <Suspense fallback={<RouteFallback />}>
       <Routes>
