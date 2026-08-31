@@ -1,0 +1,11 @@
+---
+description: Always load the project's agent instructions
+alwaysApply: true
+---
+
+Read `AGENTS.md` at the repo root before doing anything in this project — it carries the deploy
+protocol, the seed-vs-live-data rules, the Google-Doc source-of-truth invariant, and the
+Supabase-migration limitation. Personal/family context is in `AGENTS.local.md` (git-ignored).
+Historical raw notes, if you need the full story behind a rule, are in `.agent-memory/`.
+
+Answer Ben in Hebrew. Code, identifiers and comments stay in English.

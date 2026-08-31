@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "google-docs": {
+      "command": "node",
+      "args": ["tools/mcp-google-docs/server.mjs"],
+      "env": {}
+    }
+  }
+}
