@@ -1,5 +1,6 @@
 import { supabase } from './supabase'
 import type { TripPlan } from '@/types/trip-plan'
+import type { TripEventCategory } from '@/types/trip'
 
 const AI_BASE = import.meta.env.VITE_AI_BASE_URL ?? 'http://localhost:8787'
 
@@ -138,7 +139,7 @@ export interface ParsedEvent {
   date: string
   startTime: string
   endTime?: string
-  category: 'activity' | 'meal' | 'transport' | 'rest' | 'tour'
+  category: TripEventCategory
   location?: string
   description?: string
   cost?: number
@@ -219,7 +220,7 @@ export interface ParsedDocEvent {
   startTime: string
   endTime?: string
   location?: string
-  category: 'activity' | 'meal' | 'transport' | 'rest' | 'tour'
+  category: TripEventCategory
   cost?: number
   currency?: string
   confidence?: number

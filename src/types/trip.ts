@@ -1,7 +1,7 @@
 import type { ID } from './family'
 import type { TripCoords } from './trip-plan'
 
-export type TripEventCategory = 'activity' | 'meal' | 'transport' | 'rest' | 'tour'
+export type TripEventCategory = 'activity' | 'meal' | 'transport' | 'rest' | 'tour' | 'other'
 
 export interface TripEvent {
   id: ID

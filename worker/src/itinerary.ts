@@ -31,7 +31,7 @@ const ITINERARY_SCHEMA = {
           endTime: { type: 'string', description: 'HH:MM 24h, optional.' },
           category: {
             type: 'string',
-            enum: ['activity', 'meal', 'transport', 'rest', 'tour'],
+            enum: ['activity', 'meal', 'transport', 'rest', 'tour', 'other'],
           },
           location: {
             type: 'string',

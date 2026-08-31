@@ -56,6 +56,7 @@ const CATEGORY_OPTIONS: { value: TripEventCategory; label: string }[] = [
   { value: 'transport', label: '🚌 תחבורה' },
   { value: 'tour', label: '🗺️ סיור' },
   { value: 'rest', label: '😴 מנוחה' },
+  { value: 'other', label: '📌 אחר' },
 ]
 
 interface Props {
