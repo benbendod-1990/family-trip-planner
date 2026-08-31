@@ -26,3 +26,7 @@ CLAUDE.md
 
 # Supabase personal access token (never commit)
 .env.supabase
+
+# Agent context — local only (personal/family data, raw notes)
+AGENTS.local.md
+.agent-memory/
