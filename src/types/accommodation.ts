@@ -50,4 +50,6 @@ export interface Flight {
   confirmationNumber?: string
   baggageIncluded?: boolean
   ticketUrl?: string
+  /** Passenger / PNR notes — seeds store ticket refs here; not shown as a secret. */
+  notes?: string
 }
