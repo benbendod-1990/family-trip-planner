@@ -223,7 +223,7 @@ async function main() {
   }>
   const remoteById = new Map(remote.map(t => [t.id, t]))
 
-  const files = ['crete-trip.json', 'holland-trip.json', 'paris-trip.json', 'rome-trip.json']
+  const files = ['crete-trip.json', 'holland-trip.json', 'paris-trip.json', 'rome-trip.json', 'usa-trip.json']
   const trips: TripPlan[] = files
     .filter(f => !ONLY || f.includes(ONLY))
     .map(f => JSON.parse(readFileSync(join(ROOT, 'src/data', f), 'utf8')) as TripPlan)

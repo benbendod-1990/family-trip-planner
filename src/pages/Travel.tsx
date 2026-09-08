@@ -205,6 +205,9 @@ function FlightCard({ flight, tripId, onEdit, onDelete, isMobile }: { flight: Fl
             {flight.baggageIncluded && <Chip size="sm" variant="success">כבודה כלולה</Chip>}
             {flight.confirmationNumber && <Chip size="sm">{flight.confirmationNumber}</Chip>}
           </Stack>
+          {flight.notes && (
+            <Typography variant="caption" style={{ color: '#6b7280' }}>{flight.notes}</Typography>
+          )}
           {flight.ticketUrl && (
             <a
               href={flight.ticketUrl}

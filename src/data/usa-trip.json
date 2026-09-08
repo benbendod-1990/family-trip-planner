@@ -1,0 +1,705 @@
+{
+  "id": "b38fc010-9096-45c9-b8df-191e369143dc",
+  "name": "ארה״ב — מרץ 2027",
+  "destination": "פלורידה, ארה״ב",
+  "startDate": "2027-03-19",
+  "endDate": "2027-04-02",
+  "coverEmoji": "🇺🇸",
+  "docUrl": "https://docs.google.com/document/d/1gAabX9m9vWPLBjvQZszXpEh5_rCJWC6dArhMe8E8aGo/edit",
+  "createdAt": "2026-09-07T00:00:00.000Z",
+  "updatedAt": "2026-09-07T00:00:00.000Z",
+  "coords": {
+    "lat": 28.3852,
+    "lon": -81.5639
+  },
+  "family": [
+    { "id": "bd45bc64-1a3f-41b0-8580-105f52d537fe", "name": "בן", "emoji": "👨", "isChild": false },
+    { "id": "5ce1491a-ebe2-45e3-afac-e079b561c0d6", "name": "גל", "emoji": "👩", "isChild": false },
+    { "id": "2f092632-d025-4f27-8e35-48deb44371f6", "name": "אבנר", "emoji": "👨", "isChild": false },
+    { "id": "62900ff4-f78e-441f-a5a3-7939f4fc6963", "name": "אמא", "emoji": "👩", "isChild": false },
+    { "id": "af55139a-8427-47f8-b01c-8619514cde97", "name": "אגם", "emoji": "👩", "isChild": false },
+    { "id": "3b3fb68c-d03f-402b-9408-fff076e48fef", "name": "שובל", "emoji": "👩", "isChild": false },
+    { "id": "115d3582-0f7b-4234-b03b-4da4a92256d1", "name": "עדן", "emoji": "👨", "isChild": false },
+    { "id": "a6fd600a-5a99-4833-9d9b-27fe256c334c", "name": "ליבי", "emoji": "👩", "isChild": false },
+    { "id": "d1c98c2a-5a1f-46b3-ba44-ca8434b82225", "name": "לביא", "emoji": "👦", "isChild": true },
+    { "id": "9cd15660-b514-41e1-bf7f-86fa402c36c7", "name": "ארי", "emoji": "👦", "isChild": true },
+    { "id": "790e86da-5a82-4017-a822-856c38508940", "name": "לירי", "emoji": "👶", "isChild": true },
+    { "id": "4161c66a-0ec9-434a-a662-dc2fa2f9b80a", "name": "עומר", "emoji": "👧", "isChild": true }
+  ],
+  "flights": [
+    {
+      "id": "31f18738-145e-406d-9c35-6e4b7631fb18",
+      "airline": "El Al",
+      "flightNumber": "LY 17",
+      "departureAirport": "TLV",
+      "arrivalAirport": "MIA",
+      "departureTime": "2027-03-19T01:00:00.000",
+      "arrivalTime": "2027-03-19T08:50:00.000",
+      "cost": 0,
+      "currency": "USD",
+      "direction": "outbound",
+      "cabinClass": "economy",
+      "confirmationNumber": "X5OKQQ / X5G7DK",
+      "baggageIncluded": true,
+      "notes": "נתב״ג טרמינל 3 → MIA. Economy Classic. משך 13:50. יציאה בלילה שבין חמישי לשישי. בן (כרטיס 1142496055550, מושב ~43C) וגל זילה (כרטיס 1142496055549, מושב ~43B) ב-PNR X5OKQQ. ילדים לביא, ארי, לירי, עומר חוה ב-PNR X5G7DK (מושבים לא ידועים). שעות מקומיות לפי שדה — בלי Z."
+    },
+    {
+      "id": "6291ce4b-e8b0-463d-b43e-4cbf631c200e",
+      "airline": "El Al",
+      "flightNumber": "LY 18",
+      "departureAirport": "MIA",
+      "arrivalAirport": "TLV",
+      "departureTime": "2027-04-01T12:00:00.000",
+      "arrivalTime": "2027-04-02T07:00:00.000",
+      "cost": 0,
+      "currency": "USD",
+      "direction": "return",
+      "cabinClass": "economy",
+      "confirmationNumber": "X5OKQQ / X5G7DK",
+      "baggageIncluded": true,
+      "notes": "MIA → נתב״ג טרמינל 3. Economy Classic. משך 12:00. אותם שני PNR. בן מושב ~42B, גל מושב ~42C. ילדים (X5G7DK) על אותה טיסה, מושבים לא ידועים. נחיתה בת״א 02.4 ב-07:00."
+    }
+  ],
+  "accommodations": [
+    {
+      "id": "33abd5ba-1500-4874-b2a9-36bf6c6c0b8f",
+      "name": "Solterra Resort / Village at Solterra (מועדף)",
+      "type": "villa",
+      "address": "Davenport, Florida",
+      "checkIn": "2027-03-19",
+      "checkOut": "2027-03-22",
+      "cost": 0,
+      "currency": "USD",
+      "notes": "⚠️ לא הוזמן. 3 לילות לפני הקרוז, 12 נפשות. מועדף: Solterra Resort Davenport או The Village at Solterra (בתים עם בריכה פרטית). לאשר תפוסה ל-12 בכתב. Storey Lake ירד מההעדפה עד בדיקת אבטחה. צ׳ק-אין מציאותי 16:00–17:00 אחרי נסיעה מ-MIA.",
+      "coords": {
+        "lat": 28.1614,
+        "lon": -81.6167
+      }
+    },
+    {
+      "id": "40984fe7-4d43-4602-b14d-7148ed1bede3",
+      "name": "Royal Caribbean — Utopia of the Seas",
+      "type": "other",
+      "address": "Port Canaveral, Florida",
+      "checkIn": "2027-03-22",
+      "checkOut": "2027-03-26",
+      "cost": 0,
+      "currency": "USD",
+      "notes": "הוחלט: 4 לילות Bahamas & Perfect Day, 22–26.3.2027. 12 נפשות, כנראה 3 תאים של 4. מספרי תאים לא ידועים. עלייה אחה״צ מפורט קנוורל; ירידה בבוקר 26.3. לוודא תאים מאושרים ל-4 באותה קטגוריה ובקרבה. מחיר — ציטוט אמיתי, לא האומדן של 3 לילות במסמך התכנון.",
+      "coords": {
+        "lat": 28.4106,
+        "lon": -80.6328
+      }
+    },
+    {
+      "id": "c73f19fc-0360-4520-a02d-70b5a721a7c5",
+      "name": "לינה אחרי הקרוז — TBD (מיאמי / Cocoa Beach)",
+      "type": "hotel",
+      "address": "Miami / Cocoa Beach, Florida",
+      "checkIn": "2027-03-26",
+      "checkOut": "2027-03-31",
+      "cost": 0,
+      "currency": "USD",
+      "notes": "⚠️ לא הוזמן. ימים 26–31.3 אחרי הירידה מהאונייה — חוף / מנוחה, בלי כרטיסי פארק מומצאים. אופציות: אזור מיאמי ביץ׳, או Cocoa Beach (קרוב לנמל). הלילה האחרון (31.3) במלון נפרד ליד MIA."
+    },
+    {
+      "id": "d6a6b328-3d31-4924-a355-f6ec731132a1",
+      "name": "Holiday Inn Miami International Airport (מועדף)",
+      "type": "hotel",
+      "address": "Miami International Airport area, Miami, FL",
+      "checkIn": "2027-03-31",
+      "checkOut": "2027-04-01",
+      "cost": 0,
+      "currency": "USD",
+      "notes": "⚠️ לא הוזמן. לילה אחרון לפני LY18 12:00. בחירה מועדפת מהמסמך — קרוב לשדה. 12 נפשות, כנראה כמה חדרים.",
+      "coords": {
+        "lat": 25.7959,
+        "lon": -80.287
+      }
+    }
+  ],
+  "carRentals": [
+    {
+      "id": "e4901448-5d15-4fcb-adb8-e8a506382dc6",
+      "company": "TBD",
+      "carModel": "מיניוואן / van — כמות TBD",
+      "carCategory": "van",
+      "pickupLocation": "Miami International Airport (MIA)",
+      "dropoffLocation": "Port Canaveral, Florida",
+      "pickupDate": "2027-03-19T12:00:00.000",
+      "dropoffDate": "2027-03-22T10:00:00.000",
+      "cost": 0,
+      "currency": "USD",
+      "driverName": "Ben Ben David",
+      "notes": "⚠️ לא הוזמן. איסוף אחרי ביקורת דרכונים (~12:00). נסיעה לווילה באורלנדו ~4 שעות. החזרה בבוקר 22.3 לפני העלייה לאונייה (~51 דק׳ מהווילה לפורט קנוורל). כיסאות בטיחות מהארץ (אל על מטיסה בחינם). המסמך מזכיר שני מיניוואנים לקבוצה — לבדוק רכב שלישי למטען/עגלות."
+    },
+    {
+      "id": "15bd8688-9e4f-40b7-8013-628be02ecc55",
+      "company": "TBD",
+      "carModel": "מיניוואן / van — כמות TBD",
+      "carCategory": "van",
+      "pickupLocation": "Port Canaveral, Florida",
+      "dropoffLocation": "Miami International Airport (MIA)",
+      "pickupDate": "2027-03-26T09:00:00.000",
+      "dropoffDate": "2027-04-01T10:00:00.000",
+      "cost": 0,
+      "currency": "USD",
+      "driverName": "Ben Ben David",
+      "notes": "⚠️ לא הוזמן. איסוף אחרי ירידה מהאונייה (07:30–09:00). יעד ראשון: אזור מיאמי / חוף. החזרה ב-MIA בבוקר 1.4 לפני LY18 12:00."
+    }
+  ],
+  "budget": {
+    "currency": "USD",
+    "totalBudget": 0,
+    "items": [
+      {
+        "id": "b735a7f8-778a-4d32-a093-65b7a9930a57",
+        "category": "flights",
+        "label": "אל על LY17/LY18 — X5OKQQ + X5G7DK",
+        "planned": 0,
+        "date": "2026-09-06",
+        "paidBy": "bd45bc64-1a3f-41b0-8580-105f52d537fe",
+        "notes": "הוזמן. להזין עלות מהאישורים. המסמך העריך ~11,411$ ל-11 מושבים+תינוקת — זה ציטוט ישן, לא המחיר ששולם."
+      },
+      {
+        "id": "27e88588-6a7a-4118-adcd-c685e797c122",
+        "category": "accommodation",
+        "label": "Utopia of the Seas 4 לילות · 3 תאים · 22–26.3",
+        "planned": 0,
+        "notes": "הוחלט, טרם ציטוט/הזמנה סופיים. לא להעתיק את אומדן 3 הללות ($6,220) מהמסמך."
+      },
+      {
+        "id": "63b9876b-64f9-4f5a-8b8e-f1138f7c2558",
+        "category": "accommodation",
+        "label": "וילה אורלנדו 19–22.3 (Solterra / Village at Solterra)",
+        "planned": 0,
+        "notes": "לא הוזמן. 3 לילות ל-12."
+      },
+      {
+        "id": "9fc81d6f-5863-40af-83fd-17fcc3c0a7a7",
+        "category": "accommodation",
+        "label": "לינה 26–31.3 אחרי הקרוז (TBD)",
+        "planned": 0,
+        "notes": "מיאמי / Cocoa Beach — בלי להמציא הזמנה."
+      },
+      {
+        "id": "8e7827e6-a59c-4f23-a2d8-f81b83c03828",
+        "category": "accommodation",
+        "label": "Holiday Inn ליד MIA · לילה 31.3",
+        "planned": 0
+      },
+      {
+        "id": "6f843b42-c63f-4c9b-9814-62e48b8cb888",
+        "category": "transport",
+        "label": "רכבים — MIA→אורלנדו/נמל + נמל→MIA",
+        "planned": 0,
+        "notes": "לא הוזמן. המסמך העריך ~1,900$ לשני מיניוואנים + רכב מהנמל (לתכנון 3 לילות)."
+      },
+      {
+        "id": "afcf34e7-a44b-4965-ba13-76c5216c3eb1",
+        "category": "activities",
+        "label": "דיסני — Magic Kingdom 20.3 + Animal Kingdom 21.3",
+        "planned": 0,
+        "notes": "מתוכנן, לא נקנה. לא להמציא כרטיסי פארק לימים שאחרי הקרוז."
+      },
+      {
+        "id": "993bf1cf-abc3-4e31-ad33-1c59a5a972c4",
+        "category": "other",
+        "label": "ESTA ×12",
+        "planned": 0
+      },
+      {
+        "id": "e0a028a2-a1c3-4a72-b3a5-d2ae2d5c902e",
+        "category": "other",
+        "label": "ביטוח נסיעות (כל אחד לעצמו)",
+        "planned": 0
+      }
+    ]
+  },
+  "tasks": [
+    {
+      "id": "edafa4da-24f4-4fa6-8335-29800201ab16",
+      "title": "להזין עלות טיסות אל על (X5OKQQ + X5G7DK)",
+      "description": "LY17/LY18 הוזמנו. בן+גל PNR X5OKQQ (כרטיסים 1142496055550 / 1142496055549). ילדים PNR X5G7DK (לביא, ארי, לירי, עומר חוה). להזין מחיר בפועל מהאישורים — לא ציטוט המסמך.",
+      "dueDate": "2026-09-30",
+      "assignedTo": "bd45bc64-1a3f-41b0-8580-105f52d537fe",
+      "done": false,
+      "createdAt": "2026-09-07T00:00:00.000Z",
+      "updatedAt": "2026-09-07T00:00:00.000Z"
+    },
+    {
+      "id": "407fadc3-3729-4225-9742-cb82898f584e",
+      "title": "🚨 ציטוט + הזמנת 3 תאים ל-4 ב-Utopia 22–26.3",
+      "description": "4 לילות Bahamas & Perfect Day מפורט קנוורל. 12 נפשות = 4+4+4 בתפוסה מלאה. לוודא שלושה תאים מאושרים ל-4 באותה קטגוריה ובקרבה. לא להסתמך על אומדן 3 הללות מהמסמך.",
+      "dueDate": "2026-10-15",
+      "assignedTo": "bd45bc64-1a3f-41b0-8580-105f52d537fe",
+      "done": false,
+      "createdAt": "2026-09-07T00:00:00.000Z",
+      "updatedAt": "2026-09-07T00:00:00.000Z"
+    },
+    {
+      "id": "db8aec24-504b-4929-80aa-5a1d6c9189c4",
+      "title": "🚨 גיל התינוקת מול מינימום 6 חודשים בקרוז",
+      "description": "רויאל קריביאן דורשת מינימום 6 חודשים בהפלגות קריביות; אל על נותנת עריסה עד גיל 9 חודשים. חלון צר — לאשר תאריך לידה מול 22.3.2027.",
+      "dueDate": "2026-09-30",
+      "assignedTo": "5ce1491a-ebe2-45e3-afac-e079b561c0d6",
+      "done": false,
+      "createdAt": "2026-09-07T00:00:00.000Z",
+      "updatedAt": "2026-09-07T00:00:00.000Z"
+    },
+    {
+      "id": "72304cbc-3d51-4b99-b141-944dcd0b3335",
+      "title": "להזמין וילה Solterra / Village at Solterra 19–22.3 ל-12",
+      "description": "3 לילות לפני העלייה לאונייה. לאשר תפוסה ל-12 בכתב וביטול חינם. מועדף Solterra Resort או Village at Solterra בדאוונפורט.",
+      "dueDate": "2026-11-01",
+      "assignedTo": "bd45bc64-1a3f-41b0-8580-105f52d537fe",
+      "done": false,
+      "createdAt": "2026-09-07T00:00:00.000Z",
+      "updatedAt": "2026-09-07T00:00:00.000Z"
+    },
+    {
+      "id": "294c9e6f-4d7f-44f1-8bf2-99344a3663f1",
+      "title": "להזמין רכבים: MIA 19.3 → פורט קנוורל 22.3, ואחרי הירידה 26.3 → MIA 1.4",
+      "description": "שני קטעים. לבדוק שני מיניוואנים מול רכב שלישי (12 נפשות + עגלות/כיסאות). כיסאות בטיחות מהארץ.",
+      "dueDate": "2026-12-01",
+      "assignedTo": "bd45bc64-1a3f-41b0-8580-105f52d537fe",
+      "done": false,
+      "createdAt": "2026-09-07T00:00:00.000Z",
+      "updatedAt": "2026-09-07T00:00:00.000Z"
+    },
+    {
+      "id": "0f731391-f0e9-48df-a593-838c42e4dbf4",
+      "title": "ESTA לכל 12 הנוסעים",
+      "description": "ארה״ב — אישור נסיעה אלקטרוני לכל אחד, כולל ילדים ותינוקת.",
+      "dueDate": "2026-12-01",
+      "assignedTo": "bd45bc64-1a3f-41b0-8580-105f52d537fe",
+      "done": false,
+      "createdAt": "2026-09-07T00:00:00.000Z",
+      "updatedAt": "2026-09-07T00:00:00.000Z"
+    },
+    {
+      "id": "3f3b9ebb-7d8f-4cd1-892a-527fd316162d",
+      "title": "לינה 26.3–1.4: מיאמי/Cocoa Beach + Holiday Inn ליד MIA ב-31.3",
+      "description": "אחרי הירידה — ימי חוף/מנוחה בלי כרטיסי פארק. לילה אחרון מועדף Holiday Inn Miami International Airport לפני LY18 12:00.",
+      "dueDate": "2026-12-15",
+      "assignedTo": "bd45bc64-1a3f-41b0-8580-105f52d537fe",
+      "done": false,
+      "createdAt": "2026-09-07T00:00:00.000Z",
+      "updatedAt": "2026-09-07T00:00:00.000Z"
+    },
+    {
+      "id": "7312fbe5-04e3-48b9-8304-8c0c62049393",
+      "title": "כרטיסי דיסני: Magic Kingdom 20.3 + Animal Kingdom 21.3 — רק אם קונים",
+      "description": "שני ימי פארק לפני הקרוז, לפי המסמך. לא לקנות כרטיסים לימים שאחרי 21.3 בלי החלטה. שולחן ל-12 בשבוע שיא — 60 יום מראש.",
+      "dueDate": "2026-12-15",
+      "assignedTo": "5ce1491a-ebe2-45e3-afac-e079b561c0d6",
+      "done": false,
+      "createdAt": "2026-09-07T00:00:00.000Z",
+      "updatedAt": "2026-09-07T00:00:00.000Z"
+    },
+    {
+      "id": "3d5e5e09-1f5a-48d1-8ef8-85a6748e3651",
+      "title": "מושבי ילדים ב-X5G7DK + עריסה ב-LY17",
+      "description": "לביא, ארי, לירי, עומר חוה על LY17/LY18. מושבים עדיין לא ידועים. לבקש עריסה לתינוקת (אל על עד גיל 9 חודשים).",
+      "dueDate": "2027-02-01",
+      "assignedTo": "5ce1491a-ebe2-45e3-afac-e079b561c0d6",
+      "done": false,
+      "createdAt": "2026-09-07T00:00:00.000Z",
+      "updatedAt": "2026-09-07T00:00:00.000Z"
+    },
+    {
+      "id": "eff57f6c-02d8-48e3-8fda-f5462ec78400",
+      "title": "ביטוח נסיעות — כל אחד לעצמו",
+      "description": "12 נפשות. לא ביטוח קבוצתי במסמך.",
+      "dueDate": "2027-02-01",
+      "assignedTo": "bd45bc64-1a3f-41b0-8580-105f52d537fe",
+      "done": false,
+      "createdAt": "2026-09-07T00:00:00.000Z",
+      "updatedAt": "2026-09-07T00:00:00.000Z"
+    }
+  ],
+  "packingItems": [],
+  "days": [
+    {
+      "id": "d0270319-0000-4000-8000-000000000019",
+      "date": "2027-03-19",
+      "label": "נחיתה במיאמי ונסיעה לאורלנדו",
+      "events": [
+        {
+          "id": "e0270319-0001-4000-8000-000000000001",
+          "dayId": "d0270319-0000-4000-8000-000000000019",
+          "startTime": "01:00",
+          "endTime": "08:50",
+          "title": "✈️ אל על LY17 TLV→MIA",
+          "description": "טרמינל 3. Economy Classic, משך 13:50. PNR X5OKQQ (בן+גל) / X5G7DK (ילדים).",
+          "location": "Ben Gurion T3",
+          "category": "transport",
+          "coords": { "lat": 32.0114, "lon": 34.8867 }
+        },
+        {
+          "id": "e0270319-0002-4000-8000-000000000002",
+          "dayId": "d0270319-0000-4000-8000-000000000019",
+          "startTime": "08:50",
+          "endTime": "12:00",
+          "title": "🛬 נחיתה ב-MIA + ביקורת דרכונים",
+          "description": "נחיתה 08:50 שעון מקומי. ביקורת דרכונים לקבוצה — יעד מציאותי ~12:00.",
+          "location": "Miami International Airport (MIA)",
+          "category": "transport",
+          "coords": { "lat": 25.7959, "lon": -80.287 }
+        },
+        {
+          "id": "e0270319-0003-4000-8000-000000000003",
+          "dayId": "d0270319-0000-4000-8000-000000000019",
+          "startTime": "12:00",
+          "endTime": "13:00",
+          "title": "🚗 איסוף רכבים + התקנת כיסאות מהארץ",
+          "description": "השכרה TBD. כיסאות בטיחות שהגיעו בטיסה.",
+          "location": "MIA car rental",
+          "category": "transport",
+          "coords": { "lat": 25.7959, "lon": -80.287 }
+        },
+        {
+          "id": "e0270319-0004-4000-8000-000000000004",
+          "dayId": "d0270319-0000-4000-8000-000000000019",
+          "startTime": "13:00",
+          "endTime": "17:00",
+          "title": "🚗 נסיעה לווילה באורלנדו (~4 שעות)",
+          "description": "יעד מועדף: Solterra / Village at Solterra, Davenport. בלי פארק היום.",
+          "location": "Davenport, Florida",
+          "category": "transport"
+        },
+        {
+          "id": "e0270319-0005-4000-8000-000000000005",
+          "dayId": "d0270319-0000-4000-8000-000000000019",
+          "startTime": "17:00",
+          "endTime": "18:00",
+          "title": "🏡 צ׳ק-אין וילה (Solterra / Village at Solterra)",
+          "description": "⚠️ הווילה עדיין לא הוזמנה. הגעה מציאותית אחה״צ המאוחר. אוכל בווילה, בריכה, בלי פארק.",
+          "location": "Solterra Resort, Davenport",
+          "category": "rest",
+          "coords": { "lat": 28.1614, "lon": -81.6167 }
+        }
+      ]
+    },
+    {
+      "id": "d0270320-0000-4000-8000-000000000020",
+      "date": "2027-03-20",
+      "label": "Magic Kingdom",
+      "events": [
+        {
+          "id": "e0270320-0001-4000-8000-000000000001",
+          "dayId": "d0270320-0000-4000-8000-000000000020",
+          "startTime": "08:00",
+          "endTime": "16:00",
+          "title": "🏰 Magic Kingdom",
+          "description": "פתיחה — הג׳ט לג עוזר. כיוון ילדים: Dumbo, קרוסלה, Small World, Peter Pan; אחר כך Jungle Cruise, Pirates, Haunted Mansion. יציאה 15:00–16:00. ⚠️ כרטיסים טרם נקנו.",
+          "location": "Magic Kingdom, Walt Disney World",
+          "category": "activity",
+          "coords": { "lat": 28.4177, "lon": -81.5812 }
+        },
+        {
+          "id": "e0270320-0002-4000-8000-000000000002",
+          "dayId": "d0270320-0000-4000-8000-000000000020",
+          "startTime": "17:00",
+          "title": "🏡 וילה, בריכה",
+          "location": "Solterra Resort, Davenport",
+          "category": "rest",
+          "coords": { "lat": 28.1614, "lon": -81.6167 }
+        }
+      ]
+    },
+    {
+      "id": "d0270321-0000-4000-8000-000000000021",
+      "date": "2027-03-21",
+      "label": "Animal Kingdom",
+      "events": [
+        {
+          "id": "e0270321-0001-4000-8000-000000000001",
+          "dayId": "d0270321-0000-4000-8000-000000000021",
+          "startTime": "08:00",
+          "endTime": "16:00",
+          "title": "🦁 Animal Kingdom",
+          "description": "Kilimanjaro Safaris מוקדם. Na'vi River Journey, TriceraTop Spin, Festival of the Lion King. יציאה אחה״צ. ⚠️ כרטיסים טרם נקנו.",
+          "location": "Disney's Animal Kingdom",
+          "category": "activity",
+          "coords": { "lat": 28.3575, "lon": -81.59 }
+        },
+        {
+          "id": "e0270321-0002-4000-8000-000000000002",
+          "dayId": "d0270321-0000-4000-8000-000000000021",
+          "startTime": "17:00",
+          "title": "🏡 וילה, מנוחה + אריזה לקרוז",
+          "description": "מחר צ׳ק-אאוט ועלייה ל-Utopia. מזוודות נפרדות לקרוז אם צריך.",
+          "location": "Solterra Resort, Davenport",
+          "category": "rest",
+          "coords": { "lat": 28.1614, "lon": -81.6167 }
+        }
+      ]
+    },
+    {
+      "id": "d0270322-0000-4000-8000-000000000022",
+      "date": "2027-03-22",
+      "label": "עלייה ל-Utopia",
+      "events": [
+        {
+          "id": "e0270322-0001-4000-8000-000000000001",
+          "dayId": "d0270322-0000-4000-8000-000000000022",
+          "startTime": "09:00",
+          "endTime": "10:00",
+          "title": "🏡 צ׳ק-אאוט מהווילה",
+          "location": "Solterra Resort, Davenport",
+          "category": "rest",
+          "coords": { "lat": 28.1614, "lon": -81.6167 }
+        },
+        {
+          "id": "e0270322-0002-4000-8000-000000000002",
+          "dayId": "d0270322-0000-4000-8000-000000000022",
+          "startTime": "10:00",
+          "endTime": "11:00",
+          "title": "🚗 נסיעה לפורט קנוורל (~51 דק׳)",
+          "location": "Port Canaveral, Florida",
+          "category": "transport",
+          "coords": { "lat": 28.4106, "lon": -80.6328 }
+        },
+        {
+          "id": "e0270322-0003-4000-8000-000000000003",
+          "dayId": "d0270322-0000-4000-8000-000000000022",
+          "startTime": "12:00",
+          "endTime": "16:00",
+          "title": "🚢 עלייה ל-Utopia of the Seas",
+          "description": "4 לילות Bahamas & Perfect Day. 12 נפשות, 3 תאים של 4 (מספרים TBD). הפלגה אחה״צ.",
+          "location": "Utopia of the Seas, Port Canaveral",
+          "category": "transport",
+          "coords": { "lat": 28.4106, "lon": -80.6328 }
+        },
+        {
+          "id": "e0270322-0004-4000-8000-000000000004",
+          "dayId": "d0270322-0000-4000-8000-000000000022",
+          "startTime": "18:00",
+          "title": "🍽️ ארוחה ראשונה + Adventure Ocean",
+          "description": "מועדון ילדים מגיל 3. תינוקת — פעוטון בתשלום (TBD).",
+          "location": "Utopia of the Seas",
+          "category": "meal"
+        }
+      ]
+    },
+    {
+      "id": "d0270323-0000-4000-8000-000000000023",
+      "date": "2027-03-23",
+      "label": "יום ים על האונייה",
+      "events": [
+        {
+          "id": "e0270323-0001-4000-8000-000000000001",
+          "dayId": "d0270323-0000-4000-8000-000000000023",
+          "startTime": "09:00",
+          "title": "🚢 יום ים — Utopia of the Seas",
+          "description": "הספינה עצמה האטרקציה. בריכות, מגלשות, מופעים. בלי נמל.",
+          "location": "Utopia of the Seas (at sea)",
+          "category": "activity"
+        }
+      ]
+    },
+    {
+      "id": "d0270324-0000-4000-8000-000000000024",
+      "date": "2027-03-24",
+      "label": "CocoCay / Perfect Day",
+      "events": [
+        {
+          "id": "e0270324-0001-4000-8000-000000000001",
+          "dayId": "d0270324-0000-4000-8000-000000000024",
+          "startTime": "08:00",
+          "endTime": "17:00",
+          "title": "🏝️ CocoCay — Perfect Day",
+          "description": "האי הפרטי של רויאל קריביאן. חוף רדוד ובריכות כלולים; פארק המים בתשלום נפרד. עם גילאי 3–5 החלק החינמי מספיק.",
+          "location": "Perfect Day at CocoCay",
+          "category": "activity",
+          "coords": { "lat": 25.8183, "lon": -77.9264 }
+        }
+      ]
+    },
+    {
+      "id": "d0270325-0000-4000-8000-000000000025",
+      "date": "2027-03-25",
+      "label": "יום ים / אונייה",
+      "events": [
+        {
+          "id": "e0270325-0001-4000-8000-000000000001",
+          "dayId": "d0270325-0000-4000-8000-000000000025",
+          "startTime": "09:00",
+          "title": "🚢 יום ים — אונייה",
+          "description": "יום שני בים. אריזה לקראת ירידה מחר בבוקר.",
+          "location": "Utopia of the Seas (at sea)",
+          "category": "activity"
+        }
+      ]
+    },
+    {
+      "id": "d0270326-0000-4000-8000-000000000026",
+      "date": "2027-03-26",
+      "label": "ירידה מהאונייה → מיאמי",
+      "events": [
+        {
+          "id": "e0270326-0001-4000-8000-000000000001",
+          "dayId": "d0270326-0000-4000-8000-000000000026",
+          "startTime": "07:30",
+          "endTime": "09:00",
+          "title": "🚢 ירידה מ-Utopia, פורט קנוורל",
+          "location": "Port Canaveral, Florida",
+          "category": "transport",
+          "coords": { "lat": 28.4106, "lon": -80.6328 }
+        },
+        {
+          "id": "e0270326-0002-4000-8000-000000000002",
+          "dayId": "d0270326-0000-4000-8000-000000000026",
+          "startTime": "09:00",
+          "endTime": "10:00",
+          "title": "🚗 איסוף רכב אחרי הקרוז (TBD)",
+          "location": "Port Canaveral, Florida",
+          "category": "transport"
+        },
+        {
+          "id": "e0270326-0003-4000-8000-000000000003",
+          "dayId": "d0270326-0000-4000-8000-000000000026",
+          "startTime": "10:00",
+          "endTime": "14:00",
+          "title": "🚗 נסיעה לאזור מיאמי",
+          "description": "אחה״צ: Miami Beach. לינה TBD — עדיין לא הוזמנה.",
+          "location": "Miami Beach, Florida",
+          "category": "transport"
+        },
+        {
+          "id": "e0270326-0004-4000-8000-000000000004",
+          "dayId": "d0270326-0000-4000-8000-000000000026",
+          "startTime": "16:00",
+          "title": "🏖️ ערב Miami Beach (TBD)",
+          "description": "לינה באזור מיאמי / ליד MIA — לא הוזמנה.",
+          "location": "Miami Beach, Florida",
+          "category": "activity",
+          "coords": { "lat": 25.7907, "lon": -80.13 }
+        }
+      ]
+    },
+    {
+      "id": "d0270327-0000-4000-8000-000000000027",
+      "date": "2027-03-27",
+      "label": "TBD — חוף / מנוחה",
+      "events": [
+        {
+          "id": "e0270327-0001-4000-8000-000000000001",
+          "dayId": "d0270327-0000-4000-8000-000000000027",
+          "startTime": "10:00",
+          "title": "TBD — יום חוף / וילה / מנוחה",
+          "description": "באפר אחרי הקרוז. מיאמי או Cocoa Beach. בלי כרטיסי פארק מומצאים.",
+          "category": "rest"
+        }
+      ]
+    },
+    {
+      "id": "d0270328-0000-4000-8000-000000000028",
+      "date": "2027-03-28",
+      "label": "TBD — חוף / מנוחה",
+      "events": [
+        {
+          "id": "e0270328-0001-4000-8000-000000000001",
+          "dayId": "d0270328-0000-4000-8000-000000000028",
+          "startTime": "10:00",
+          "title": "TBD — יום רגוע",
+          "description": "באפר אחרי הקרוז. בלי כרטיסי פארק.",
+          "category": "rest"
+        }
+      ]
+    },
+    {
+      "id": "d0270329-0000-4000-8000-000000000029",
+      "date": "2027-03-29",
+      "label": "TBD — חוף / מנוחה",
+      "events": [
+        {
+          "id": "e0270329-0001-4000-8000-000000000001",
+          "dayId": "d0270329-0000-4000-8000-000000000029",
+          "startTime": "10:00",
+          "title": "TBD — יום רגוע",
+          "description": "באפר אחרי הקרוז. בלי כרטיסי פארק.",
+          "category": "rest"
+        }
+      ]
+    },
+    {
+      "id": "d0270330-0000-4000-8000-000000000030",
+      "date": "2027-03-30",
+      "label": "TBD — חוף / מנוחה",
+      "events": [
+        {
+          "id": "e0270330-0001-4000-8000-000000000001",
+          "dayId": "d0270330-0000-4000-8000-000000000030",
+          "startTime": "10:00",
+          "title": "TBD — יום רגוע",
+          "description": "באפר אחרי הקרוז. בלי כרטיסי פארק.",
+          "category": "rest"
+        }
+      ]
+    },
+    {
+      "id": "d0270331-0000-4000-8000-000000000031",
+      "date": "2027-03-31",
+      "label": "מעבר למלון ליד MIA",
+      "events": [
+        {
+          "id": "e0270331-0001-4000-8000-000000000001",
+          "dayId": "d0270331-0000-4000-8000-000000000031",
+          "startTime": "15:00",
+          "title": "🏨 צ׳ק-אין Holiday Inn ליד MIA (מועדף, TBD)",
+          "description": "לילה אחרון לפני LY18 מחר ב-12:00. המלון עדיין לא הוזמן.",
+          "location": "Holiday Inn Miami International Airport",
+          "category": "rest",
+          "coords": { "lat": 25.7959, "lon": -80.287 }
+        }
+      ]
+    },
+    {
+      "id": "d0270401-0000-4000-8000-000000000001",
+      "date": "2027-04-01",
+      "label": "טיסת חזור LY18",
+      "events": [
+        {
+          "id": "e0270401-0001-4000-8000-000000000001",
+          "dayId": "d0270401-0000-4000-8000-000000000001",
+          "startTime": "09:00",
+          "endTime": "10:00",
+          "title": "🚗 החזרת רכב ב-MIA",
+          "location": "Miami International Airport (MIA)",
+          "category": "transport",
+          "coords": { "lat": 25.7959, "lon": -80.287 }
+        },
+        {
+          "id": "e0270401-0002-4000-8000-000000000002",
+          "dayId": "d0270401-0000-4000-8000-000000000001",
+          "startTime": "12:00",
+          "endTime": "23:59",
+          "title": "✈️ אל על LY18 MIA→TLV",
+          "description": "Economy Classic, משך 12:00. PNR X5OKQQ / X5G7DK. נחיתה בת״א מחר 07:00.",
+          "location": "Miami International Airport (MIA)",
+          "category": "transport",
+          "coords": { "lat": 25.7959, "lon": -80.287 }
+        }
+      ]
+    },
+    {
+      "id": "d0270402-0000-4000-8000-000000000002",
+      "date": "2027-04-02",
+      "label": "נחיתה בת״א",
+      "events": [
+        {
+          "id": "e0270402-0001-4000-8000-000000000001",
+          "dayId": "d0270402-0000-4000-8000-000000000002",
+          "startTime": "07:00",
+          "title": "🛬 נחיתה בנתב״ג — LY18",
+          "description": "טרמינל 3, 07:00 שעון ישראל.",
+          "location": "Ben Gurion T3",
+          "category": "transport",
+          "coords": { "lat": 32.0114, "lon": 34.8867 }
+        }
+      ]
+    }
+  ]
+}
