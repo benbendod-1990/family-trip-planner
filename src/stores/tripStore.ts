@@ -482,15 +482,22 @@ export const useTripStore = create<TripStore>()(
           saveSeedDuplicateRedirects(injected.redirects)
           if (injected.replacedCatalog) {
             state.activeTripId = state.trips[0]?.id ?? null
-            return
-          }
-          if (state.activeTripId && injected.droppedIds.includes(state.activeTripId)) {
+          } else if (state.activeTripId && injected.droppedIds.includes(state.activeTripId)) {
             const target = injected.redirects[state.activeTripId]
             state.activeTripId =
               (target && state.trips.some(t => t.id === target) ? target : null) ??
               state.trips[0]?.id ??
               null
           }
+          // In-place mutate during rehydrate updates memory but does not
+          // rewrite localStorage. Flush so a previously cached USA seed is
+          // gone from the guest persist key, not just hidden on screen.
+          const trips = state.trips
+          const activeTripId = state.activeTripId
+          queueMicrotask(() => {
+            if (!isGuestTripStore()) return
+            useTripStore.setState({ trips, activeTripId })
+          })
           return
         }
 

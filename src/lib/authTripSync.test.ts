@@ -307,6 +307,7 @@ describe('call-site regressions', () => {
     assert.ok(store.includes("import('@/lib/repairLiveSeedTrips')"))
     assert.ok(store.includes('hydrateGuestTrips'))
     assert.ok(store.includes('GUEST_TRIPS'))
+    assert.ok(store.includes('queueMicrotask'))
     assert.ok(auth.includes("import('@/data/familySeeds')"))
     assert.equal(auth.includes("import('@/data/demoData')"), false)
   })
