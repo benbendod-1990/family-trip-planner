@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
 import type { TripPlan } from '../types/trip-plan.ts'
 import { extractTripMapPois } from './tripMapPois.ts'
-import { collectDayStops, layoutWindingRoad } from './tripMapDayStops.ts'
+import { collectDayStops, layoutWindingRoad, layoutDayPoster } from './tripMapDayStops.ts'
 import { deriveTripSegments, flowPillsFromDays } from './tripMapSegments.ts'
 import { layoutOverviewMap, matchingRegionPack } from './tripMapGeo.ts'
 
@@ -35,6 +35,10 @@ describe('illustrated diary maps are trip-generic', () => {
         const road = layoutWindingRoad(stops.length, day.id)
         assert.equal(road.stops.length, stops.length)
         assert.match(road.d, /^M/)
+        assert.ok(road.height >= 1040)
+        assert.ok(road.car)
+        const poster = layoutDayPoster(stops, day.id)
+        assert.equal(poster.chips.length, stops.length)
         for (const stop of stops) {
           assert.match(stop.blurb, HE)
         }

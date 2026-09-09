@@ -6,6 +6,12 @@ import {
 } from './tripMapPois.ts'
 import { googleMapsUrl } from '../utils/maps.ts'
 import type { TripDay, TripEvent, TripEventCategory } from '../types/trip.ts'
+import {
+  cssPxToView,
+  placeMapChips,
+  shortMapLabel,
+  type PlacedChip,
+} from './mapLabelLayout.ts'
 
 export type DayStopKind = MapPoiKind | 'ship' | 'transport' | 'meal' | 'rest'
 
@@ -147,12 +153,40 @@ export function dayRoadTheme(stops: DayStop[], label?: string): DayRoadTheme {
   return 'default'
 }
 
+export interface RoadStopPoint {
+  x: number
+  y: number
+  t: number
+  nx: number
+  ny: number
+  angle: number
+}
+
 export interface WindingRoadLayout {
+  width: number
+  height: number
   d: string
   centerline: string
   start: { x: number; y: number }
   end: { x: number; y: number }
-  stops: Array<{ x: number; y: number; t: number }>
+  stops: RoadStopPoint[]
+  car: { x: number; y: number; angle: number }
+}
+
+export interface DayPosterLayout {
+  width: number
+  height: number
+  road: WindingRoadLayout
+  chips: PlacedChip[]
+}
+
+/** Portrait-tall canvas so a dense day stays readable at iPhone width. */
+export function dayRoadViewBox(stopCount: number): { width: number; height: number } {
+  const n = Math.max(1, stopCount)
+  return {
+    width: 1000,
+    height: Math.max(1040, 280 + n * 230),
+  }
 }
 
 function hashVariant(seed: string): number {
@@ -207,43 +241,97 @@ function pointAtLength(
   return pts[pts.length - 1]
 }
 
+function tangentAt(
+  pts: Array<{ x: number; y: number }>,
+  t: number,
+): { x: number; y: number; tx: number; ty: number; nx: number; ny: number; angle: number } {
+  const p = pointAtLength(pts, t)
+  const a = pointAtLength(pts, Math.max(0, t - 0.02))
+  const b = pointAtLength(pts, Math.min(1, t + 0.02))
+  let tx = b.x - a.x
+  let ty = b.y - a.y
+  const len = Math.hypot(tx, ty) || 1
+  tx /= len
+  ty /= len
+  // Screen-space left normal (y grows down).
+  const nx = -ty
+  const ny = tx
+  return { x: p.x, y: p.y, tx, ty, nx, ny, angle: Math.atan2(ty, tx) }
+}
+
 /**
  * Deterministic winding road for one day. Variant comes from the day id so
  * consecutive days snake differently without being random on each render.
+ * Y is monotonic (bottom → top) so stops keep vertical spacing on a phone.
  */
 export function layoutWindingRoad(
   stopCount: number,
   variantSeed: string,
-  width = 1000,
-  height = 640,
+  width?: number,
+  height?: number,
 ): WindingRoadLayout {
+  const view = dayRoadViewBox(stopCount)
+  width = width ?? view.width
+  height = height ?? view.height
   const variant = hashVariant(variantSeed)
-  const waves = 1.35 + (variant % 4) * 0.28
+  const waves = 1.55 + (variant % 3) * 0.38
   const phase = ((variant % 10) / 10) * Math.PI
-  const amp = width * (0.22 + (variant % 5) * 0.012)
-  const padX = 90
-  const padY = 78
-  const samples = 28
+  const padX = 168
+  const padY = 120
+  const amp = Math.min(width / 2 - padX, width * (0.26 + (variant % 4) * 0.02))
+  const samples = 40
   const spine: Array<{ x: number; y: number }> = []
   for (let i = 0; i < samples; i++) {
     const t = i / (samples - 1)
     const y = height - padY - t * (height - padY * 2)
     const x = width / 2 + Math.sin(t * Math.PI * waves + phase) * amp
-    const clamped = Math.min(width - padX, Math.max(padX, x))
-    spine.push({ x: clamped, y })
+    spine.push({ x: Math.min(width - padX, Math.max(padX, x)), y })
   }
   const n = Math.max(1, stopCount)
-  const stops: Array<{ x: number; y: number; t: number }> = []
+  const stops: RoadStopPoint[] = []
   for (let i = 0; i < n; i++) {
-    const t = n === 1 ? 0.5 : 0.1 + (i / (n - 1)) * 0.8
-    const p = pointAtLength(spine, t)
-    stops.push({ ...p, t })
+    const t = n === 1 ? 0.5 : 0.08 + (i / (n - 1)) * 0.84
+    const p = tangentAt(spine, t)
+    stops.push({ x: p.x, y: p.y, t, nx: p.nx, ny: p.ny, angle: p.angle })
   }
+  const car = tangentAt(spine, n <= 2 ? 0.42 : 0.36)
   return {
+    width,
+    height,
     d: catmullRomPath(spine),
     centerline: catmullRomPath(spine),
     start: spine[0],
     end: spine[spine.length - 1],
     stops,
+    car: { x: car.x, y: car.y, angle: car.angle * (180 / Math.PI) },
   }
+}
+
+/**
+ * Poster layout: winding road + one short chip per stop, never a stack of blurbs.
+ */
+export function layoutDayPoster(stops: DayStop[], variantSeed: string): DayPosterLayout {
+  const road = layoutWindingRoad(Math.max(1, stops.length), variantSeed)
+  const iconR = cssPxToView(20, road.width)
+  const offset = cssPxToView(64, road.width)
+  const anchors = stops.map((stop, i) => {
+    const pt = road.stops[i] ?? road.stops[road.stops.length - 1]
+    const side = i % 2 === 0 ? 1 : -1
+    const title = shortMapLabel(stop.title, 14)
+    const text = stop.time ? `${stop.time}\n${title}` : title
+    return {
+      id: stop.id,
+      ax: pt.x,
+      ay: pt.y,
+      text,
+      preferDx: pt.nx * side * offset,
+      preferDy: pt.ny * side * offset,
+    }
+  })
+  const chips = placeMapChips(anchors, { width: road.width, height: road.height }, {
+    iconR,
+    gap: cssPxToView(8, road.width),
+    obstacles: [{ x: 80, y: 0, w: road.width - 90, h: 92 }],
+  })
+  return { width: road.width, height: road.height, road, chips }
 }
