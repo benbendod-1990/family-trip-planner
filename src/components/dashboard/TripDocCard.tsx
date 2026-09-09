@@ -200,7 +200,7 @@ export default function TripDocCard({ trip }: Props) {
         <Title><FileText size={14} /> מסמך התכנון</Title>
         {trip.docUrl && (
           <OpenDoc href={trip.docUrl} target="_blank" rel="noopener noreferrer">
-            פתח <ExternalLink size={13} />
+            {trip.docTitle ?? 'פתח'} <ExternalLink size={13} />
           </OpenDoc>
         )}
       </Header>

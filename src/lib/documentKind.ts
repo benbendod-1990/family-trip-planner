@@ -18,7 +18,7 @@ export function classifyDocument(
   // Venue operators bill under a parent company the guest never sees — Beekse
   // Bergen's confirmations come from libemafunfactory.nl — so the operator
   // names have to be here alongside the obvious hotel words.
-  if (/hotel|resort|booking\.com|airbnb|guesthouse|beeksebergen|beekse bergen|libema|bungalow|camping|stay|lodging|מלון|לינה|אירוח/.test(hay)) return 'hotel'
+  if (/hotel|resort|booking\.com|airbnb|guesthouse|beeksebergen|beekse bergen|libema|bungalow|camping|stay|lodging|cruise|royal.?caribbean|utopia|מלון|לינה|אירוח|קרוז/.test(hay)) return 'hotel'
   if (/car|rental|hertz|avis|europcar|sixt|budget|רכב|השכרת/.test(hay)) return 'car'
   if (/ticket|efteling|toverland|museum|tour|getyourguide|tiqets|כרטיסים|כניסה/.test(hay)) return 'activity'
   return 'other'

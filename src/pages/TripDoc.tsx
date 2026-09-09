@@ -298,11 +298,15 @@ export default function TripDoc() {
                 >
                   <Typography variant="body1" style={{ fontWeight: 500 }}>{doc.filename}</Typography>
                   <Typography variant="body2" style={{ color: '#8F7B5C' }}>
-                    {KIND_LABEL[doc.kind]} · {linkOnly ? 'קישור להזמנה' : prettySize(doc.size)}
+                    {KIND_LABEL[doc.kind]} · {linkOnly ? (doc.sourceMessageId ? 'ממתין לקובץ מהמייל' : 'קישור להזמנה') : prettySize(doc.size)}
                     {doc.sourceSubject ? ` · ${doc.sourceSubject}` : ''}
                   </Typography>
                 </Meta>
-                {doc.sourceMessageId && <Badge size="sm" variant="default">Gmail</Badge>}
+                {doc.sourceMessageId && (
+                  <Badge size="sm" variant="default">
+                    {linkOnly ? 'ממתין ל-Gmail' : 'Gmail'}
+                  </Badge>
+                )}
                 {linkOnly && href ? (
                   <a href={href} target="_blank" rel="noopener noreferrer">
                     <Button size="sm" variant="ghost">

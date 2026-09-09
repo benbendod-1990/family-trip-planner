@@ -831,7 +831,12 @@ export const useTripStore = create<TripStore>()(
         // the Doc↔app link survives on already-installed devices.
         state.trips = state.trips.map(t => {
           const seed = DEMO_TRIPS.find(s => s.id === t.id)
-          return seed?.docUrl && !t.docUrl ? { ...t, docUrl: seed.docUrl } : t
+          if (!seed) return t
+          return {
+            ...t,
+            docUrl: t.docUrl || seed.docUrl,
+            docTitle: t.docTitle || seed.docTitle,
+          }
         })
 
         // Canonical booking-reference cards (El Al PNRs, Utopia sailing) that

@@ -13,6 +13,13 @@ import type { TripDocument, TripPlan } from '@/types/trip-plan'
 
 export const LINK_DOC_PREFIX = 'external:'
 
+/** Combined 3-card USA placeholders from the first seed pass — replaced by Dorit's Gmail ids. */
+export const STALE_USA_SEED_DOC_IDS = new Set([
+  'c38fc010-9096-45c9-b8df-191e369143d1',
+  'c38fc010-9096-45c9-b8df-191e369143d2',
+  'c38fc010-9096-45c9-b8df-191e369143d3',
+])
+
 export function isLinkOnlyDocument(doc: Pick<TripDocument, 'path' | 'url'>): boolean {
   return Boolean(doc.url) || (doc.path?.startsWith(LINK_DOC_PREFIX) ?? false)
 }
@@ -52,14 +59,45 @@ export function mergeServerDocuments(
   return mergeById(server, localLinks)
 }
 
+/**
+ * When Gmail finally yields the real PDF, drop the matching placeholder so we
+ * don't keep a link-only card next to the file. Match on message id or thread
+ * id — not filename, because two Utopia receipts share Cruise_Vacation_Receipt.pdf.
+ */
+export function findGmailPlaceholder(
+  docs: TripDocument[],
+  msg: { id: string; threadId?: string },
+): TripDocument | undefined {
+  const keys = [msg.id, msg.threadId].filter((k): k is string => Boolean(k))
+  if (!keys.length) return undefined
+  return docs.find(
+    d => isLinkOnlyDocument(d) && d.sourceMessageId && keys.includes(d.sourceMessageId),
+  )
+}
+
 /** Fill in any canonical seed booking cards the live trip is still missing. */
 export function ensureSeedBookingDocuments(trips: TripPlan[], seeds: TripPlan[]): TripPlan[] {
   return trips.map(t => {
     const seed = seeds.find(s => s.id === t.id)
     const seedDocs = (seed?.documents ?? []).filter(isLinkOnlyDocument)
-    if (!seedDocs.length) return t
-    const merged = mergeById(t.documents ?? [], seedDocs)
-    if (merged.length === (t.documents ?? []).length) return t
+    if (!seedDocs.length && !(t.documents ?? []).some(d => STALE_USA_SEED_DOC_IDS.has(d.id))) {
+      return t
+    }
+    const kept = (t.documents ?? []).filter(d => !STALE_USA_SEED_DOC_IDS.has(d.id))
+    const haveId = new Set(kept.map(d => d.id))
+    const haveGmail = new Set(kept.map(d => d.sourceMessageId).filter(Boolean) as string[])
+    const missing = seedDocs.filter(d => {
+      if (haveId.has(d.id)) return false
+      if (d.sourceMessageId && haveGmail.has(d.sourceMessageId)) return false
+      return true
+    })
+    const merged = [...kept, ...missing]
+    if (
+      merged.length === (t.documents ?? []).length &&
+      merged.every((d, i) => d.id === (t.documents ?? [])[i]?.id)
+    ) {
+      return t
+    }
     return { ...t, documents: merged }
   })
 }

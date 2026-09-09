@@ -64,6 +64,8 @@ export interface TripPlan {
   coords?: TripCoords
   /** Linked Google Doc — the source of truth for this trip's plan. */
   docUrl?: string
+  /** Display title of the linked Google Doc, when known. */
+  docTitle?: string
   /** When the seed/app content was last reconciled against docUrl. */
   docLastPulledAt?: string
   /** Travel documents pulled from Gmail attachments or uploaded by hand. */

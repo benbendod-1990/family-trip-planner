@@ -114,7 +114,14 @@ function mergeRemoteTripsById(local: TripPlan[], remote: TripPlan[]): TripPlan[]
     const r = remoteById.get(l.id)
     if (!r) return l
     const winner = new Date(r.updatedAt) > new Date(l.updatedAt) ? r : l
-    return { ...winner, documents: mergeServerDocuments(l.documents, r.documents) }
+    return {
+      ...winner,
+      documents: mergeServerDocuments(l.documents, r.documents),
+      // hydrateTrip has no doc_url column, so a newer cloud row would otherwise
+      // wipe the linked Google Doc. Keep whichever side still has it.
+      docUrl: winner.docUrl || l.docUrl || r.docUrl,
+      docTitle: winner.docTitle || l.docTitle || r.docTitle,
+    }
   })
   for (const r of remote) {
     if (!merged.some(t => t.id === r.id)) merged.push(r)
