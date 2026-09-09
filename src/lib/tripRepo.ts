@@ -207,12 +207,12 @@ export async function inviteUserToTrip(tripId: string, email: string): Promise<v
     _trip_id: tripId,
     _email: email,
   })
-  if (error) throw error
+  if (error) throw describe(error, 'invite_user_to_trip')
 }
 
 export async function listTripMembers(tripId: string): Promise<TripMember[]> {
   const { data, error } = await supabase.rpc('list_trip_members', { _trip_id: tripId })
-  if (error) throw error
+  if (error) throw describe(error, 'list_trip_members')
   return (data ?? []) as TripMember[]
 }
 
@@ -221,7 +221,7 @@ export async function removeUserFromTrip(tripId: string, userId: string): Promis
     _trip_id: tripId,
     _target_user_id: userId,
   })
-  if (error) throw error
+  if (error) throw describe(error, 'remove_user_from_trip')
 }
 
 // ────────────────────────────────────────────────────────────────────────────
