@@ -88,7 +88,7 @@ export async function pullDocText(body: DocPullRequest): Promise<DocPullResponse
   return {
     docId,
     // Strip the UTF-8 BOM Google prefixes onto the txt export.
-    text: text.replace(/^﻿/, ''),
+    text: text.replace(/^\uFEFF/, ''),
     fetchedAt: new Date().toISOString(),
   }
 }
