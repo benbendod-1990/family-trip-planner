@@ -280,7 +280,7 @@ export function layoutOverviewMap<T extends { coords: TripCoords }>(
     const pt = projectLonLat(p.coords.lat, p.coords.lon, box, view)
     return { ...p, ...pt }
   })
-  const placed = spreadProjected(raw, 86)
+  const placed = spreadProjected(raw, 110)
   const landD = pack
     ? ringsToPath(pack.rings, box)
     : landBlobFromProjected(placed.map(p => ({ x: p.x, y: p.y })))
