@@ -4,6 +4,7 @@ import {
   collectPlaceCandidates,
   focusOriginForTrip,
   focusRegionPois,
+  sortPoisByItinerary,
   withResolvedCoords,
   type TripMapPoi,
 } from '@/lib/tripMapPois'
@@ -46,7 +47,8 @@ export function useTripMapPois(trip: TripPlan | undefined): {
     const resolved = withResolvedCoords(candidates, extraCoords)
     if (!trip) return resolved
     const origin = focusOriginForTrip(trip, resolved)
-    return origin ? focusRegionPois(resolved, origin) : resolved
+    const focused = origin ? focusRegionPois(resolved, origin) : resolved
+    return sortPoisByItinerary(focused)
   }, [candidates, extraCoords, trip])
 
   const pendingGeocode = candidates.filter(c => !c.coords && !extraCoords[c.key]).length

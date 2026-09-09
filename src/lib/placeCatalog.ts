@@ -23,9 +23,9 @@ export interface PlaceCatalogEntry {
 }
 
 /**
- * Public, stable blurbs + real lat/lon for well-known stops.
+ * Public, stable blurbs + real lat/lon for well-known stops across trips.
  * Not family itinerary data — safe to ship in the map chunk.
- * Add entries here as later trips get an illustrated map.
+ * Unknown places fall back to event text + Google Maps.
  */
 export const PLACE_CATALOG: PlaceCatalogEntry[] = [
   {
@@ -120,12 +120,78 @@ export const PLACE_CATALOG: PlaceCatalogEntry[] = [
     canonicalKey: 'ben gurion t3',
     nameHe: 'נתב״ג טרמינל 3',
     blurb:
-      'טרמינל 3 בנתב״ג — יציאה בלילה ל-MIA ב-LY17, ונחיתה בבוקר אחרי LY18. לא חלק מאזור פלורידה במפה המצוירת, אבל זה שער היציאה והחזרה של הטיול.',
+      'טרמינל 3 בנתב״ג — שער היציאה והחזרה של טיסות אל על. לא חלק ממפת היעד (הוא רחוק מהאשכול), אבל מופיע בדרך המצוירת של יום הטיסה.',
     linkUrl: 'https://www.iaa.gov.il/en/airports/ben-gurion/',
     linkLabel: 'רשות שדות התעופה',
     kind: 'airport',
     emoji: '🛫',
     coords: { lat: 32.0114, lon: 34.8867 },
+  },
+  {
+    canonicalKey: 'schiphol airport',
+    nameHe: 'סכיפהול',
+    blurb:
+      'נמל התעופה של אמסטרדם — שער הכניסה והיציאה לטיול בהולנד. איסוף רכב אחרי הנחיתה, והחזרה לפני הטיסה הביתה.',
+    linkUrl: 'https://www.schiphol.nl/',
+    linkLabel: 'אתר סכיפהול',
+    kind: 'airport',
+    emoji: '✈️',
+    coords: { lat: 52.3105, lon: 4.7683 },
+  },
+  {
+    canonicalKey: 'efteling, kaatsheuvel',
+    nameHe: 'אפטלינג',
+    blurb:
+      'פארק האגדות בהולנד — יער, רכבות ומופעים. מתאים ליום מלא עם ילדים; כרטיסים לעיתים כלולים בחבילת המלון ליד הפארק.',
+    linkUrl: 'https://www.efteling.com/',
+    linkLabel: 'אתר אפטלינג',
+    kind: 'park',
+    emoji: '🌳',
+    coords: { lat: 51.6497, lon: 5.0497 },
+  },
+  {
+    canonicalKey: 'safaripark beekse bergen',
+    nameHe: 'Beekse Bergen',
+    blurb:
+      'ספארי פתוח בהולנד — חיות מהרכב, ומלון ספארי ליד האגם. יום רגוע אחרי אפטלינג, עם אפשרות גם ל-Speelland.',
+    linkUrl: 'https://www.beeksebergen.nl/',
+    linkLabel: 'אתר Beekse Bergen',
+    kind: 'park',
+    emoji: '🦁',
+    coords: { lat: 51.5175, lon: 5.113 },
+  },
+  {
+    canonicalKey: 'aeroporto di fiumicino (fco)',
+    nameHe: 'פיומיצ׳ינו (FCO)',
+    blurb:
+      'נמל התעופה של רומא. Leonardo Express לטרמיני בערך חצי שעה; בלילה אחרי השעה האחרונה נשארת מונית בתעריף קבוע למרכז.',
+    linkUrl: 'https://www.adr.it/fiumicino',
+    linkLabel: 'אתר FCO',
+    kind: 'airport',
+    emoji: '✈️',
+    coords: { lat: 41.8003, lon: 12.2389 },
+  },
+  {
+    canonicalKey: 'charles de gaulle (cdg)',
+    nameHe: 'שארל דה גול (CDG)',
+    blurb:
+      'נמל התעופה הראשי של פריז. טרמינלים מפוצלים — בדקו את מספר הטרמינל בכרטיס לפני היציאה מהעיר ביום החזור.',
+    linkUrl: 'https://www.parisaeroport.fr/en/passengers/access/paris-charles-de-gaulle',
+    linkLabel: 'אתר CDG',
+    kind: 'airport',
+    emoji: '✈️',
+    coords: { lat: 49.0097, lon: 2.5479 },
+  },
+  {
+    canonicalKey: 'rethymno, crete',
+    nameHe: 'רתימנו, כרתים',
+    blurb:
+      'עיר החוף בצפון כרתים — העיר העתיקה, הטיילת, וחופים רדודים. בסיס נוח לטיול משפחתי קצר באי.',
+    linkUrl: 'https://en.wikipedia.org/wiki/Rethymno',
+    linkLabel: 'ויקיפדיה',
+    kind: 'city',
+    emoji: '🏖️',
+    coords: { lat: 35.3669, lon: 24.4745 },
   },
 ]
 
