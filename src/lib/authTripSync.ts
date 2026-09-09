@@ -1,14 +1,19 @@
 /**
  * Who may see / auto-push which trips after a signed-in cloud read.
  *
- * Guest Home still injects DEMO_TRIPS. Authenticated Home must not: an invitee
- * who is only on USA would otherwise keep Holland/Paris/Crete/Rome from the
- * local seed catalog, and first-login wireUp used to push those canonical
- * UUIDs through save_trip — claiming them if they did not yet exist.
+ * Guest Home must never inject family seeds (Holland/Paris/Crete/Rome/USA).
+ * Those are real trips: they appear only after Google sign-in AND an RLS
+ * membership. Authenticated Home must not keep seeds the RLS read omitted —
+ * first-login wireUp used to push those canonical UUIDs through save_trip.
  */
 
 import type { TripPlan } from '@/types/trip-plan'
-import { CANONICAL_SEED_IDS, ensureDemoTrips } from './dedupeDemoTrips.ts'
+import {
+  CANONICAL_SEED_IDENTITIES,
+  CANONICAL_SEED_IDS,
+  ensureDemoTrips,
+  isNearDuplicateOfSeed,
+} from './dedupeDemoTrips.ts'
 
 export const LEGACY_ITALY_DEMO_ID = 'demo-italy-2026'
 
@@ -53,10 +58,46 @@ export function resolveActiveTripId(trips: TripPlan[], current: string | null | 
   return trips[0]?.id ?? null
 }
 
+/** Family seed UUIDs (and the old Italy demo) — never shown to signed-out visitors. */
+export function isPrivateFamilySeedId(id: string): boolean {
+  return id === LEGACY_ITALY_DEMO_ID || CANONICAL_SEED_IDS.has(id)
+}
+
 /**
- * Guest (signed-out) catalog: empty/legacy Italy demo → full seed list;
- * otherwise inject any missing seed by id. Authenticated rehydrate must not
- * call this.
+ * Guest-safe sample trips only. Canonical family ids are dropped even if a
+ * caller accidentally passes FAMILY_SEED_TRIPS / DEMO_TRIPS.
+ */
+export function guestSafeSeeds(seeds: TripPlan[]): TripPlan[] {
+  return seeds.filter(s => !isPrivateFamilySeedId(s.id))
+}
+
+export function isPrivateFamilySeedTrip(trip: Pick<TripPlan, 'id' | 'name' | 'destination' | 'startDate' | 'endDate'>): boolean {
+  if (isPrivateFamilySeedId(trip.id)) return true
+  return CANONICAL_SEED_IDENTITIES.some(seed =>
+    isNearDuplicateOfSeed(trip, seed, CANONICAL_SEED_IDS),
+  )
+}
+
+/** Drop cached USA/Holland/… seeds from a guest persist so old tabs don't keep them. */
+export function dropPrivateFamilySeedsFromGuest(trips: TripPlan[]): {
+  trips: TripPlan[]
+  droppedIds: string[]
+} {
+  const droppedIds: string[] = []
+  const kept = trips.filter(t => {
+    if (isPrivateFamilySeedTrip(t)) {
+      droppedIds.push(t.id)
+      return false
+    }
+    return true
+  })
+  return { trips: kept, droppedIds }
+}
+
+/**
+ * Guest (signed-out) catalog: strip private family seeds from any previous
+ * persist, then inject only guest-safe samples (production: none).
+ * Authenticated rehydrate must not call this.
  */
 export function hydrateGuestTrips(
   existing: TripPlan[],
@@ -68,15 +109,24 @@ export function hydrateGuestTrips(
   redirects: Record<string, string>
   replacedCatalog: boolean
 } {
+  const stripped = dropPrivateFamilySeedsFromGuest(existing)
+  const safeSeeds = guestSafeSeeds(seeds)
   const onlyItalyDemo = existing.length === 1 && existing[0]?.id === LEGACY_ITALY_DEMO_ID
-  if (existing.length === 0 || onlyItalyDemo) {
+  const catalogWasPrivateOnly = stripped.trips.length === 0 && existing.length > 0
+
+  if (existing.length === 0 || onlyItalyDemo || catalogWasPrivateOnly) {
     return {
-      trips: seeds.map(t => structuredClone(t)),
-      droppedIds: [],
+      trips: safeSeeds.map(t => structuredClone(t)),
+      droppedIds: stripped.droppedIds,
       redirects,
       replacedCatalog: true,
     }
   }
-  const result = ensureDemoTrips(existing, seeds, redirects)
-  return { ...result, replacedCatalog: false }
+
+  const result = ensureDemoTrips(stripped.trips, safeSeeds, redirects)
+  return {
+    ...result,
+    droppedIds: [...stripped.droppedIds, ...result.droppedIds],
+    replacedCatalog: false,
+  }
 }

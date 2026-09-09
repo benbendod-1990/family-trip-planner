@@ -1,3 +1,5 @@
+import type { TripPlan } from '@/types/trip-plan'
+
 // The Crete & Holland seeds historically shipped with a far-future updatedAt
 // so a refreshed seed would always win the newer-wins merge. That backfired on
 // the core goal — cross-device edit sync: a real edit is stamped "now", which
@@ -16,4 +18,15 @@ export function normalizeSeedTimestamp<T extends { updatedAt: string; createdAt:
   trip: T,
 ): T {
   return trip.updatedAt === SEED_FAR_FUTURE ? { ...trip, updatedAt: trip.createdAt } : trip
+}
+
+export function normalizePersistedTripFields(trips: TripPlan[]): TripPlan[] {
+  return trips
+    .map(t => ({
+      ...t,
+      tasks: t.tasks ?? [],
+      packingItems: t.packingItems ?? [],
+      carRentals: t.carRentals ?? [],
+    }))
+    .map(normalizeSeedTimestamp)
 }

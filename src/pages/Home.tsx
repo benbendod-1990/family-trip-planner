@@ -6,15 +6,12 @@ import { useTripStore } from '@/stores/tripStore'
 import { useAuth } from '@/lib/AuthContext'
 import TripCard from '@/components/trip/TripCard'
 import TripFormModal from '@/components/trip/TripFormModal'
-import { Plus, Upload, Sparkles } from 'lucide-react'
+import { Plus, Upload } from 'lucide-react'
 import styled from 'styled-components'
 import { importTripFromFile } from '@/utils/export'
 import { generateId } from '@/utils/id'
 import { useBreakpoint } from '@/hooks/useBreakpoint'
-import type { TripPlan } from '@/types/trip-plan'
-import { DEMO_TRIPS } from '@/data/demoData'
 import { warmTheme, warmDisplayFont, warmPageBackground } from '@/theme/warmTheme'
-import { isNearDuplicateOfSeed } from '@/lib/dedupeDemoTrips'
 
 /*
  * Home is eager (it is the start_url), so anything it imports statically lands
@@ -22,6 +19,9 @@ import { isNearDuplicateOfSeed } from '@/lib/dedupeDemoTrips'
  * roughly 215kB that nothing on this screen needs in order to paint. Lazy, it
  * arrives a beat later in its own chunk, which is the right trade for a button
  * nobody taps in the first second.
+ *
+ * Family seed JSON must stay out of this graph — guests open this page
+ * without signing in.
  */
 const CloudSyncButton = lazy(() => import('@/components/cloud/CloudSyncButton'))
 
@@ -72,13 +72,7 @@ export default function Home() {
   const { session, loading: authLoading } = useAuth()
   const [showCreate, setShowCreate] = useState(false)
   const { isMobile, isTablet } = useBreakpoint()
-  // Demo loaders are guest-only. Showing "טען הולנד" to a signed-in invitee
-  // would put a canonical seed UUID back into their store.
-  const allowDemoLoaders = !session && !authLoading
-
-  const demoSeedIds = new Set(DEMO_TRIPS.map(d => d.id))
-  const hasDemo = (d: (typeof DEMO_TRIPS)[number]) =>
-    trips.some(t => t.id === d.id || t.name === d.name || isNearDuplicateOfSeed(t, d, demoSeedIds))
+  const isGuest = !session && !authLoading
 
   const handleImport = async () => {
     try {
@@ -90,20 +84,6 @@ export default function Home() {
     } catch {
       // user cancelled or bad file — ignore silently
     }
-  }
-
-  const loadSampleTrip = (trip: TripPlan) => {
-    if (!allowDemoLoaders) return
-    const exists = hasDemo(trip)
-    if (exists) {
-      alert(`הטיול "${trip.name}" כבר קיים`)
-      return
-    }
-    const now = new Date().toISOString()
-    useTripStore.setState(state => ({
-      trips: [...state.trips, { ...trip, createdAt: now, updatedAt: now }],
-      activeTripId: trip.id,
-    }))
   }
 
   return (
@@ -145,44 +125,22 @@ export default function Home() {
       {trips.length === 0 ? (
         <Stack direction="column" spacing="md" align="center" style={{ padding: '32px 0' }}>
           <EmptyState
-            title="אין טיולים עדיין"
-            description={allowDemoLoaders ? 'צור טיול חדש או טען טיול לדוגמה' : 'עדיין אין טיולים שמורים לחשבון הזה'}
-            actionText="צור טיול ראשון"
-            onAction={() => setShowCreate(true)}
+            title={isGuest ? 'התחברו כדי לראות את הטיולים' : 'אין טיולים עדיין'}
+            description={
+              isGuest
+                ? 'הטיולים המשפחתיים זמינים רק אחרי התחברות עם Google'
+                : 'עדיין אין טיולים שמורים לחשבון הזה'
+            }
+            actionText={isGuest ? 'התחברות עם Google' : 'צור טיול ראשון'}
+            onAction={() => (isGuest ? navigate('/login') : setShowCreate(true))}
           />
-          {allowDemoLoaders && (
-          <Stack direction="column" spacing="xs" align="stretch" style={{ width: '100%', maxWidth: 360 }}>
-            {DEMO_TRIPS.map(trip => (
-              <Button key={trip.id} variant="ghost" onClick={() => loadSampleTrip(trip)}>
-                <Stack direction="row" spacing="xs" align="center">
-                  <Sparkles size={16} />
-                  <span>{trip.coverEmoji} טען {trip.name}</span>
-                </Stack>
-              </Button>
-            ))}
-          </Stack>
-          )}
         </Stack>
       ) : (
-        <>
-          {allowDemoLoaders && DEMO_TRIPS.some(d => !hasDemo(d)) && (
-            <Stack direction="row" spacing="xs" style={{ marginBottom: 12, flexWrap: 'wrap' }}>
-              {DEMO_TRIPS.filter(d => !hasDemo(d)).map(trip => (
-                <Button key={trip.id} variant="ghost" onClick={() => loadSampleTrip(trip)}>
-                  <Stack direction="row" spacing="xs" align="center">
-                    <Sparkles size={14} />
-                    <span>{trip.coverEmoji} טען {trip.name}</span>
-                  </Stack>
-                </Button>
-              ))}
-            </Stack>
-          )}
-          <Grid columns={isMobile ? 1 : isTablet ? 2 : 3} gap="md">
-            {trips.map((trip, i) => (
-              <TripCard key={trip.id} trip={trip} index={i} />
-            ))}
-          </Grid>
-        </>
+        <Grid columns={isMobile ? 1 : isTablet ? 2 : 3} gap="md">
+          {trips.map((trip, i) => (
+            <TripCard key={trip.id} trip={trip} index={i} />
+          ))}
+        </Grid>
       )}
 
       <TripFormModal
