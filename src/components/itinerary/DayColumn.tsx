@@ -31,6 +31,7 @@ const DayWrapper = styled.div`
   width: 100%;
   min-width: 0;
   max-width: 100%;
+  overflow-wrap: anywhere;
 `
 
 interface Props {

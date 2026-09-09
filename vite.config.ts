@@ -11,13 +11,19 @@ export default defineConfig({
       // instead of re-downloading the bundle over cellular every time. This
       // is what turns "icon on the home screen" into an app that actually
       // starts instantly (and works offline).
-      registerType: 'prompt',
+      // autoUpdate skipWaiting+clientsClaim so an iPhone PWA does not keep
+      // serving a hung itinerary chunk until someone taps "רענן". iOS restores
+      // the last URL; a frozen לוח זמנים never shows the prompt. See
+      // PwaUpdatePrompt.tsx (visibility/pageshow poll + controllerchange reload).
+      registerType: 'autoUpdate',
       // public/manifest.json stays the hand-maintained source of truth and is
       // already linked from index.html — don't let the plugin emit a second one.
       manifest: false,
       injectRegister: null,
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
+        skipWaiting: true,
+        clientsClaim: true,
         // index.html must never be served stale from the precache without a
         // revalidation path, or a deploy can strand users on an old build.
         cleanupOutdatedCaches: true,

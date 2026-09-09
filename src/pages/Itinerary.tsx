@@ -8,20 +8,46 @@ import SmartAddBar from '@/components/itinerary/SmartAddBar'
 import GmailSyncInlineButton from '@/components/gmail/GmailSyncInlineButton'
 // Lazy — see the note in AiChatDrawer: this modal drags Leaflet in with it.
 const AiItineraryModal = lazy(() => import('@/components/ai/AiItineraryModal'))
-import { Stack, Typography, Badge, Button, Grid } from 'myk-library'
+import { Stack, Typography, Badge, Button } from 'myk-library'
 import { getTripDuration, formatDateShort } from '@/utils/date'
-import { itineraryGridColumns } from '@/utils/itineraryLayout'
+import {
+  itineraryGridColumns,
+  itineraryDaysTemplate,
+  itineraryIsSingleColumn,
+} from '@/utils/itineraryLayout'
 import { History, Sparkles } from 'lucide-react'
-import styled from 'styled-components'
+import styled, { css } from 'styled-components'
 import { useDestinationCacheStore } from '@/stores/destinationCacheStore'
 
 const GridWrapper = styled.div<{ $mobile: boolean }>`
   padding: ${({ $mobile }) => ($mobile ? '12px' : '24px')};
-  min-height: calc(100vh - 120px);
   width: 100%;
   min-width: 0;
   max-width: 100%;
   box-sizing: border-box;
+`
+
+/*
+ * myk-library Grid uses `repeat(N, 1fr)` = minmax(auto, 1fr). That auto
+ * minimum is min-content; 15 Timeline columns against overflow-x:hidden is
+ * how iOS Safari paints a cream blank instead of the itinerary. A flex
+ * stack on one column, minmax(0, 1fr) otherwise, cannot blow out.
+ */
+const DaysGrid = styled.div<{ $cols: number }>`
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  gap: 16px;
+  ${({ $cols }) => itineraryIsSingleColumn($cols)
+    ? css`
+        display: flex;
+        flex-direction: column;
+      `
+    : css`
+        display: grid;
+        grid-template-columns: ${itineraryDaysTemplate($cols)};
+        align-items: start;
+      `}
 `
 
 const PageHeader = styled.div<{ $mobile: boolean }>`
@@ -120,11 +146,11 @@ export default function Itinerary() {
       </div>
 
       <GridWrapper $mobile={isMobile}>
-        <Grid columns={columns} gap="md">
+        <DaysGrid $cols={columns}>
           {trip.days.map((day, index) => (
             <DayColumn key={day.id} day={day} tripId={trip.id} dayIndex={index} weather={weather[day.date]} />
           ))}
-        </Grid>
+        </DaysGrid>
       </GridWrapper>
     </div>
   )

@@ -1,7 +1,7 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
-import { itineraryGridColumns } from './itineraryLayout.ts'
+import { itineraryGridColumns, itineraryDaysTemplate, itineraryIsSingleColumn } from './itineraryLayout.ts'
 import { getTripDuration } from './date.ts'
 
 describe('itineraryGridColumns', () => {
@@ -9,6 +9,53 @@ describe('itineraryGridColumns', () => {
     assert.equal(itineraryGridColumns(true, true), 1)
     assert.equal(itineraryGridColumns(false, true), 2)
     assert.equal(itineraryGridColumns(false, false), 3)
+  })
+})
+
+describe('itineraryDaysTemplate', () => {
+  it('uses minmax(0, 1fr) so 1fr cannot lock to min-content on WebKit', () => {
+    assert.equal(itineraryDaysTemplate(1), 'repeat(1, minmax(0, 1fr))')
+    assert.equal(itineraryDaysTemplate(3), 'repeat(3, minmax(0, 1fr))')
+    assert.equal(itineraryIsSingleColumn(1), true)
+    assert.equal(itineraryIsSingleColumn(2), false)
+  })
+
+  it('does not emit auto-fit / naked 1fr tracks', () => {
+    for (const n of [1, 2, 3]) {
+      const t = itineraryDaysTemplate(n)
+      assert.equal(t.includes('auto-fit'), false)
+      assert.equal(t.includes('minmax(0, 1fr)'), true)
+      assert.equal(/\b1fr\b/.test(t.replaceAll('minmax(0, 1fr)', '')), false)
+    }
+  })
+})
+
+describe('Itinerary page does not use myk-library Grid', () => {
+  it('keeps day layout local so 1fr-minmax(auto) cannot sneak back in', () => {
+    const src = readFileSync(new URL('../pages/Itinerary.tsx', import.meta.url), 'utf8')
+    assert.equal(src.includes('DaysGrid'), true)
+    assert.equal(/\{[^}]*\bGrid\b[^}]*\}\s*from 'myk-library'/.test(src), false)
+    assert.equal(src.includes('itineraryDaysTemplate'), true)
+  })
+})
+
+describe('AppLayout keeps chrome while itinerary loads', () => {
+  it('nests Suspense around Outlet instead of letting App unmount the shell', () => {
+    const src = readFileSync(new URL('../components/layout/AppLayout.tsx', import.meta.url), 'utf8')
+    assert.equal(src.includes('<Outlet />'), true)
+    assert.equal(src.includes('PageErrorBoundary'), true)
+    assert.equal(/Suspense fallback=\{<RouteFallback/.test(src.replace(/\s+/g, ' ')), true)
+  })
+})
+
+describe('PWA update path', () => {
+  it('auto-activates a waiting worker instead of waiting for a tap on a hung page', () => {
+    const vite = readFileSync(new URL('../../vite.config.ts', import.meta.url), 'utf8')
+    assert.equal(vite.includes("registerType: 'autoUpdate'"), true)
+    assert.equal(vite.includes('skipWaiting: true'), true)
+    const prompt = readFileSync(new URL('../components/pwa/PwaUpdatePrompt.tsx', import.meta.url), 'utf8')
+    assert.equal(prompt.includes('registration.update()'), true)
+    assert.equal(prompt.includes('pageshow'), true)
   })
 })
 
