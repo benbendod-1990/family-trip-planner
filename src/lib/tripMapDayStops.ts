@@ -185,7 +185,7 @@ export function dayRoadViewBox(stopCount: number): { width: number; height: numb
   const n = Math.max(1, stopCount)
   return {
     width: 1000,
-    height: Math.max(980, 260 + n * 210),
+    height: Math.max(1040, 280 + n * 230),
   }
 }
 
@@ -317,8 +317,8 @@ export function layoutDayPoster(stops: DayStop[], variantSeed: string): DayPoste
   const anchors = stops.map((stop, i) => {
     const pt = road.stops[i] ?? road.stops[road.stops.length - 1]
     const side = i % 2 === 0 ? 1 : -1
-    const time = stop.time ? `${stop.time} ` : ''
-    const text = `${time}${shortMapLabel(stop.title, 16)}`.trim()
+    const title = shortMapLabel(stop.title, 14)
+    const text = stop.time ? `${stop.time}\n${title}` : title
     return {
       id: stop.id,
       ax: pt.x,

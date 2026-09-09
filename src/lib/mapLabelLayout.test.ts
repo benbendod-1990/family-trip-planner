@@ -39,7 +39,7 @@ describe('short map labels', () => {
   it('keeps the first clause and caps length', () => {
     assert.equal(shortMapLabel('נחיתה ב-MIA + ביקורת דרכונים', 16).includes('+'), false)
     assert.ok([...shortMapLabel('צ׳ק-אין וילה (Solterra / Village at Solterra)', 16)].length <= 16)
-    assert.equal(shortMapLabel('Magic Kingdom'), 'Magic Kingdom')
+    assert.equal(shortMapLabel('שדה התעופה מיאמי (MIA)'), 'MIA')
   })
 })
 
@@ -51,7 +51,7 @@ describe('USA dense-day winding road is readable', () => {
     const stops = collectDayStops(day!, pois)
     assert.equal(stops.length, 5)
     const poster = layoutDayPoster(stops, day!.id)
-    assert.ok(poster.height >= 1200, `tall canvas, got ${poster.height}`)
+    assert.ok(poster.height >= 1400, `tall canvas, got ${poster.height}`)
     const rects = poster.chips.map(c => ({ x: c.x, y: c.y, w: c.w, h: c.h }))
     assert.equal(overlapPairs(rects, 4).join(','), '')
     for (let i = 0; i < stops.length; i++) {

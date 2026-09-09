@@ -35,7 +35,7 @@ describe('illustrated diary maps are trip-generic', () => {
         const road = layoutWindingRoad(stops.length, day.id)
         assert.equal(road.stops.length, stops.length)
         assert.match(road.d, /^M/)
-        assert.ok(road.height >= 980)
+        assert.ok(road.height >= 1040)
         assert.ok(road.car)
         const poster = layoutDayPoster(stops, day.id)
         assert.equal(poster.chips.length, stops.length)

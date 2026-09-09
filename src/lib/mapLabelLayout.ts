@@ -74,22 +74,33 @@ export function closestPointOnRect(px: number, py: number, rect: Rect): { x: num
 
 /** First clause of a title, then hard-cap so map chips stay short. */
 export function shortMapLabel(title: string, max = 20): string {
+  const code = title.match(/\(([A-Z]{2,4})\)/)
+  if (code) return code[1]
   let t = title.replace(/\s+/g, ' ').trim()
   const cut = t.split(/\s*[,+(–—|/]\s*/)[0]?.trim() ?? t
   if (cut.length >= 6) t = cut
+  const words = t.split(' ')
+  if (words.length > 2 && [...t].length > max) t = words.slice(0, 2).join(' ')
   const chars = [...t]
   if (chars.length <= max) return t
   return `${chars.slice(0, max - 1).join('').trimEnd()}…`
 }
 
-export function estimateChipSizeCss(text: string): { w: number; h: number } {
+function lineWidthCss(text: string): number {
   let w = 18
   for (const ch of [...text]) {
     if (/[\u0590-\u05FF]/.test(ch)) w += 7.2
     else if (/[A-Z0-9]/.test(ch)) w += 7.4
     else w += 6.2
   }
-  return { w: Math.min(168, Math.max(40, w)), h: 24 }
+  return Math.min(168, Math.max(40, w))
+}
+
+export function estimateChipSizeCss(text: string): { w: number; h: number } {
+  const lines = text.split('\n').filter(Boolean)
+  const w = Math.max(...lines.map(lineWidthCss), 40)
+  const h = lines.length <= 1 ? 24 : 8 + lines.length * 13
+  return { w, h }
 }
 
 function sideFromOffset(dx: number, dy: number): LabelSide {
@@ -262,8 +273,8 @@ export function placeMapChips(
       }
       const item = items[i]
       if (item && circleHitsRect(item.ax, item.ay, iconR, out[i], gap)) {
-        let dx = out[i].cx - item.ax
-        let dy = out[i].cy - item.ay
+        const dx = out[i].cx - item.ax
+        const dy = out[i].cy - item.ay
         const len = Math.hypot(dx, dy) || 1
         out[i].x += (dx / len) * 14
         out[i].y += (dy / len) * 14

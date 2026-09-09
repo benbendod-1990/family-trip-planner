@@ -48,22 +48,26 @@ const Chip = styled.button<{ $x: number; $y: number; $active: boolean }>`
   left: ${({ $x }) => $x}%;
   top: ${({ $y }) => $y}%;
   transform: translate(-50%, -50%);
-  max-width: 44%;
+  max-width: 40%;
   border: 1px solid ${({ theme, $active }) => ($active ? theme.colors.primary[400] : theme.colors.gray[200])};
   background: ${({ $active }) => ($active ? '#fffdf7' : 'rgba(255,253,247,0.95)')};
-  border-radius: 999px;
-  padding: 4px 10px;
+  border-radius: 12px;
+  padding: 4px 8px 5px;
   cursor: pointer;
   box-shadow: 0 2px 8px rgba(42, 32, 19, 0.14);
   font-family: inherit;
   color: ${({ theme }) => theme.colors.gray[900]};
   font-size: 11px;
   font-weight: 700;
-  line-height: 1.25;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  line-height: 1.2;
+  text-align: center;
   z-index: ${({ $active }) => ($active ? 4 : 3)};
+`
+
+const ChipTime = styled.div`
+  font-size: 10px;
+  font-weight: 800;
+  color: ${({ theme }) => theme.colors.primary[600]};
 `
 
 const Milestone = styled.button<{ $x: number; $y: number; $active: boolean }>`
@@ -234,7 +238,12 @@ export default function WindingDayRoad({
                   $active={active}
                   onClick={() => onSelectStop(stop.id, stop.poiId)}
                 >
-                  {chip.text}
+                  {chip.text.split('\n').length > 1 ? (
+                    <>
+                      <ChipTime>{chip.text.split('\n')[0]}</ChipTime>
+                      <div>{chip.text.split('\n').slice(1).join(' ')}</div>
+                    </>
+                  ) : chip.text}
                 </Chip>
               )}
             </div>

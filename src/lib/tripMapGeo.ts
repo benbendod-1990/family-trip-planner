@@ -314,6 +314,7 @@ export function layoutOverviewMap<T extends { coords: TripCoords; id: string; na
     w: 140,
     h: 22,
   }))
+  obstacles.push({ x: 0, y: view.height - 88, w: view.width, h: 88 })
   const iconR = cssPxToView(30, view.width)
   const labelReach = iconR + cssPxToView(40, view.width)
   const chips = placeMapChips(
