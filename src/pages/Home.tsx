@@ -13,6 +13,7 @@ import { useBreakpoint } from '@/hooks/useBreakpoint'
 import type { TripPlan } from '@/types/trip-plan'
 import { DEMO_TRIPS } from '@/data/demoData'
 import { warmTheme, warmDisplayFont, warmPageBackground } from '@/theme/warmTheme'
+import { isNearDuplicateOfSeed } from '@/lib/dedupeDemoTrips'
 
 /*
  * Home is eager (it is the start_url), so anything it imports statically lands
@@ -70,6 +71,10 @@ export default function Home() {
   const [showCreate, setShowCreate] = useState(false)
   const { isMobile, isTablet } = useBreakpoint()
 
+  const demoSeedIds = new Set(DEMO_TRIPS.map(d => d.id))
+  const hasDemo = (d: (typeof DEMO_TRIPS)[number]) =>
+    trips.some(t => t.id === d.id || t.name === d.name || isNearDuplicateOfSeed(t, d, demoSeedIds))
+
   const handleImport = async () => {
     try {
       const imported = await importTripFromFile()
@@ -83,7 +88,7 @@ export default function Home() {
   }
 
   const loadSampleTrip = (trip: TripPlan) => {
-    const exists = trips.some(t => t.id === trip.id || t.name === trip.name)
+    const exists = hasDemo(trip)
     if (exists) {
       alert(`הטיול "${trip.name}" כבר קיים`)
       return
@@ -152,9 +157,9 @@ export default function Home() {
         </Stack>
       ) : (
         <>
-          {DEMO_TRIPS.some(d => !trips.some(t => t.id === d.id)) && (
+          {DEMO_TRIPS.some(d => !hasDemo(d)) && (
             <Stack direction="row" spacing="xs" style={{ marginBottom: 12, flexWrap: 'wrap' }}>
-              {DEMO_TRIPS.filter(d => !trips.some(t => t.id === d.id)).map(trip => (
+              {DEMO_TRIPS.filter(d => !hasDemo(d)).map(trip => (
                 <Button key={trip.id} variant="ghost" onClick={() => loadSampleTrip(trip)}>
                   <Stack direction="row" spacing="xs" align="center">
                     <Sparkles size={14} />
