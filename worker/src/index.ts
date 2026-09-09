@@ -17,6 +17,7 @@ export interface Env {
   GEMINI_API_KEY?: string
   SUPABASE_URL?: string
   SUPABASE_JWT_SECRET?: string
+  SUPABASE_ANON_KEY?: string
   SUPABASE_SERVICE_ROLE_KEY?: string
   GOOGLE_CLIENT_ID?: string
   GOOGLE_CLIENT_SECRET?: string
@@ -43,8 +44,9 @@ export default {
       return json({ error: 'method_not_allowed' }, 405, cors)
     }
 
-    const caller = await authenticate(req, env)
-    if (!caller) return json({ error: 'unauthorized' }, 401, cors)
+    const auth = await authenticate(req, env)
+    if (!auth.ok) return json({ error: 'unauthorized', detail: auth.detail }, 401, cors)
+    const caller = auth.caller
 
     try {
       // Gmail token broker. Requires a real user (not the shared-secret path).

@@ -9,6 +9,7 @@ import { supabase } from './supabase'
 import { normalizeSeedTimestamp } from './seedNormalize'
 import { rowToDocument } from './tripDocuments'
 import { fromDb, tripToPayload } from './tripPayload'
+import { mergeServerDocuments } from './seedBookingDocuments'
 import {
   CANONICAL_SEED_IDENTITIES,
   CANONICAL_SEED_IDS,
@@ -101,17 +102,11 @@ async function hydrateTrip(t: Row): Promise<TripPlan> {
 }
 
 /**
- * Fold a cloud read into the local trips: newer-wins on trip content, but
- * documents always come from the server.
- *
- * The exception is not a special case, it's the only correct rule. Documents
- * live in their own table and never travel through save_trip(), so the local
- * copy has no way to learn about one filed anywhere else — by the puller on the
- * Mac, or by the other phone. Plain newer-wins threw the remote trip away
- * whenever local was newer, which is nearly always, and took the only copy of
- * the document list with it: the tab stayed empty no matter how often you
- * synced. Server state is authoritative here in both directions, so a document
- * deleted on the other phone stays deleted rather than being resurrected.
+ * Fold a cloud read into the local trips: newer-wins on trip content.
+ * File-documents always come from the server (they live in trip_documents,
+ * never save_trip()). Link-only seed cards (El Al PNR, cruise reference)
+ * are kept from local when the table doesn't have them yet — otherwise a
+ * cloud pull with an empty documents list wiped the USA bookings.
  */
 function mergeRemoteTripsById(local: TripPlan[], remote: TripPlan[]): TripPlan[] {
   const remoteById = new Map(remote.map(t => [t.id, t]))
@@ -119,7 +114,7 @@ function mergeRemoteTripsById(local: TripPlan[], remote: TripPlan[]): TripPlan[]
     const r = remoteById.get(l.id)
     if (!r) return l
     const winner = new Date(r.updatedAt) > new Date(l.updatedAt) ? r : l
-    return { ...winner, documents: r.documents ?? [] }
+    return { ...winner, documents: mergeServerDocuments(l.documents, r.documents) }
   })
   for (const r of remote) {
     if (!merged.some(t => t.id === r.id)) merged.push(r)

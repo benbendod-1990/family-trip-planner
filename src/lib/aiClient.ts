@@ -1,5 +1,5 @@
-import { supabase } from './supabase'
 import { assertProductAiEnabled } from './aiFeatures'
+import { workerAuthHeaders } from './workerAuth'
 import type { TripPlan } from '@/types/trip-plan'
 import type { TripEventCategory } from '@/types/trip'
 
@@ -55,14 +55,7 @@ export interface BlogDigestResponse {
 }
 
 async function callAi<TBody, TResult>(path: string, body: TBody): Promise<TResult> {
-  const { data } = await supabase.auth.getSession()
-  const token = data.session?.access_token
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`
-  } else if (import.meta.env.VITE_AI_SHARED_SECRET) {
-    headers['x-api-secret'] = import.meta.env.VITE_AI_SHARED_SECRET
-  }
+  const headers = await workerAuthHeaders()
   const res = await fetch(`${AI_BASE}${path}`, {
     method: 'POST',
     headers,

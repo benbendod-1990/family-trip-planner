@@ -27,3 +27,7 @@ workers_dev = true
 [vars]
 ALLOWED_ORIGIN = "http://localhost:3002,https://family-trip-planner-end.pages.dev"
 SUPABASE_URL = "https://fmybfgryipzlfukirizp.supabase.co"
+# Publishable key — same value the frontend ships. Used only to call
+# GET /auth/v1/user as a JWT-verify fallback when JWKS/crypto misses.
+# Not a secret; RLS still gates data. Do not put the service_role key here.
+SUPABASE_ANON_KEY = "sb_publishable_vmVd1BccNla7ykG4SZZ3AQ_oGAcYGK1"

@@ -319,6 +319,44 @@
     }
   ],
   "packingItems": [],
+  "documents": [
+    {
+      "id": "c38fc010-9096-45c9-b8df-191e369143d1",
+      "path": "external:https://www.elal.com/myb/he",
+      "filename": "אל על LY17/LY18 — PNR X5OKQQ (בן וגל)",
+      "mimeType": "text/uri-list",
+      "size": 0,
+      "kind": "flight",
+      "addedAt": "2026-09-07T00:00:00.000Z",
+      "url": "https://www.elal.com/myb/he",
+      "sourceSubject": "כרטיסים 1142496055550 / 1142496055549 · ניהול הזמנה באתר אל על",
+      "sourceFrom": "El Al"
+    },
+    {
+      "id": "c38fc010-9096-45c9-b8df-191e369143d2",
+      "path": "external:https://www.elal.com/myb/he",
+      "filename": "אל על LY17/LY18 — PNR X5G7DK (ילדים)",
+      "mimeType": "text/uri-list",
+      "size": 0,
+      "kind": "flight",
+      "addedAt": "2026-09-07T00:00:00.000Z",
+      "url": "https://www.elal.com/myb/he",
+      "sourceSubject": "לביא, ארי, לירי, עומר חוה · ניהול הזמנה באתר אל על",
+      "sourceFrom": "El Al"
+    },
+    {
+      "id": "c38fc010-9096-45c9-b8df-191e369143d3",
+      "path": "external:https://www.royalcaribbean.com/account/check-in",
+      "filename": "Royal Caribbean — Utopia of the Seas 22–26.3.2027",
+      "mimeType": "text/uri-list",
+      "size": 0,
+      "kind": "hotel",
+      "addedAt": "2026-09-07T00:00:00.000Z",
+      "url": "https://www.royalcaribbean.com/account/check-in",
+      "sourceSubject": "4 לילות Bahamas & Perfect Day · Port Canaveral · 12 נפשות",
+      "sourceFrom": "Royal Caribbean"
+    }
+  ],
   "days": [
     {
       "id": "d0270319-0000-4000-8000-000000000019",

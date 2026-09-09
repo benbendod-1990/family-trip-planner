@@ -10,11 +10,13 @@ import type { TripPlan } from '@/types/trip-plan'
 
 export class DocSyncError extends Error {
   hint?: string
+  reconnect?: boolean
 
-  constructor(message: string, hint?: string) {
+  constructor(message: string, hint?: string, reconnect?: boolean) {
     super(message)
     this.name = 'DocSyncError'
     this.hint = hint
+    this.reconnect = reconnect
   }
 }
 
@@ -36,8 +38,12 @@ function humanize(err: unknown): DocSyncError {
       'צריך קישור בצורה https://docs.google.com/document/d/...',
     )
   }
-  if (raw.startsWith('AI 401') || raw.includes('unauthorized')) {
-    return new DocSyncError('צריך להתחבר מחדש כדי לבדוק סנכרון')
+  if (raw.startsWith('AI 401') || raw.includes('unauthorized') || raw.includes('missing_bearer') || raw.includes('expired_token') || raw.includes('invalid_token')) {
+    return new DocSyncError(
+      'צריך להתחבר מחדש כדי לבדוק סנכרון',
+      'התחבר עם Google מהכפתור למטה — בלי זה האפליקציה לא יכולה לקרוא את המסמך דרך השרת.',
+      true,
+    )
   }
   return new DocSyncError('הבדיקה נכשלה', raw.slice(0, 200))
 }

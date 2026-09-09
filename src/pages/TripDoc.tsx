@@ -8,7 +8,10 @@ import { useBreakpoint } from '@/hooks/useBreakpoint'
 import { fetchDocText } from '@/lib/tripDoc'
 import { documentUrl, deleteDocument, uploadDocument, classifyDocument } from '@/lib/tripDocuments'
 import { pullAllDocuments } from '@/lib/gmailSync'
+import { GmailAuthError } from '@/lib/gmailToken'
+import { documentHref, isLinkOnlyDocument } from '@/lib/seedBookingDocuments'
 import TripDocCard from '@/components/dashboard/TripDocCard'
+import AuthReconnectBanner from '@/components/auth/AuthReconnectBanner'
 import type { TripDocument } from '@/types/trip-plan'
 
 const PageWrapper = styled.div<{ $mobile: boolean }>`
@@ -78,6 +81,7 @@ const KIND_LABEL: Record<TripDocument['kind'], string> = {
 }
 
 function prettySize(bytes: number): string {
+  if (bytes <= 0) return 'קישור להזמנה'
   if (bytes < 1024) return `${bytes} B`
   if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`
   return `${(bytes / 1024 / 1024).toFixed(1)} MB`
@@ -87,6 +91,7 @@ export default function TripDoc() {
   const { id } = useParams<{ id: string }>()
   const trip = useTripStore(s => s.trips.find(t => t.id === id))
   const { isMobile } = useBreakpoint()
+  const [gmailReconnect, setGmailReconnect] = useState(false)
 
   const [openDoc, setOpenDoc] = useState<TripDocument | null>(null)
   const [openUrl, setOpenUrl] = useState<string | null>(null)
@@ -111,7 +116,7 @@ export default function TripDoc() {
   useEffect(() => {
     if (!openDoc) return
     let cancelled = false
-    documentUrl(openDoc.path)
+    documentUrl(openDoc)
       .then(u => { if (!cancelled) setOpenUrl(u) })
       .catch(e => { if (!cancelled) setDocError(e instanceof Error ? e.message : 'לא ניתן לפתוח') })
     return () => { cancelled = true }
@@ -163,6 +168,7 @@ export default function TripDoc() {
     setPullBusy(true)
     setPullNote(null)
     setDocError(null)
+    setGmailReconnect(false)
     try {
       const r = await pullAllDocuments()
       if (r.documentsUnavailable) {
@@ -174,7 +180,12 @@ export default function TripDoc() {
         setPullNote(`לא נמצאו מסמכים חדשים (${r.scanned} מיילים נסרקו${skipped}).`)
       }
     } catch (e) {
-      setDocError(e instanceof Error ? e.message : 'משיכת המסמכים נכשלה')
+      if (e instanceof GmailAuthError) {
+        setGmailReconnect(true)
+        setDocError(e.message)
+      } else {
+        setDocError(e instanceof Error ? e.message : 'משיכת המסמכים נכשלה')
+      }
     } finally {
       setPullBusy(false)
     }
@@ -257,39 +268,61 @@ export default function TripDoc() {
           <Typography variant="body2" style={{ color: '#8F7B5C' }}>{pullNote}</Typography>
         )}
 
-        {docError && (
+        {gmailReconnect && docError ? (
+          <AuthReconnectBanner
+            message={docError}
+            hint="אחרי ההתחברות אפשר לשאוב כרטיסים מהמייל. בינתיים מופיעות כאן ההזמנות שכבר ידועות מהטיול."
+          />
+        ) : docError ? (
           <Typography variant="body2" style={{ color: '#b91c1c' }}>{docError}</Typography>
-        )}
+        ) : null}
 
         {documents.length === 0 ? (
           <EmptyState
             icon={<FileText size={40} />}
             title="אין עדיין מסמכים"
-            description='הרץ "סנכרן Gmail" כדי למשוך את הכרטיסים והשוברים מהמייל, או העלה קובץ ידנית.'
+            description='כרטיסי טיסה ושוברים יופיעו כאן. אפשר לשאוב מ-Gmail אחרי התחברות, או להעלות קובץ ידנית.'
           />
         ) : (
-          documents.map(doc => (
-            <DocRow key={doc.id} variant="outlined">
-              <Thumb>
-                {doc.mimeType.startsWith('image/') ? <ImageIcon size={18} /> : <FileText size={18} />}
-              </Thumb>
-              <Meta onClick={() => showDoc(doc)} style={{ cursor: 'pointer' }}>
-                <Typography variant="body1" style={{ fontWeight: 500 }}>{doc.filename}</Typography>
-                <Typography variant="body2" style={{ color: '#8F7B5C' }}>
-                  {KIND_LABEL[doc.kind]} · {prettySize(doc.size)}
-                  {doc.sourceSubject ? ` · ${doc.sourceSubject}` : ''}
-                </Typography>
-              </Meta>
-              {doc.sourceMessageId && <Badge size="sm" variant="default">Gmail</Badge>}
-              <Button size="sm" variant="ghost" onClick={() => showDoc(doc)}>הצג</Button>
-              <Button size="sm" variant="ghost" onClick={() => void onDelete(doc)} aria-label="מחק">
-                <Trash2 size={14} />
-              </Button>
-            </DocRow>
-          ))
+          documents.map(doc => {
+            const href = documentHref(doc)
+            const linkOnly = isLinkOnlyDocument(doc)
+            return (
+              <DocRow key={doc.id} variant="outlined">
+                <Thumb>
+                  {doc.mimeType.startsWith('image/') ? <ImageIcon size={18} /> : <FileText size={18} />}
+                </Thumb>
+                <Meta
+                  onClick={() => (linkOnly && href ? window.open(href, '_blank', 'noopener,noreferrer') : showDoc(doc))}
+                  style={{ cursor: 'pointer' }}
+                >
+                  <Typography variant="body1" style={{ fontWeight: 500 }}>{doc.filename}</Typography>
+                  <Typography variant="body2" style={{ color: '#8F7B5C' }}>
+                    {KIND_LABEL[doc.kind]} · {linkOnly ? 'קישור להזמנה' : prettySize(doc.size)}
+                    {doc.sourceSubject ? ` · ${doc.sourceSubject}` : ''}
+                  </Typography>
+                </Meta>
+                {doc.sourceMessageId && <Badge size="sm" variant="default">Gmail</Badge>}
+                {linkOnly && href ? (
+                  <a href={href} target="_blank" rel="noopener noreferrer">
+                    <Button size="sm" variant="ghost">
+                      <Stack direction="row" spacing="xs" align="center">
+                        <ExternalLink size={13} /><span>פתח הזמנה</span>
+                      </Stack>
+                    </Button>
+                  </a>
+                ) : (
+                  <Button size="sm" variant="ghost" onClick={() => showDoc(doc)}>הצג</Button>
+                )}
+                <Button size="sm" variant="ghost" onClick={() => void onDelete(doc)} aria-label="מחק">
+                  <Trash2 size={14} />
+                </Button>
+              </DocRow>
+            )
+          })
         )}
 
-        {openDoc && (
+        {openDoc && !isLinkOnlyDocument(openDoc) && (
           <Stack direction="column" spacing="xs">
             <Stack direction="row" align="center" justify="between">
               <Typography variant="body1" style={{ fontWeight: 600 }}>{openDoc.filename}</Typography>
