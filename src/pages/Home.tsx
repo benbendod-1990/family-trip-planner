@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Container, Grid, EmptyState, Button, Stack, Typography } from 'myk-library'
 import { ThemeProvider } from 'styled-components'
 import { useTripStore } from '@/stores/tripStore'
+import { useAuth } from '@/lib/AuthContext'
 import TripCard from '@/components/trip/TripCard'
 import TripFormModal from '@/components/trip/TripFormModal'
 import { Plus, Upload, Sparkles } from 'lucide-react'
@@ -68,8 +69,12 @@ const ButtonRow = styled.div<{ $mobile: boolean }>`
 export default function Home() {
   const navigate = useNavigate()
   const trips = useTripStore(s => s.trips)
+  const { session, loading: authLoading } = useAuth()
   const [showCreate, setShowCreate] = useState(false)
   const { isMobile, isTablet } = useBreakpoint()
+  // Demo loaders are guest-only. Showing "טען הולנד" to a signed-in invitee
+  // would put a canonical seed UUID back into their store.
+  const allowDemoLoaders = !session && !authLoading
 
   const demoSeedIds = new Set(DEMO_TRIPS.map(d => d.id))
   const hasDemo = (d: (typeof DEMO_TRIPS)[number]) =>
@@ -88,6 +93,7 @@ export default function Home() {
   }
 
   const loadSampleTrip = (trip: TripPlan) => {
+    if (!allowDemoLoaders) return
     const exists = hasDemo(trip)
     if (exists) {
       alert(`הטיול "${trip.name}" כבר קיים`)
@@ -140,10 +146,11 @@ export default function Home() {
         <Stack direction="column" spacing="md" align="center" style={{ padding: '32px 0' }}>
           <EmptyState
             title="אין טיולים עדיין"
-            description="צור טיול חדש או טען טיול לדוגמה"
+            description={allowDemoLoaders ? 'צור טיול חדש או טען טיול לדוגמה' : 'עדיין אין טיולים שמורים לחשבון הזה'}
             actionText="צור טיול ראשון"
             onAction={() => setShowCreate(true)}
           />
+          {allowDemoLoaders && (
           <Stack direction="column" spacing="xs" align="stretch" style={{ width: '100%', maxWidth: 360 }}>
             {DEMO_TRIPS.map(trip => (
               <Button key={trip.id} variant="ghost" onClick={() => loadSampleTrip(trip)}>
@@ -154,10 +161,11 @@ export default function Home() {
               </Button>
             ))}
           </Stack>
+          )}
         </Stack>
       ) : (
         <>
-          {DEMO_TRIPS.some(d => !hasDemo(d)) && (
+          {allowDemoLoaders && DEMO_TRIPS.some(d => !hasDemo(d)) && (
             <Stack direction="row" spacing="xs" style={{ marginBottom: 12, flexWrap: 'wrap' }}>
               {DEMO_TRIPS.filter(d => !hasDemo(d)).map(trip => (
                 <Button key={trip.id} variant="ghost" onClick={() => loadSampleTrip(trip)}>

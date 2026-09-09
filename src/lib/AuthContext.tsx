@@ -1,6 +1,11 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
 import type { Session, User } from '@supabase/supabase-js'
-import { useTripStore } from '@/stores/tripStore'
+import { switchTripStoreAccount, useTripStore } from '@/stores/tripStore'
+import {
+  dropUnauthorizedDemoSeeds,
+  localTripsSafeToAutoPush,
+  resolveActiveTripId,
+} from '@/lib/authTripSync'
 
 /*
  * Everything Supabase-shaped below is imported dynamically, on purpose.
@@ -34,17 +39,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Gates tearDown: without it, signing out (or unmounting) while never
+    // Gates tearDownSyncs: without it, signing out (or unmounting) while never
     // signed in would pull the realtime/autosync chunks purely to call a
     // pair of no-op stop functions.
     let syncsRunning = false
 
-    // On sign-in: pull cloud trips, merge with local (newer updatedAt wins),
-    // push local-only trips back, then start the live syncs. Newer-wins is
-    // critical because auto-push on mutation is disabled — without it, any
-    // local edit made between sessions gets clobbered by the stale cloud
-    // copy on the next refresh.
-    const wireUp = async () => {
+    // On sign-in: switch to this user's persist key, pull RLS-visible trips,
+    // merge newer-wins on those ids only, and auto-push user-created local
+    // trips — never canonical demo seeds the user is not a member of.
+    const wireUp = async (userId: string) => {
       const [
         { persistGmailRefreshToken },
         { listTrips, pushLocalToRemote, foldRemoteTrips, deleteCollapsedDuplicates },
@@ -62,24 +65,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         import('./tripDocuments'),
         import('@/data/demoData'),
       ])
+      await switchTripStoreAccount(userId)
       // Fire-and-forget: capture Google's refresh_token now, while Supabase
       // still has it in the session. After the first JWT refresh it's gone.
       void persistGmailRefreshToken()
       try {
         const remote = await listTrips()
         const localTrips = useTripStore.getState().trips
-        const remoteById = new Map(remote.map(t => [t.id, t]))
-        const { trips: merged, droppedIds } = foldRemoteTrips(localTrips, remote)
+        const remoteIds = new Set(remote.map(t => t.id))
+        const localForMerge = dropUnauthorizedDemoSeeds(localTrips, remoteIds)
+        const { trips: merged, droppedIds } = foldRemoteTrips(localForMerge, remote)
         if (droppedIds.length) {
           await deleteCollapsedDuplicates(droppedIds, [...localTrips, ...remote])
         }
-        const localOnly = merged.filter(t => !remoteById.has(t.id))
-        if (localOnly.length) {
-          await pushLocalToRemote(localOnly)
+        const pushable = localTripsSafeToAutoPush(merged, remoteIds)
+        if (pushable.length) {
+          await pushLocalToRemote(pushable)
         }
         const withSeedDocs = ensureSeedBookingDocuments(merged, DEMO_TRIPS)
         suppressNextPush()
-        useTripStore.setState({ trips: withSeedDocs })
+        useTripStore.setState({
+          trips: withSeedDocs,
+          activeTripId: resolveActiveTripId(withSeedDocs, useTripStore.getState().activeTripId),
+        })
         for (const t of withSeedDocs) {
           const links = t.documents ?? []
           if (links.length) void persistLinkDocuments(t.id, links)
@@ -93,7 +101,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     // Only reachable once wireUp() has run, so these modules are already in
     // the module cache and the dynamic import resolves without a fetch.
-    const tearDown = async () => {
+    // Unmount must NOT switch the persist key back to guest — React StrictMode
+    // remounts this provider, and that would flash demo seeds over USA.
+    const tearDownSyncs = async () => {
       if (!syncsRunning) return
       syncsRunning = false
       const [{ stopTripRealtime }, { stopTripAutoSync }] = await Promise.all([
@@ -102,6 +112,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       ])
       stopTripRealtime()
       stopTripAutoSync()
+    }
+    const leaveAccount = async () => {
+      await tearDownSyncs()
+      await switchTripStoreAccount(null)
     }
 
     // Unsubscribing has to survive an unmount that beats the dynamic import.
@@ -114,12 +128,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       void supabase.auth.getSession().then(({ data }) => {
         setSession(data.session)
         setLoading(false)
-        if (data.session) void wireUp()
+        if (data.session) void wireUp(data.session.user.id)
       })
       const { data: sub } = supabase.auth.onAuthStateChange((_event, s) => {
         setSession(s)
-        if (s) void wireUp()
-        else void tearDown()
+        if (s) void wireUp(s.user.id)
+        else void leaveAccount()
       })
       unsubscribe = () => sub.subscription.unsubscribe()
     })
@@ -127,7 +141,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => {
       unmounted = true
       unsubscribe?.()
-      void tearDown()
+      void tearDownSyncs()
     }
   }, [])
 

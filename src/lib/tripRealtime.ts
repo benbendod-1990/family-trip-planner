@@ -3,6 +3,7 @@ import { supabase } from './supabase'
 import { listTrips, mergeRemoteTrips } from './tripRepo'
 import { useTripStore } from '@/stores/tripStore'
 import { suppressNextPush } from './tripAutoSync'
+import { dropUnauthorizedDemoSeeds, remoteTripIds, resolveActiveTripId } from './authTripSync'
 
 // Subscribes to changes on every trip-related table for the signed-in user.
 // On any change we refetch and replace the store — simple, correct, and cheap
@@ -38,9 +39,17 @@ function scheduleRefetch() {
       // Merge by updatedAt — preserve unsynced local edits when the cloud
       // changes (auto-push is off; only pushed-or-newer cloud rows should
       // overwrite local ones) — except documents, which the server owns.
-      const merged = mergeRemoteTrips(localTrips, remote)
+      // Drop canonical demo seeds the RLS read did not return so a realtime
+      // event cannot resurrect Holland/Paris/Crete/Rome for a USA-only member.
+      const merged = mergeRemoteTrips(
+        dropUnauthorizedDemoSeeds(localTrips, remoteTripIds(remote)),
+        remote,
+      )
       suppressNextPush()
-      useTripStore.setState({ trips: merged })
+      useTripStore.setState({
+        trips: merged,
+        activeTripId: resolveActiveTripId(merged, useTripStore.getState().activeTripId),
+      })
     } catch (e) {
       console.error('realtime refetch failed:', e)
     }

@@ -7,6 +7,11 @@ import { useAuth } from '@/lib/AuthContext'
 import { useTripStore } from '@/stores/tripStore'
 import { pushLocalToRemote, listTrips, deleteTrip, mergeRemoteTrips, foldRemoteTrips, deleteCollapsedDuplicates } from '@/lib/tripRepo'
 import { suppressNextPush } from '@/lib/tripAutoSync'
+import {
+  dropUnauthorizedDemoSeeds,
+  remoteTripIds,
+  resolveActiveTripId,
+} from '@/lib/authTripSync'
 import { syncFromGmail, type GmailSyncReport } from '@/lib/gmailSync'
 import { GmailAuthError } from '@/lib/gmailToken'
 import { getLastSync } from '@/lib/gmailSyncState'
@@ -180,9 +185,15 @@ export default function CloudSyncButton() {
         // Step 1 — pull from cloud first. The cloud may already have fresher
         // data (admin edits, other devices) that supersedes local stubs.
         const remote = await listTrips()
-        const merged = mergeRemoteTrips(trips, remote)
+        const merged = mergeRemoteTrips(
+          dropUnauthorizedDemoSeeds(trips, remoteTripIds(remote)),
+          remote,
+        )
         suppressNextPush()
-        useTripStore.setState({ trips: merged })
+        useTripStore.setState({
+          trips: merged,
+          activeTripId: resolveActiveTripId(merged, useTripStore.getState().activeTripId),
+        })
         if (cancelled) return
 
         // Step 2 — if cloud pull alone resolved the placeholders, skip Gmail.
@@ -238,14 +249,23 @@ export default function CloudSyncButton() {
     try {
       const remote = await listTrips()
       const remoteById = new Map(remote.map(t => [t.id, t]))
+      const remoteIds = remoteTripIds(remote)
       // Local wins on conflict (user's recent edits) — pick newer updatedAt.
       // Documents are the exception: the server owns them. See mergeRemoteTrips.
-      const { trips: merged, droppedIds } = foldRemoteTrips(trips, remote)
+      // Canonical demo seeds the user is not a member of stay off the list
+      // and are never pushed — save_trip would claim the family UUID.
+      const { trips: merged, droppedIds } = foldRemoteTrips(
+        dropUnauthorizedDemoSeeds(trips, remoteIds),
+        remote,
+      )
       if (droppedIds.length) {
         await deleteCollapsedDuplicates(droppedIds, [...trips, ...remote])
       }
       suppressNextPush()
-      useTripStore.setState({ trips: merged })
+      useTripStore.setState({
+        trips: merged,
+        activeTripId: resolveActiveTripId(merged, useTripStore.getState().activeTripId),
+      })
 
       const outcomes = await pushLocalToRemote(merged)
       const ok = outcomes.filter(o => o.ok).length

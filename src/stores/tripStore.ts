@@ -13,11 +13,22 @@ import { getDaysBetween } from '@/utils/date'
 import { DEMO_TRIP, DEMO_TRIPS } from '@/data/demoData'
 import { normalizeSeedTimestamp } from '@/lib/seedNormalize'
 import {
-  ensureDemoTrips,
   loadSeedDuplicateRedirects,
   saveSeedDuplicateRedirects,
 } from '@/lib/dedupeDemoTrips'
 import { ensureSeedBookingDocuments } from '@/lib/seedBookingDocuments'
+import { hydrateGuestTrips } from '@/lib/authTripSync'
+import {
+  getTripStoreAccount,
+  initTripStoreAccountFromHint,
+  isGuestTripStore,
+  persistHasEntry,
+  planTripStoreAccountSwitch,
+  setTripStoreAccount,
+  tripStorePersistName,
+} from '@/lib/tripStoreScope'
+
+const initialTripStoreAccount = initTripStoreAccountFromHint()
 
 interface TripStore {
   trips: TripPlan[]
@@ -454,42 +465,33 @@ export const useTripStore = create<TripStore>()(
         })),
     }),
     {
-      name: 'myk-trip-plan-store',
+      name: tripStorePersistName(initialTripStoreAccount),
       storage: createJSONStorage(() => localStorage),
       onRehydrateStorage: () => (state) => {
         if (!state) return
 
-        // One-shot migration: drop the legacy non-UUID Italy demo. Its IDs
-        // don't match the Supabase schema (uuid columns), so syncs to cloud
-        // silently fail. Replace it with the real upcoming trip.
-        const onlyItalyDemo =
-          state.trips.length === 1 && state.trips[0]?.id === 'demo-italy-2026'
-        if (state.trips.length === 0 || onlyItalyDemo) {
-          state.trips = [...DEMO_TRIPS]
-          state.activeTripId = DEMO_TRIP.id
-          return
-        }
-
-        // Seed any known upcoming trips that aren't in the store yet, then
-        // collapse a pre-existing near-duplicate onto the canonical seed.
-        // Inject-by-id alone is how Home grew two USA Mar-2027 cards: the
-        // family already had "ארה״ב — מרץ 2027 (פלורידה משפחתי)" under a
-        // different UUID, and usa-trip.json landed next to it. Unique user
-        // edits on the duplicate are copied onto the seed; unrelated trips
-        // (Holland/Paris/Crete/Rome, a differently-titled NYC trip, …) stay.
-        const injected = ensureDemoTrips(
-          state.trips,
-          DEMO_TRIPS,
-          loadSeedDuplicateRedirects(),
-        )
-        state.trips = injected.trips
-        saveSeedDuplicateRedirects(injected.redirects)
-        if (state.activeTripId && injected.droppedIds.includes(state.activeTripId)) {
-          const target = injected.redirects[state.activeTripId]
-          state.activeTripId =
-            (target && state.trips.some(t => t.id === target) ? target : null) ??
-            state.trips[0]?.id ??
-            null
+        // Demo seeds are a guest catalog only. An authenticated cache must
+        // not grow Holland/Paris/Crete/Rome just because those UUIDs are
+        // missing — membership comes from Supabase RLS after wireUp.
+        if (isGuestTripStore()) {
+          const injected = hydrateGuestTrips(
+            state.trips,
+            DEMO_TRIPS,
+            loadSeedDuplicateRedirects(),
+          )
+          state.trips = injected.trips
+          saveSeedDuplicateRedirects(injected.redirects)
+          if (injected.replacedCatalog) {
+            state.activeTripId = DEMO_TRIP.id
+            return
+          }
+          if (state.activeTripId && injected.droppedIds.includes(state.activeTripId)) {
+            const target = injected.redirects[state.activeTripId]
+            state.activeTripId =
+              (target && state.trips.some(t => t.id === target) ? target : null) ??
+              state.trips[0]?.id ??
+              null
+          }
         }
 
         // One-shot: replace stale Holland trip with refreshed seed (start 18.8,
@@ -849,7 +851,38 @@ export const useTripStore = create<TripStore>()(
   )
 )
 
-// Selectors
+/**
+ * Point persist at this user's cache (or the guest catalog). Does not delete
+ * cloud data. Signing out always resets the in-memory/guest list to stock
+ * demos so a previous account's USA trip cannot reappear from the old shared
+ * `myk-trip-plan-store` key.
+ */
+export async function switchTripStoreAccount(userId: string | null): Promise<void> {
+  const previous = getTripStoreAccount()
+  const nextName = tripStorePersistName(userId)
+  const currentName = useTripStore.persist.getOptions().name
+  if (previous === userId && currentName === nextName) return
+
+  setTripStoreAccount(userId)
+  useTripStore.persist.setOptions({ name: nextName })
+
+  const plan = planTripStoreAccountSwitch(previous, userId, persistHasEntry(nextName))
+  if (plan.resetTo === 'noop') return
+  if (plan.resetTo === 'rehydrate') {
+    await useTripStore.persist.rehydrate()
+    return
+  }
+  if (plan.resetTo === 'guest-demos') {
+    useTripStore.setState({
+      trips: DEMO_TRIPS.map(t => structuredClone(t)),
+      activeTripId: DEMO_TRIP.id,
+    })
+    return
+  }
+
+  useTripStore.setState({ trips: [], activeTripId: null })
+}
+
 export const selectActiveTrip = (state: TripStore): TripPlan | undefined =>
   state.trips.find(t => t.id === state.activeTripId)
 

@@ -1,0 +1,248 @@
+import { describe, it } from 'node:test'
+import assert from 'node:assert/strict'
+import { readFileSync } from 'node:fs'
+import type { TripPlan } from '../types/trip-plan.ts'
+import type { TripDocument } from '../types/trip-plan.ts'
+import { CANONICAL_SEED_IDENTITIES } from './dedupeDemoTrips.ts'
+import {
+  dropUnauthorizedDemoSeeds,
+  hydrateGuestTrips,
+  isUnauthorizedDemoSeed,
+  localTripsSafeToAutoPush,
+  remoteTripIds,
+  resolveActiveTripId,
+} from './authTripSync.ts'
+import {
+  GUEST_TRIP_STORE_KEY,
+  planTripStoreAccountSwitch,
+  tripStorePersistName,
+} from './tripStoreScope.ts'
+
+const HOLLAND_ID = '34980c90-bd66-4270-8d45-3e96787b07ef'
+const PARIS_ID = 'a1f4e9b2-3c8d-4e6a-9b7c-1d5e8f7a2b34'
+const CRETE_ID = 'b2c5f8a3-4d9e-4f1b-8c6a-7e2d5b9f3a18'
+const ROME_ID = '30a5d517-0db3-427f-adfa-92ef125e1f8f'
+const USA_ID = 'b38fc010-9096-45c9-b8df-191e369143dc'
+const DEMO_IDS = [HOLLAND_ID, PARIS_ID, CRETE_ID, ROME_ID, USA_ID]
+
+function stub(partial: Partial<TripPlan> & Pick<TripPlan, 'id' | 'name' | 'destination' | 'startDate' | 'endDate'>): TripPlan {
+  return {
+    coverEmoji: '🧳',
+    family: [],
+    tasks: [],
+    days: [],
+    budget: { currency: 'ILS', totalBudget: 0, items: [] },
+    accommodations: [],
+    flights: [],
+    carRentals: [],
+    packingItems: [],
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-01-01T00:00:00.000Z',
+    ...partial,
+  }
+}
+
+function usa(overrides: Partial<TripPlan> = {}): TripPlan {
+  return stub({
+    id: USA_ID,
+    name: 'ארה״ב — מרץ 2027',
+    destination: 'פלורידה, ארה״ב',
+    startDate: '2027-03-19',
+    endDate: '2027-04-02',
+    coverEmoji: '🇺🇸',
+    ...overrides,
+  })
+}
+
+function allDemoStubs(): TripPlan[] {
+  return CANONICAL_SEED_IDENTITIES.map(s => stub({ ...s, coverEmoji: '🧳' }))
+}
+
+/** Same composition wireUp uses before foldRemoteTrips (union remote-only). */
+function visibleAfterCloudPull(local: TripPlan[], remote: TripPlan[]): TripPlan[] {
+  const remoteIds = remoteTripIds(remote)
+  const kept = dropUnauthorizedDemoSeeds(local, remoteIds)
+  const have = new Set(kept.map(t => t.id))
+  return [...kept, ...remote.filter(t => !have.has(t.id))]
+}
+
+describe('guest demo seeds', () => {
+  it('empty guest store gets the full canonical catalog', () => {
+    const seeds = allDemoStubs()
+    const { trips, replacedCatalog } = hydrateGuestTrips([], seeds)
+    assert.equal(replacedCatalog, true)
+    assert.deepEqual(trips.map(t => t.id).sort(), DEMO_IDS.slice().sort())
+    for (const id of DEMO_IDS) {
+      assert.ok(trips.some(t => t.id === id))
+    }
+  })
+
+  it('injects missing seeds next to a guest trip that is already present', () => {
+    const seeds = allDemoStubs()
+    const holland = seeds.find(t => t.id === HOLLAND_ID)!
+    const { trips, replacedCatalog } = hydrateGuestTrips([holland], seeds)
+    assert.equal(replacedCatalog, false)
+    assert.equal(trips.length, 5)
+    assert.ok(trips.some(t => t.id === USA_ID))
+    assert.ok(trips.some(t => t.id === PARIS_ID))
+  })
+
+  it('replaces the legacy Italy demo with the full catalog', () => {
+    const seeds = allDemoStubs()
+    const italy = stub({
+      id: 'demo-italy-2026',
+      name: 'איטליה',
+      destination: 'רומא',
+      startDate: '2026-01-01',
+      endDate: '2026-01-07',
+    })
+    const { trips, replacedCatalog } = hydrateGuestTrips([italy], seeds)
+    assert.equal(replacedCatalog, true)
+    assert.equal(trips.some(t => t.id === 'demo-italy-2026'), false)
+    assert.equal(trips.length, seeds.length)
+  })
+})
+
+describe('authenticated member sees only RLS-returned USA', () => {
+  it('treats Holland/Paris/Crete/Rome as unauthorized when remote is USA only', () => {
+    const remoteIds = new Set([USA_ID])
+    assert.equal(isUnauthorizedDemoSeed(HOLLAND_ID, remoteIds), true)
+    assert.equal(isUnauthorizedDemoSeed(PARIS_ID, remoteIds), true)
+    assert.equal(isUnauthorizedDemoSeed(CRETE_ID, remoteIds), true)
+    assert.equal(isUnauthorizedDemoSeed(ROME_ID, remoteIds), true)
+    assert.equal(isUnauthorizedDemoSeed(USA_ID, remoteIds), false)
+  })
+
+  it('Home list after cloud pull is only USA, including documents', () => {
+    const booking: TripDocument = {
+      id: 'usa-doc-1',
+      filename: 'LY17.pdf',
+      path: 'external:https://example.com/ly17',
+      mimeType: 'text/uri-list',
+      size: 0,
+      kind: 'flight',
+      addedAt: '2026-09-07T00:00:00.000Z',
+      url: 'https://example.com/ly17',
+    }
+    const local = allDemoStubs().map(t =>
+      t.id === USA_ID ? usa({ documents: [booking] }) : t,
+    )
+    const remote = [usa({ documents: [booking], updatedAt: '2026-09-08T00:00:00.000Z' })]
+    const visible = visibleAfterCloudPull(local, remote)
+    assert.equal(visible.length, 1)
+    assert.equal(visible[0].id, USA_ID)
+    assert.equal(visible[0].documents?.[0]?.id, 'usa-doc-1')
+    for (const id of [HOLLAND_ID, PARIS_ID, CRETE_ID, ROME_ID]) {
+      assert.equal(visible.some(t => t.id === id), false)
+    }
+  })
+
+  it('adds a remote-only authorized trip the local cache did not have', () => {
+    const local = allDemoStubs().filter(t => t.id !== USA_ID)
+    const visible = visibleAfterCloudPull(local, [usa()])
+    assert.deepEqual(visible.map(t => t.id), [USA_ID])
+  })
+
+  it('keeps a user-created local trip that is not a canonical seed', () => {
+    const custom = stub({
+      id: '11111111-2222-3333-4444-555555555555',
+      name: 'טיול חדש',
+      destination: 'יוון',
+      startDate: '2026-06-01',
+      endDate: '2026-06-08',
+    })
+    const visible = visibleAfterCloudPull([...allDemoStubs(), custom], [usa()])
+    assert.equal(visible.some(t => t.id === USA_ID), true)
+    assert.equal(visible.some(t => t.id === custom.id), true)
+    assert.equal(visible.some(t => t.id === HOLLAND_ID), false)
+  })
+
+  it('clears activeTripId when it pointed at an unauthorized demo seed', () => {
+    const visible = [usa()]
+    assert.equal(resolveActiveTripId(visible, HOLLAND_ID), USA_ID)
+    assert.equal(resolveActiveTripId(visible, USA_ID), USA_ID)
+    assert.equal(resolveActiveTripId([], HOLLAND_ID), null)
+  })
+})
+
+describe('no auto-push of unauthorized demo seeds', () => {
+  it('does not auto-push any canonical seed the RLS read omitted', () => {
+    const local = allDemoStubs()
+    const remoteIds = new Set([USA_ID])
+    const pushable = localTripsSafeToAutoPush(local, remoteIds)
+    assert.deepEqual(pushable, [])
+  })
+
+  it('does not auto-push canonical seeds even when the cloud list is empty', () => {
+    // First login on a new account: guest catalog is sitting in memory, but
+    // save_trip would claim Holland/Paris/Crete/Rome/USA UUIDs.
+    const pushable = localTripsSafeToAutoPush(allDemoStubs(), new Set())
+    assert.deepEqual(pushable, [])
+  })
+
+  it('still auto-pushes a user-created trip that is not a seed', () => {
+    const custom = stub({
+      id: 'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee',
+      name: 'טיול שלי',
+      destination: 'ליסבון',
+      startDate: '2026-07-01',
+      endDate: '2026-07-05',
+    })
+    const pushable = localTripsSafeToAutoPush([...allDemoStubs(), custom], new Set([USA_ID]))
+    assert.deepEqual(pushable.map(t => t.id), [custom.id])
+  })
+})
+
+describe('account-scoped persist keys', () => {
+  it('uses a distinct key per user and a guest key without a suffix', () => {
+    assert.equal(tripStorePersistName(null), GUEST_TRIP_STORE_KEY)
+    assert.equal(tripStorePersistName('user-a'), `${GUEST_TRIP_STORE_KEY}:user-a`)
+    assert.notEqual(tripStorePersistName('user-a'), tripStorePersistName('user-b'))
+  })
+
+  it('sign-out resets to guest demos instead of rehydrating a stale shared key', () => {
+    const plan = planTripStoreAccountSwitch('user-a', null, true)
+    assert.equal(plan.persistName, GUEST_TRIP_STORE_KEY)
+    assert.equal(plan.resetTo, 'guest-demos')
+  })
+
+  it('a new user starts empty so the previous account’s USA cannot leak', () => {
+    const toB = planTripStoreAccountSwitch('user-a', 'user-b', false)
+    assert.equal(toB.persistName, tripStorePersistName('user-b'))
+    assert.equal(toB.resetTo, 'empty')
+  })
+
+  it('returning to the same user rehydrates their own cache only', () => {
+    const back = planTripStoreAccountSwitch(null, 'user-a', true)
+    assert.equal(back.persistName, tripStorePersistName('user-a'))
+    assert.equal(back.resetTo, 'rehydrate')
+  })
+})
+
+describe('call-site regressions', () => {
+  it('wireUp no longer pushes every local-only trip', () => {
+    const text = readFileSync(new URL('./AuthContext.tsx', import.meta.url), 'utf8')
+    assert.equal(text.includes('pushLocalToRemote(localOnly)'), false)
+    assert.ok(text.includes('localTripsSafeToAutoPush'))
+    assert.ok(text.includes('dropUnauthorizedDemoSeeds'))
+    assert.ok(text.includes('switchTripStoreAccount'))
+  })
+
+  it('manual sync and realtime also drop unauthorized demo seeds', () => {
+    const cloud = readFileSync(new URL('../components/cloud/CloudSyncButton.tsx', import.meta.url), 'utf8')
+    const realtime = readFileSync(new URL('./tripRealtime.ts', import.meta.url), 'utf8')
+    assert.ok(cloud.includes('dropUnauthorizedDemoSeeds'))
+    assert.ok(realtime.includes('dropUnauthorizedDemoSeeds'))
+  })
+
+  it('Home hides demo loaders for a signed-in session', () => {
+    const home = readFileSync(new URL('../pages/Home.tsx', import.meta.url), 'utf8')
+    assert.ok(home.includes('allowDemoLoaders'))
+    assert.ok(home.includes('!session && !authLoading'))
+  })
+
+  it('does not re-enable in-app AI product UI', () => {
+    const flag = readFileSync(new URL('./aiFeatures.ts', import.meta.url), 'utf8')
+    assert.ok(flag.includes('AI_PRODUCT_UI_ENABLED: boolean = false'))
+  })
+})
