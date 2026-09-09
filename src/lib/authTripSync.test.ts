@@ -324,4 +324,9 @@ describe('call-site regressions', () => {
     const flag = readFileSync(new URL('./aiFeatures.ts', import.meta.url), 'utf8')
     assert.ok(flag.includes('AI_PRODUCT_UI_ENABLED: boolean = false'))
   })
+
+  it('PWA precache skips the family seed itinerary chunk', () => {
+    const vite = readFileSync(new URL('../../vite.config.ts', import.meta.url), 'utf8')
+    assert.ok(vite.includes("globIgnores: ['**/familySeeds-*.js']"))
+  })
 })

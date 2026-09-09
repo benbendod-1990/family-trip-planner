@@ -25,6 +25,9 @@ export default defineConfig({
         // serving the Vite bolt (or any previous PNG) after a Pages deploy.
         cacheId: 'family-trip-planner-brand-v1',
         globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
+        // Family itineraries are lazy-loaded after Google sign-in. Precaching
+        // them would put usa-trip.json on every guest PWA install.
+        globIgnores: ['**/familySeeds-*.js'],
         skipWaiting: true,
         clientsClaim: true,
         // index.html must never be served stale from the precache without a
