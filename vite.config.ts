@@ -21,6 +21,9 @@ export default defineConfig({
       manifest: false,
       injectRegister: null,
       workbox: {
+        // Bump when swapping home-screen icons so old precaches cannot keep
+        // serving the Vite bolt (or any previous PNG) after a Pages deploy.
+        cacheId: 'family-trip-planner-brand-v1',
         globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
         skipWaiting: true,
         clientsClaim: true,

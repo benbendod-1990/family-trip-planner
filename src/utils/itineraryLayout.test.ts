@@ -52,6 +52,7 @@ describe('PWA update path', () => {
   it('auto-activates a waiting worker instead of waiting for a tap on a hung page', () => {
     const vite = readFileSync(new URL('../../vite.config.ts', import.meta.url), 'utf8')
     assert.equal(vite.includes("registerType: 'autoUpdate'"), true)
+    assert.equal(vite.includes("cacheId: 'family-trip-planner-brand-v1'"), true)
     assert.equal(vite.includes('skipWaiting: true'), true)
     const prompt = readFileSync(new URL('../components/pwa/PwaUpdatePrompt.tsx', import.meta.url), 'utf8')
     assert.equal(prompt.includes('registration.update()'), true)
