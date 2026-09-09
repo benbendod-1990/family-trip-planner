@@ -2,13 +2,21 @@ import { format, addDays, differenceInCalendarDays, parseISO } from 'date-fns'
 import { he } from 'date-fns/locale'
 
 export const formatDateHe = (date: string | Date): string => {
-  const d = typeof date === 'string' ? parseISO(date) : date
-  return format(d, 'EEEE, d MMMM yyyy', { locale: he })
+  try {
+    const d = typeof date === 'string' ? parseISO(date) : date
+    return format(d, 'EEEE, d MMMM yyyy', { locale: he })
+  } catch {
+    return typeof date === 'string' ? date : ''
+  }
 }
 
 export const formatDateShort = (date: string | Date): string => {
-  const d = typeof date === 'string' ? parseISO(date) : date
-  return format(d, 'd MMM', { locale: he })
+  try {
+    const d = typeof date === 'string' ? parseISO(date) : date
+    return format(d, 'd MMM', { locale: he })
+  } catch {
+    return typeof date === 'string' ? date : ''
+  }
 }
 
 export const formatDateISO = (date: Date): string => format(date, 'yyyy-MM-dd')

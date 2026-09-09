@@ -112,7 +112,7 @@ export default function ReadinessCard({ trip }: Props) {
     return nights >= duration - 1
   })()
   const budgetSet = trip.budget.totalBudget > 0
-  const eventsPlanned = trip.days.flatMap(d => d.events).length >= duration
+  const eventsPlanned = (trip.days ?? []).flatMap(d => d.events ?? []).length >= duration
 
   const checks: Check[] = [
     {
@@ -136,7 +136,7 @@ export default function ReadinessCard({ trip }: Props) {
     {
       label: 'תכנית יומית',
       ok: eventsPlanned,
-      detail: eventsPlanned ? 'מלאה' : `${trip.days.flatMap(d => d.events).length} אירועים`,
+      detail: eventsPlanned ? 'מלאה' : `${(trip.days ?? []).flatMap(d => d.events ?? []).length} אירועים`,
       icon: '🗓️',
     },
     {
