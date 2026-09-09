@@ -46,6 +46,24 @@ function mergeById(base: TripDocument[], extra: TripDocument[]): TripDocument[] 
 }
 
 /**
+ * Drop a link-only seed card once a real Storage file exists for the same
+ * Gmail message id. Otherwise the USA trip shows «פתח הזמנה» next to the
+ * actual X5OKQQ.pdf that already lives in trip_documents.
+ */
+export function dropCoveredLinkDocuments(docs: TripDocument[]): TripDocument[] {
+  const realMessageIds = new Set(
+    docs
+      .filter(d => !isLinkOnlyDocument(d) && d.sourceMessageId)
+      .map(d => d.sourceMessageId as string),
+  )
+  if (!realMessageIds.size) return docs
+  return docs.filter(d => {
+    if (!isLinkOnlyDocument(d) || !d.sourceMessageId) return true
+    return !realMessageIds.has(d.sourceMessageId)
+  })
+}
+
+/**
  * Server file-documents win; local link-only cards that the table doesn't
  * know about are kept. Without this, hydrateTrip's empty `documents: []`
  * erased the USA seed bookings on every sync.
@@ -56,7 +74,7 @@ export function mergeServerDocuments(
 ): TripDocument[] {
   const server = remote ?? []
   const localLinks = (local ?? []).filter(isLinkOnlyDocument)
-  return mergeById(server, localLinks)
+  return dropCoveredLinkDocuments(mergeById(server, localLinks))
 }
 
 /**
@@ -91,7 +109,7 @@ export function ensureSeedBookingDocuments(trips: TripPlan[], seeds: TripPlan[])
       if (d.sourceMessageId && haveGmail.has(d.sourceMessageId)) return false
       return true
     })
-    const merged = [...kept, ...missing]
+    const merged = dropCoveredLinkDocuments([...kept, ...missing])
     if (
       merged.length === (t.documents ?? []).length &&
       merged.every((d, i) => d.id === (t.documents ?? [])[i]?.id)

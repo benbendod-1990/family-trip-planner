@@ -9,7 +9,7 @@ import { supabase } from './supabase'
 import { normalizeSeedTimestamp } from './seedNormalize'
 import { rowToDocument } from './tripDocuments'
 import { fromDb, tripToPayload } from './tripPayload'
-import { mergeServerDocuments } from './seedBookingDocuments'
+import { dropCoveredLinkDocuments, mergeServerDocuments } from './seedBookingDocuments'
 import {
   CANONICAL_SEED_IDENTITIES,
   CANONICAL_SEED_IDS,
@@ -95,7 +95,7 @@ async function hydrateTrip(t: Row): Promise<TripPlan> {
     flights: ((flights.data ?? []) as Row[]).map(x => fromDb(x) as unknown as Flight),
     carRentals: ((cars.data ?? []) as Row[]).map(x => fromDb(x) as unknown as CarRental),
     packingItems: ((packing.data ?? []) as Row[]).map(x => fromDb(x) as unknown as PackingItem),
-    documents: ((docs.data ?? []) as Row[]).map(rowToDocument),
+    documents: dropCoveredLinkDocuments(((docs.data ?? []) as Row[]).map(rowToDocument)),
     coords: t.coords as TripPlan['coords'],
     createdAt: t.created_at as string,
     updatedAt: t.updated_at as string,

@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs'
 import type { TripDocument, TripPlan } from '../types/trip-plan.ts'
 import {
   documentHref,
+  dropCoveredLinkDocuments,
   ensureSeedBookingDocuments,
   findGmailPlaceholder,
   isLinkOnlyDocument,
@@ -59,6 +60,7 @@ describe('USA seed booking documents', () => {
     assert.ok(ids.includes('1a07f94b110c890e'))
     assert.ok(ids.includes('1a07f9480390adda'))
     assert.ok(docs.every(d => documentHref(d)?.startsWith('https://')))
+    assert.equal(docs.some(d => (d.sourceSubject ?? '').includes('ממתין')), false)
   })
 
   it('wires the planning Google Doc id and title', () => {
@@ -95,6 +97,20 @@ describe('mergeServerDocuments', () => {
     const merged = mergeServerDocuments([card], [card])
     assert.equal(merged.length, 1)
   })
+
+  it('drops a seed link when the server already has the real PDF for that message', () => {
+    const seed = linkDoc({
+      id: 'seed-x5okqq',
+      filename: 'X5OKQQ.pdf — אל על · בן',
+      sourceMessageId: '1a068f623c9fe07b',
+    })
+    const pdf = fileDoc('real-x5okqq', 'X5OKQQ.pdf')
+    pdf.sourceMessageId = '1a068f623c9fe07b'
+    const merged = mergeServerDocuments([seed], [pdf])
+    assert.equal(merged.some(d => d.id === 'real-x5okqq'), true)
+    assert.equal(merged.some(d => d.id === 'seed-x5okqq'), false)
+    assert.equal(merged.length, 1)
+  })
 })
 
 describe('ensureSeedBookingDocuments', () => {
@@ -121,6 +137,46 @@ describe('ensureSeedBookingDocuments', () => {
     const once = ensureSeedBookingDocuments([{ ...usa, documents: [] }], [usa])
     const twice = ensureSeedBookingDocuments(once, [usa])
     assert.equal((twice[0]?.documents ?? []).length, (once[0]?.documents ?? []).length)
+  })
+
+  it('does not re-inject a seed link once a real file exists for that message id', () => {
+    const pdf = fileDoc('real-x5okqq', 'X5OKQQ.pdf')
+    pdf.sourceMessageId = '1a068f623c9fe07b'
+    const live: TripPlan = { ...usa, documents: [pdf] }
+    const out = ensureSeedBookingDocuments([live], [usa])
+    const docs = out[0]?.documents ?? []
+    assert.equal(docs.some(d => d.id === 'real-x5okqq' && !isLinkOnlyDocument(d)), true)
+    assert.equal(docs.some(d => d.sourceMessageId === '1a068f623c9fe07b' && isLinkOnlyDocument(d)), false)
+    assert.equal(docs.filter(isLinkOnlyDocument).length, 4)
+  })
+
+  it('drops a seed link that is sitting next to the real PDF for the same message', () => {
+    const pdf = fileDoc('real-gal', 'X5OKQQ.pdf')
+    pdf.sourceMessageId = '1a068f62222c52b9'
+    const seedGal = (usa.documents ?? []).find(d => d.sourceMessageId === '1a068f62222c52b9')
+    assert.ok(seedGal)
+    const live: TripPlan = { ...usa, documents: [pdf, seedGal!] }
+    const out = ensureSeedBookingDocuments([live], [usa])
+    const docs = out[0]?.documents ?? []
+    assert.equal(docs.some(d => d.id === seedGal!.id), false)
+    assert.equal(docs.some(d => d.id === 'real-gal'), true)
+  })
+})
+
+describe('dropCoveredLinkDocuments', () => {
+  it('keeps uncovered cruise/kids links and both real X5OKQQ PDFs', () => {
+    const ben = fileDoc('pdf-ben', 'X5OKQQ.pdf')
+    ben.sourceMessageId = '1a068f623c9fe07b'
+    const gal = fileDoc('pdf-gal', 'X5OKQQ.pdf')
+    gal.sourceMessageId = '1a068f62222c52b9'
+    const mixed = [...(usa.documents ?? []), ben, gal]
+    const out = dropCoveredLinkDocuments(mixed)
+    assert.equal(out.filter(d => d.filename === 'X5OKQQ.pdf').length, 2)
+    assert.equal(out.some(d => d.sourceMessageId === '1a068f623c9fe07b' && isLinkOnlyDocument(d)), false)
+    assert.equal(out.some(d => d.sourceMessageId === '1a068f62222c52b9' && isLinkOnlyDocument(d)), false)
+    assert.equal(out.some(d => d.sourceMessageId === '1a075a7c145b4ea4'), true)
+    assert.equal(out.some(d => d.sourceMessageId === '1a07f94b110c890e'), true)
+    assert.equal(out.length, 5)
   })
 })
 

@@ -5,7 +5,7 @@ import { CloudOff, Loader2, Check, AlertCircle, RefreshCw, Mail } from 'lucide-r
 import styled from 'styled-components'
 import { useAuth } from '@/lib/AuthContext'
 import { useTripStore } from '@/stores/tripStore'
-import { pushLocalToRemote, listTrips, deleteTrip, mergeRemoteTrips, foldRemoteTrips, deleteCollapsedDuplicates } from '@/lib/tripRepo'
+import { pushLocalToRemote, listTrips, deleteTrip, foldRemoteTrips, deleteCollapsedDuplicates } from '@/lib/tripRepo'
 import { suppressNextPush } from '@/lib/tripAutoSync'
 import {
   dropUnauthorizedDemoSeeds,
@@ -15,7 +15,6 @@ import {
 import { syncFromGmail, type GmailSyncReport } from '@/lib/gmailSync'
 import { GmailAuthError } from '@/lib/gmailToken'
 import { getLastSync } from '@/lib/gmailSyncState'
-import { tripHasPlaceholders } from '@/lib/tripMerge'
 import type { TripPlan } from '@/types/trip-plan'
 
 // Auto-generated trips from the legacy Gmail-sync code (before we removed
@@ -164,73 +163,6 @@ export default function CloudSyncButton() {
     return () => { cancelled = true }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session?.user?.id])
-
-  // Auto-rescan: if any trip has placeholder bookings, do a full sweep:
-  //   1. Pull from cloud first — direct DB edits (e.g. Aegean date fix) live
-  //      only in cloud until something pulls; without this the local stub
-  //      keeps masquerading as fresh.
-  //   2. Force-full Gmail sweep — bypass incremental checkpoint because the
-  //      source emails are usually older than the window.
-  //   3. Only mark "done" AFTER success. If the rescan throws or no
-  //      placeholder gets fixed, the next refresh tries again.
-  useEffect(() => {
-    if (!session) return
-    if (!trips.some(tripHasPlaceholders)) return
-    if (sessionStorage.getItem('auto-placeholder-rescan-done')) return
-    let cancelled = false
-    void (async () => {
-      setMode('gmail')
-      setToast({ kind: 'info', text: '🤖 מזהה הזמנות חסרות — מושך מהענן ומפעיל AI…' })
-      try {
-        // Step 1 — pull from cloud first. The cloud may already have fresher
-        // data (admin edits, other devices) that supersedes local stubs.
-        const remote = await listTrips()
-        const merged = mergeRemoteTrips(
-          dropUnauthorizedDemoSeeds(trips, remoteTripIds(remote)),
-          remote,
-        )
-        suppressNextPush()
-        useTripStore.setState({
-          trips: merged,
-          activeTripId: resolveActiveTripId(merged, useTripStore.getState().activeTripId),
-        })
-        if (cancelled) return
-
-        // Step 2 — if cloud pull alone resolved the placeholders, skip Gmail.
-        const stillNeedsAi = merged.some(tripHasPlaceholders)
-        if (!stillNeedsAi) {
-          setToast({ kind: 'ok', text: '✓ נמשכו פרטים מעודכנים מהענן' })
-          sessionStorage.setItem('auto-placeholder-rescan-done', '1')
-          setMode('idle')
-          return
-        }
-
-        const report = await syncFromGmail({ forceFull: true })
-        if (cancelled) return
-        const fixed = report.aiAugmented
-        if (fixed) {
-          setToast({ kind: 'ok', text: `✓ AI שיחזר ${fixed} פרטים חסרים מהמיילים שלך` })
-          sessionStorage.setItem('auto-placeholder-rescan-done', '1')
-        } else {
-          setToast({ kind: 'info', text: 'לא נמצאו פרטים נוספים בג׳מייל.' })
-          // don't set the done flag — let next refresh retry
-        }
-      } catch (e) {
-        if (cancelled) return
-        if (e instanceof GmailAuthError) {
-          // Not a real failure — the Gmail token just expired. Offer to reconnect.
-          setToast(gmailReconnectToast())
-        } else {
-          const msg = e instanceof Error ? e.message : 'שגיאה'
-          setToast({ kind: 'err', text: `סנכרון אוטומטי נכשל: ${msg.slice(0, 150)}` })
-        }
-        // don't set done flag — retry on next refresh
-      }
-      setMode('idle')
-    })()
-    return () => { cancelled = true }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session?.user?.id, trips.length])
 
   if (!session) {
     return (
