@@ -221,7 +221,12 @@ export default function AppLayout() {
           ) : undefined
         }
       >
-        <Outlet />
+        {/* min-width:0 lets the itinerary grid shrink inside AppShell's flex
+            main. Without it, auto-sized children report a huge min-content
+            width and the layout can hang on long trips. */}
+        <div style={{ minWidth: 0, width: '100%', maxWidth: '100%' }}>
+          <Outlet />
+        </div>
       </AppShell>
 
       {isTablet && (

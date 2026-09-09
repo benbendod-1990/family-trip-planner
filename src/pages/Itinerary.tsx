@@ -9,8 +9,8 @@ import GmailSyncInlineButton from '@/components/gmail/GmailSyncInlineButton'
 // Lazy — see the note in AiChatDrawer: this modal drags Leaflet in with it.
 const AiItineraryModal = lazy(() => import('@/components/ai/AiItineraryModal'))
 import { Stack, Typography, Badge, Button, Grid } from 'myk-library'
-import { getTripDuration } from '@/utils/date'
-import { formatDateShort } from '@/utils/date'
+import { getTripDuration, formatDateShort } from '@/utils/date'
+import { itineraryGridColumns } from '@/utils/itineraryLayout'
 import { History, Sparkles } from 'lucide-react'
 import styled from 'styled-components'
 import { useDestinationCacheStore } from '@/stores/destinationCacheStore'
@@ -18,6 +18,10 @@ import { useDestinationCacheStore } from '@/stores/destinationCacheStore'
 const GridWrapper = styled.div<{ $mobile: boolean }>`
   padding: ${({ $mobile }) => ($mobile ? '12px' : '24px')};
   min-height: calc(100vh - 120px);
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
 `
 
 const PageHeader = styled.div<{ $mobile: boolean }>`
@@ -40,7 +44,7 @@ export default function Itinerary() {
   const trip = useTripStore(s => s.trips.find(t => t.id === id))
   const [showAiBuilder, setShowAiBuilder] = useState(false)
 
-  const { isMobile } = useBreakpoint()
+  const { isMobile, isTablet } = useBreakpoint()
   const { weather } = useWeather(id ?? '')
   const getDestination = useDestinationCacheStore(s => s.getDestination)
   const [hidePastVisit, setHidePastVisit] = useState(false)
@@ -48,6 +52,7 @@ export default function Itinerary() {
   if (!trip) return null
 
   const duration = getTripDuration(trip.startDate, trip.endDate)
+  const columns = itineraryGridColumns(isMobile, isTablet)
   const destMemory = getDestination(trip.destination)
   const pastVisits = destMemory?.visits.filter(v => v.tripId !== id) ?? []
 
@@ -115,7 +120,7 @@ export default function Itinerary() {
       </div>
 
       <GridWrapper $mobile={isMobile}>
-        <Grid columns="repeat(auto-fit, minmax(280px, 1fr))" gap="md" autoFlow="row">
+        <Grid columns={columns} gap="md">
           {trip.days.map((day, index) => (
             <DayColumn key={day.id} day={day} tripId={trip.id} dayIndex={index} weather={weather[day.date]} />
           ))}

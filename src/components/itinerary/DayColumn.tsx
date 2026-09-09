@@ -29,6 +29,8 @@ const CATEGORY_LABEL: Record<string, string> = {
 
 const DayWrapper = styled.div`
   width: 100%;
+  min-width: 0;
+  max-width: 100%;
 `
 
 interface Props {
@@ -140,12 +142,14 @@ export default function DayColumn({ day, tripId, dayIndex, weather }: Props) {
         </Stack>
       </Card>
 
-      <EventFormModal
-        open={showAdd}
-        onClose={() => setShowAdd(false)}
-        tripId={tripId}
-        dayDate={day.date}
-      />
+      {showAdd && (
+        <EventFormModal
+          open={showAdd}
+          onClose={() => setShowAdd(false)}
+          tripId={tripId}
+          dayDate={day.date}
+        />
+      )}
       {editEvent && (
         <EventFormModal
           open={!!editEvent}
