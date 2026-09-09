@@ -260,8 +260,7 @@ export default function TripDoc() {
         </Stack>
 
         <Typography variant="body2" style={{ color: '#8F7B5C' }}>
-          כרטיסי טיסה, שוברים ואישורי הזמנה. "שאב מ-Gmail" סורק שנתיים אחורה ומצרף
-          את הקבצים לכל הטיולים — לא רק לזה שפתוח.
+          כרטיסי טיסה, שוברים ואישורי הזמנה. כדי לצרף קבצים מהמייל לחצו על «שאב מ-Gmail» — הסריקה רצה רק אז, שנתיים אחורה, לכל הטיולים. אין סריקה אוטומטית בפתיחת האפליקציה.
         </Typography>
 
         {pullNote && (
@@ -281,7 +280,7 @@ export default function TripDoc() {
           <EmptyState
             icon={<FileText size={40} />}
             title="אין עדיין מסמכים"
-            description='כרטיסי טיסה ושוברים יופיעו כאן. אפשר לשאוב מ-Gmail אחרי התחברות, או להעלות קובץ ידנית.'
+            description='כרטיסי טיסה ושוברים יופיעו כאן. אפשר ללחוץ על «שאב מ-Gmail» אחרי התחברות, או להעלות קובץ ידנית.'
           />
         ) : (
           documents.map(doc => {
@@ -298,15 +297,15 @@ export default function TripDoc() {
                 >
                   <Typography variant="body1" style={{ fontWeight: 500 }}>{doc.filename}</Typography>
                   <Typography variant="body2" style={{ color: '#8F7B5C' }}>
-                    {KIND_LABEL[doc.kind]} · {linkOnly ? (doc.sourceMessageId ? 'ממתין לקובץ מהמייל' : 'קישור להזמנה') : prettySize(doc.size)}
-                    {doc.sourceSubject ? ` · ${doc.sourceSubject}` : ''}
+                    {KIND_LABEL[doc.kind]} · {linkOnly ? 'קישור להזמנה' : prettySize(doc.size)}
+                    {!linkOnly && doc.sourceSubject ? ` · ${doc.sourceSubject}` : ''}
                   </Typography>
                 </Meta>
-                {doc.sourceMessageId && (
-                  <Badge size="sm" variant="default">
-                    {linkOnly ? 'ממתין ל-Gmail' : 'Gmail'}
-                  </Badge>
-                )}
+                {linkOnly ? (
+                  <Badge size="sm" variant="default">אין PDF עדיין</Badge>
+                ) : doc.sourceMessageId ? (
+                  <Badge size="sm" variant="default">Gmail</Badge>
+                ) : null}
                 {linkOnly && href ? (
                   <a href={href} target="_blank" rel="noopener noreferrer">
                     <Button size="sm" variant="ghost">

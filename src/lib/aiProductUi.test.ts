@@ -44,6 +44,26 @@ describe('in-app AI product UI is unmounted', () => {
     assert.equal(gmail.includes('fetchTravelEmails'), true)
   })
 
+  it('never auto-runs Gmail on mount or login — only the explicit Gmail button', () => {
+    const cloud = src('../components/cloud/CloudSyncButton.tsx')
+    assert.equal(cloud.includes('auto-placeholder-rescan-done'), false)
+    assert.equal(cloud.includes('מזהה הזמנות חסרות'), false)
+    assert.equal(cloud.includes('forceFull'), false)
+    assert.equal(cloud.includes('onClick={syncGmail}'), true)
+    assert.equal(cloud.includes('const syncGmail = async'), true)
+  })
+
+  it('TripDoc link-only cards are not badged as waiting for Gmail', () => {
+    const page = src('../pages/TripDoc.tsx')
+    assert.equal(page.includes('ממתין ל-Gmail'), false)
+    assert.equal(page.includes('ממתין לקובץ מהמייל'), false)
+    assert.ok(page.includes('אין PDF עדיין'))
+    assert.ok(page.includes('קישור להזמנה'))
+    assert.ok(page.includes('אין סריקה אוטומטית'))
+    assert.ok(page.includes('onClick={() => void onPull()}'))
+    assert.ok(page.includes('הצג'))
+  })
+
   it('TripDoc maps Gmail 401 to a Hebrew reconnect CTA, not raw broker JSON', () => {
     const page = src('../pages/TripDoc.tsx')
     assert.equal(page.includes('AuthReconnectBanner'), true)
@@ -52,5 +72,39 @@ describe('in-app AI product UI is unmounted', () => {
     const authErr = src('../lib/gmailAuthError.ts')
     assert.equal(token.includes('throwForGmailBrokerStatus'), true)
     assert.match(authErr, /status === 401/)
+  })
+
+  it('Gmail pull functions are only imported by explicit click surfaces', () => {
+    const allowedSync = new Set([
+      'CloudSyncButton.tsx',
+      'GmailSyncInlineButton.tsx',
+      'gmailSync.ts',
+      'aiProductUi.test.ts',
+    ])
+    const allowedPull = new Set(['TripDoc.tsx', 'gmailSync.ts', 'aiProductUi.test.ts'])
+    const files = [
+      ['../components/cloud/CloudSyncButton.tsx', 'CloudSyncButton.tsx'],
+      ['../components/gmail/GmailSyncInlineButton.tsx', 'GmailSyncInlineButton.tsx'],
+      ['../pages/TripDoc.tsx', 'TripDoc.tsx'],
+      ['../lib/gmailSync.ts', 'gmailSync.ts'],
+      ['../lib/AuthContext.tsx', 'AuthContext.tsx'],
+      ['../stores/tripStore.ts', 'tripStore.ts'],
+      ['../lib/tripLifecycleSync.ts', 'tripLifecycleSync.ts'],
+      ['../lib/tripAutoSync.ts', 'tripAutoSync.ts'],
+      ['../App.tsx', 'App.tsx'],
+    ] as const
+    for (const [rel, name] of files) {
+      let text: string
+      try { text = src(rel) } catch { continue }
+      if (text.includes('syncFromGmail(') && !allowedSync.has(name)) {
+        assert.fail(`${name} must not call syncFromGmail`)
+      }
+      if (text.includes('pullAllDocuments(') && !allowedPull.has(name)) {
+        assert.fail(`${name} must not call pullAllDocuments`)
+      }
+    }
+    const inline = src('../components/gmail/GmailSyncInlineButton.tsx')
+    assert.ok(inline.includes('onClick={run}'))
+    assert.equal(inline.includes('useEffect'), false)
   })
 })
