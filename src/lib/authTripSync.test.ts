@@ -12,6 +12,7 @@ import {
   remoteTripIds,
   resolveActiveTripId,
 } from './authTripSync.ts'
+import { ensureSeedDocLinks, USA_PLANNING_DOC_TITLE, USA_PLANNING_DOC_URL, USA_TRIP_ID } from './seedDocLink.ts'
 import {
   GUEST_TRIP_STORE_KEY,
   planTripStoreAccountSwitch,
@@ -22,7 +23,7 @@ const HOLLAND_ID = '34980c90-bd66-4270-8d45-3e96787b07ef'
 const PARIS_ID = 'a1f4e9b2-3c8d-4e6a-9b7c-1d5e8f7a2b34'
 const CRETE_ID = 'b2c5f8a3-4d9e-4f1b-8c6a-7e2d5b9f3a18'
 const ROME_ID = '30a5d517-0db3-427f-adfa-92ef125e1f8f'
-const USA_ID = 'b38fc010-9096-45c9-b8df-191e369143dc'
+const USA_ID = USA_TRIP_ID
 const DEMO_IDS = [HOLLAND_ID, PARIS_ID, CRETE_ID, ROME_ID, USA_ID]
 
 function stub(partial: Partial<TripPlan> & Pick<TripPlan, 'id' | 'name' | 'destination' | 'startDate' | 'endDate'>): TripPlan {
@@ -143,6 +144,17 @@ describe('authenticated member sees only RLS-returned USA', () => {
     assert.deepEqual(visible.map(t => t.id), [USA_ID])
   })
 
+  it('restores the USA planning Doc after a cloud-only hydrate that omitted docUrl', () => {
+    // Invitee persist starts empty (PR #10). Cloud USA has no doc_url column,
+    // so the row arrives without docUrl. Seed restore must still attach it.
+    const visible = visibleAfterCloudPull([], [usa({ updatedAt: '2026-09-08T00:00:00.000Z' })])
+    assert.equal(visible[0]?.docUrl, undefined)
+    const withDoc = ensureSeedDocLinks(visible)
+    assert.equal(withDoc[0]?.id, USA_ID)
+    assert.equal(withDoc[0]?.docUrl, USA_PLANNING_DOC_URL)
+    assert.equal(withDoc[0]?.docTitle, USA_PLANNING_DOC_TITLE)
+  })
+
   it('keeps a user-created local trip that is not a canonical seed', () => {
     const custom = stub({
       id: '11111111-2222-3333-4444-555555555555',
@@ -220,6 +232,12 @@ describe('account-scoped persist keys', () => {
 })
 
 describe('call-site regressions', () => {
+  it('wireUp restores seed Doc links after the cloud merge', () => {
+    const text = readFileSync(new URL('./AuthContext.tsx', import.meta.url), 'utf8')
+    assert.ok(text.includes('ensureSeedDocLinks'))
+    assert.ok(text.includes('ensureSeedBookingDocuments'))
+  })
+
   it('wireUp no longer pushes every local-only trip', () => {
     const text = readFileSync(new URL('./AuthContext.tsx', import.meta.url), 'utf8')
     assert.equal(text.includes('pushLocalToRemote(localOnly)'), false)

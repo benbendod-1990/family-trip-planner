@@ -17,6 +17,7 @@ import {
   saveSeedDuplicateRedirects,
 } from '@/lib/dedupeDemoTrips'
 import { ensureSeedBookingDocuments } from '@/lib/seedBookingDocuments'
+import { ensureSeedDocLinks } from '@/lib/seedDocLink'
 import { hydrateGuestTrips } from '@/lib/authTripSync'
 import {
   getTripStoreAccount,
@@ -830,16 +831,10 @@ export const useTripStore = create<TripStore>()(
         state.trips = state.trips.map(normalizeSeedTimestamp)
 
         // Carry the linked Google Doc URL onto live trips that predate it, so
-        // the Doc↔app link survives on already-installed devices.
-        state.trips = state.trips.map(t => {
-          const seed = DEMO_TRIPS.find(s => s.id === t.id)
-          if (!seed) return t
-          return {
-            ...t,
-            docUrl: t.docUrl || seed.docUrl,
-            docTitle: t.docTitle || seed.docTitle,
-          }
-        })
+        // the Doc↔app link survives on already-installed devices. Authenticated
+        // cloud hydrate also runs this (seedDocLink) because persist can start
+        // empty for an invitee.
+        state.trips = ensureSeedDocLinks(state.trips)
 
         // Canonical booking-reference cards (El Al PNRs, Utopia sailing) that
         // don't need Gmail. Self-limiting by document id. Must run after the

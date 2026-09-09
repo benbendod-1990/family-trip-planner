@@ -90,6 +90,8 @@ export function tripToPayload(plan: TripPlan): Record<string, unknown> {
     total_budget: plan.budget?.totalBudget ?? 0,
     currency: plan.budget?.currency ?? 'EUR',
     coords: plan.coords ?? null,
+    doc_url: plan.docUrl || null,
+    doc_title: plan.docTitle || null,
     days: days.map(d => ({ id: d.id, date: d.date, label: d.label ?? null })),
     events,
     family_members: plan.family.map(f => clean(toDb(f), 'family_members')),
