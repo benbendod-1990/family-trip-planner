@@ -1,72 +1,33 @@
-import styled from 'styled-components'
 import { useRegisterSW } from 'virtual:pwa-register/react'
 
 /*
  * The service worker precaches the app so it launches from the device instead
- * of the network. The trade-off is that a deploy no longer reaches users on
- * the next refresh — the cached build keeps serving until the new worker takes
- * over. So we register with `registerType: 'prompt'` (see vite.config.ts) and
- * surface the waiting build here, rather than swapping it in mid-session and
- * risking a reload while someone is editing a trip.
+ * of the network. vite.config uses `registerType: 'autoUpdate'` so a new
+ * worker skipWaiting + clientsClaim and reloads on `activated` (isUpdate).
  *
- * Styled to match the sync toast in components/cloud/CloudSyncButton.tsx.
+ * That is the iPhone recovery path. `prompt` + a "רענן" toast failed here:
+ * iOS standalone restores the last URL, so swipe-away lands back on a hung
+ * לוח זמנים that never paints the toast. The old waiting worker then keeps
+ * serving the frozen itinerary chunk forever.
+ *
+ * iOS also throttles SW update checks. Poll on an interval, on foreground,
+ * and on pageshow (bfcache / PWA restore) so the next launch actually sees
+ * the deploy. Dev keeps the SW off (`devOptions.enabled: false`).
  */
-const Toast = styled.div`
-  position: fixed;
-  bottom: 24px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: #3b82f6;
-  color: #fff;
-  padding: 10px 18px;
-  border-radius: 999px;
-  font-size: 14px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  z-index: 1100;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
-  max-width: 90vw;
-  text-align: center;
-`
-
-const ToastButton = styled.button`
-  background: rgba(255, 255, 255, 0.22);
-  border: 1px solid rgba(255, 255, 255, 0.55);
-  color: #fff;
-  font-size: 13px;
-  font-weight: 600;
-  padding: 5px 12px;
-  border-radius: 999px;
-  cursor: pointer;
-  white-space: nowrap;
-  &:hover { background: rgba(255, 255, 255, 0.32); }
-`
-
-const ToastDismiss = styled.button`
-  background: transparent;
-  border: none;
-  color: rgba(255, 255, 255, 0.85);
-  font-size: 14px;
-  line-height: 1;
-  cursor: pointer;
-  padding: 2px 4px;
-  &:hover { color: #fff; }
-`
+const UPDATE_POLL_MS = 15 * 60 * 1000
 
 export default function PwaUpdatePrompt() {
-  const {
-    needRefresh: [needRefresh, setNeedRefresh],
-    updateServiceWorker,
-  } = useRegisterSW()
-
-  if (!needRefresh) return null
-
-  return (
-    <Toast role="status">
-      <span>יש גרסה חדשה</span>
-      <ToastButton onClick={() => void updateServiceWorker(true)}>רענן</ToastButton>
-      <ToastDismiss onClick={() => setNeedRefresh(false)} aria-label="סגור">✕</ToastDismiss>
-    </Toast>
-  )
+  useRegisterSW({
+    immediate: true,
+    onRegisteredSW(_url, registration) {
+      if (!registration) return
+      const check = () => { void registration.update() }
+      window.setInterval(check, UPDATE_POLL_MS)
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') check()
+      })
+      window.addEventListener('pageshow', check)
+    },
+  })
+  return null
 }

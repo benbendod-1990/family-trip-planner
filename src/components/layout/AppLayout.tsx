@@ -1,7 +1,9 @@
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { Outlet, useParams, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import AiChatDrawer from '@/components/ai/AiChatDrawer'
 import CloudSyncButton from '@/components/cloud/CloudSyncButton'
+import RouteFallback from '@/components/layout/RouteFallback'
+import PageErrorBoundary from '@/components/layout/PageErrorBoundary'
 import {
   AppShell, Navbar, Sidebar, Drawer,
   SidebarContent, SidebarNavItem, SidebarSection, SidebarSectionTitle,
@@ -12,6 +14,32 @@ import styled, { ThemeProvider } from 'styled-components'
 import { Map, Wallet, Plane, Home, ListTodo, Users, Menu, LayoutDashboard, Backpack, User, FileText } from 'lucide-react'
 import { useBreakpoint } from '@/hooks/useBreakpoint'
 import { warmTheme } from '@/theme/warmTheme'
+
+/*
+ * AppShell is height:100vh + overflow:hidden and its <main> is flex:1 with
+ * min-width:auto. On iOS that 100vh is taller than the visual viewport, and
+ * a wide min-content child is clipped to cream by html's overflow-x:hidden.
+ * Cap to dvh and let main shrink.
+ */
+const ShellFrame = styled.div`
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
+
+  & > div {
+    height: 100% !important;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  main {
+    min-width: 0;
+    max-width: 100%;
+  }
+`
 
 const TripTitle = styled.div`
   font-weight: 600;
@@ -75,7 +103,9 @@ export default function AppLayout() {
   const activeTripId = useTripStore(s => s.activeTripId)
   const setActiveTrip = useTripStore(s => s.setActiveTrip)
   const [collapsed, setCollapsed] = useState(false)
-  const [drawerOpen, setDrawerOpen] = useState(false)
+  // Open only for the current path — a route change closes it without an effect.
+  const [drawerPath, setDrawerPath] = useState<string | null>(null)
+  const drawerOpen = drawerPath === location.pathname
   const { isTablet } = useBreakpoint()
 
   const trip = trips.find(t => t.id === id)
@@ -85,11 +115,6 @@ export default function AppLayout() {
       setActiveTrip(id)
     }
   }, [id, activeTripId, setActiveTrip])
-
-  // close drawer on navigation
-  useEffect(() => {
-    setDrawerOpen(false)
-  }, [location.pathname])
 
   if (!trip) return <Navigate to="/" replace />
 
@@ -139,7 +164,7 @@ export default function AppLayout() {
             <Stack direction="row" align="center" spacing="md" style={{ padding: '0 16px', height: '100%' }}>
               {isTablet && (
                 <ActionIcon
-                  onClick={() => setDrawerOpen(true)}
+                  onClick={() => setDrawerPath(location.pathname)}
                   title="תפריט"
                   aria-label="פתח תפריט"
                   variant="subtle"
@@ -221,18 +246,23 @@ export default function AppLayout() {
           ) : undefined
         }
       >
-        {/* min-width:0 lets the itinerary grid shrink inside AppShell's flex
-            main. Without it, auto-sized children report a huge min-content
-            width and the layout can hang on long trips. */}
+        {/* Nested Suspense: keep the navbar painted while the itinerary
+            chunk loads. A single App-level boundary unmounts AppShell, so a
+            slow/hung first paint of לוח זמנים is a cream blank with no chrome.
+            min-width:0 lets the day list shrink inside flex main. */}
         <div style={{ minWidth: 0, width: '100%', maxWidth: '100%' }}>
-          <Outlet />
+          <PageErrorBoundary>
+            <Suspense fallback={<RouteFallback />}>
+              <Outlet />
+            </Suspense>
+          </PageErrorBoundary>
         </div>
       </AppShell>
 
       {isTablet && (
         <Drawer
           isOpen={drawerOpen}
-          onClose={() => setDrawerOpen(false)}
+          onClose={() => setDrawerPath(null)}
           placement="right"
           size="sm"
           title={
@@ -251,7 +281,7 @@ export default function AppLayout() {
   return (
     <>
       <ThemeProvider theme={warmTheme}>
-        <div className="warm-shell">{shellTree}</div>
+        <ShellFrame className="warm-shell">{shellTree}</ShellFrame>
       </ThemeProvider>
       <AiChatDrawer />
     </>
