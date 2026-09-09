@@ -8,6 +8,7 @@ import AuthReconnectBanner from '@/components/auth/AuthReconnectBanner'
 import type { DocDiffResult, DocIssue } from '@/lib/tripDocDiff'
 import type { TripPlan } from '@/types/trip-plan'
 import { formatDateShort } from '@/utils/date'
+import { useIsTripOwner } from '@/hooks/useIsTripOwner'
 
 interface Props {
   trip: TripPlan
@@ -171,6 +172,7 @@ function issueText(issue: DocIssue): string {
 export default function TripDocCard({ trip }: Props) {
   const setDocUrl = useTripStore(s => s.setDocUrl)
   const markDocChecked = useTripStore(s => s.markDocChecked)
+  const { isOwner, loading: ownerLoading } = useIsTripOwner(trip.id)
 
   const [busy, setBusy] = useState(false)
   const [result, setResult] = useState<DocDiffResult | null>(null)
@@ -178,6 +180,7 @@ export default function TripDocCard({ trip }: Props) {
   const [draftUrl, setDraftUrl] = useState('')
 
   const run = async () => {
+    if (!isOwner) return
     setBusy(true)
     setError(null)
     setResult(null)
@@ -206,36 +209,42 @@ export default function TripDocCard({ trip }: Props) {
       </Header>
 
       {!trip.docUrl ? (
-        <>
-          <IssueLine>
-            המסמך הוא מקור האמת של הטיול. הדבק את הקישור כדי להשוות מולו.
-          </IssueLine>
-          <LinkForm style={{ marginTop: 10 }}>
-            <Input
-              value={draftUrl}
-              onChange={e => setDraftUrl(e.target.value)}
-              placeholder="https://docs.google.com/document/d/..."
-              aria-label="קישור למסמך התכנון"
-            />
-            <SmallButton
-              disabled={!draftUrl.trim()}
-              onClick={() => {
-                setDocUrl(trip.id, draftUrl.trim())
-                setDraftUrl('')
-              }}
-            >
-              קשר
-            </SmallButton>
-          </LinkForm>
-        </>
-      ) : (
+        isOwner ? (
+          <>
+            <IssueLine>
+              המסמך הוא מקור האמת של הטיול. הדבק את הקישור כדי להשוות מולו.
+            </IssueLine>
+            <LinkForm style={{ marginTop: 10 }}>
+              <Input
+                value={draftUrl}
+                onChange={e => setDraftUrl(e.target.value)}
+                placeholder="https://docs.google.com/document/d/..."
+                aria-label="קישור למסמך התכנון"
+              />
+              <SmallButton
+                disabled={!draftUrl.trim()}
+                onClick={() => {
+                  setDocUrl(trip.id, draftUrl.trim())
+                  setDraftUrl('')
+                }}
+              >
+                קשר
+              </SmallButton>
+            </LinkForm>
+          </>
+        ) : ownerLoading ? null : (
+          <IssueLine>רק יוצר הטיול יכול לקשר את מסמך התכנון.</IssueLine>
+        )
+      ) : isOwner ? (
         <Button onClick={run} disabled={busy}>
           {busy ? <Spin size={16} /> : <RefreshCw size={16} />}
           {busy ? 'קורא את המסמך…' : 'בדוק סנכרון מול המסמך'}
         </Button>
+      ) : ownerLoading ? null : (
+        <IssueLine>רק יוצר הטיול יכול לבדוק סנכרון מול המסמך. אפשר לפתוח את המסמך מהקישור למעלה.</IssueLine>
       )}
 
-      {error && (
+      {isOwner && error && (
         error.reconnect
           ? (
             <AuthReconnectBanner
@@ -253,14 +262,14 @@ export default function TripDocCard({ trip }: Props) {
           )
       )}
 
-      {result && result.inSync && (
+      {isOwner && result && result.inSync && (
         <Banner $tone="ok">
           <CheckCircle2 size={16} style={{ flexShrink: 0, marginTop: 1 }} />
           <div>הלו״ז מסונכרן עם המסמך — כל {result.days.length} הימים תואמים.</div>
         </Banner>
       )}
 
-      {result && !result.inSync && (
+      {isOwner && result && !result.inSync && (
         <>
           <Banner $tone="warn">
             <AlertTriangle size={16} style={{ flexShrink: 0, marginTop: 1 }} />
