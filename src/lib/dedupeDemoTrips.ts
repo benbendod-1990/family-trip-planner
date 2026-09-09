@@ -321,6 +321,7 @@ export function mergeUniqueUserData(kept: TripPlan, from: TripPlan): TripPlan {
     family,
     documents,
     docUrl: kept.docUrl ?? from.docUrl,
+    docTitle: kept.docTitle ?? from.docTitle,
     updatedAt: new Date().toISOString(),
   }
 }

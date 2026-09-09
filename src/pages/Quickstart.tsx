@@ -45,6 +45,7 @@ const MIGRATIONS = [
   { file: '0003_fix_rls_recursion.sql',             title: 'תיקון RLS recursion',   status: 'ran' },
   { file: '0004_save_trip_rpc.sql',                 title: 'RPC לשמירה (עוקף RLS)', status: 'pending' },
   { file: '0009_fix_invite_role_ambiguous.sql',     title: 'תיקון הזמנה: role ambiguous', status: 'pending' },
+  { file: '0010_trip_doc_url.sql',                  title: 'קישור מסמך התכנון (doc_url)', status: 'pending' },
 ] as const
 
 function CopyButton({ file }: { file: string }) {
