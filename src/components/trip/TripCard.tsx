@@ -20,6 +20,7 @@ import { destinationColor, warmDisplayFont } from '@/theme/warmTheme'
  */
 const PostTripDebriefModal = lazy(() => import('@/components/archive/PostTripDebriefModal'))
 const InviteMemberModal = lazy(() => import('@/components/cloud/InviteMemberModal'))
+const TripWeatherStrip = lazy(() => import('@/components/trip/TripWeatherStrip'))
 
 const Emoji = styled.div`
   font-size: 48px;
@@ -131,6 +132,11 @@ export default function TripCard({ trip, index = 0 }: Props) {
           <Typography variant="body2" style={{ color: '#8F7B5C' }}>
             {trip.family.map(m => m.emoji).join(' ')} {trip.family.length} נוסעים
           </Typography>
+        )}
+        {trip.destination && (
+          <Suspense fallback={null}>
+            <TripWeatherStrip destination={trip.destination} coords={trip.coords} />
+          </Suspense>
         )}
         {isArchived && (
           <Badge variant="success" size="sm">✓ נשמר בזיכרון</Badge>

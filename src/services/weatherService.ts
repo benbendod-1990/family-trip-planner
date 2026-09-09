@@ -8,6 +8,18 @@ export interface DayWeather {
   precipitation: number
 }
 
+export interface CurrentConditions {
+  temp: number
+  weatherCode: number
+}
+
+/** Destination snapshot for Home cards: what's it like there now, and tomorrow. */
+export interface DestinationNowWeather {
+  current: CurrentConditions
+  today: DayWeather
+  tomorrow: DayWeather | null
+}
+
 export async function reverseGeocode(coords: TripCoords): Promise<{ name?: string; address?: string } | null> {
   try {
     const res = await fetch(
@@ -88,6 +100,79 @@ export async function geocodeDestination(destination: string): Promise<TripCoord
   geocodeCache.set(destination, result)
   saveGeocodeCache(geocodeCache)
   return result
+}
+
+function asNumber(value: unknown): number | null {
+  return typeof value === 'number' && Number.isFinite(value) ? value : null
+}
+
+function dailySlice(data: Record<string, unknown>, index: number): DayWeather | null {
+  const daily = data.daily
+  if (!daily || typeof daily !== 'object') return null
+  const d = daily as Record<string, unknown>
+  const time = Array.isArray(d.time) ? d.time[index] : undefined
+  const maxTemp = asNumber(Array.isArray(d.temperature_2m_max) ? d.temperature_2m_max[index] : undefined)
+  const minTemp = asNumber(Array.isArray(d.temperature_2m_min) ? d.temperature_2m_min[index] : undefined)
+  const weatherCode = asNumber(
+    Array.isArray(d.weathercode) ? d.weathercode[index]
+      : Array.isArray(d.weather_code) ? d.weather_code[index]
+        : undefined,
+  )
+  const precipitation = asNumber(Array.isArray(d.precipitation_sum) ? d.precipitation_sum[index] : undefined)
+  if (typeof time !== 'string' || maxTemp == null || minTemp == null || weatherCode == null) return null
+  return {
+    date: time,
+    maxTemp: Math.round(maxTemp),
+    minTemp: Math.round(minTemp),
+    weatherCode,
+    precipitation: Math.round(precipitation ?? 0),
+  }
+}
+
+function parseCurrent(data: Record<string, unknown>): CurrentConditions | null {
+  const legacy = data.current_weather
+  if (legacy && typeof legacy === 'object') {
+    const c = legacy as Record<string, unknown>
+    const temp = asNumber(c.temperature)
+    const weatherCode = asNumber(c.weathercode ?? c.weather_code)
+    if (temp != null && weatherCode != null) return { temp: Math.round(temp), weatherCode }
+  }
+  const current = data.current
+  if (current && typeof current === 'object') {
+    const c = current as Record<string, unknown>
+    const temp = asNumber(c.temperature_2m ?? c.temperature)
+    const weatherCode = asNumber(c.weather_code ?? c.weathercode)
+    if (temp != null && weatherCode != null) return { temp: Math.round(temp), weatherCode }
+  }
+  return null
+}
+
+export function parseDestinationNowWeather(data: unknown): DestinationNowWeather | null {
+  if (!data || typeof data !== 'object') return null
+  const rec = data as Record<string, unknown>
+  const current = parseCurrent(rec)
+  const today = dailySlice(rec, 0)
+  if (!current || !today) return null
+  return { current, today, tomorrow: dailySlice(rec, 1) }
+}
+
+/** Current conditions + today/tomorrow daily at the destination (not the trip dates). */
+export async function fetchDestinationNowWeather(coords: TripCoords): Promise<DestinationNowWeather | null> {
+  const params = new URLSearchParams({
+    latitude: coords.lat.toString(),
+    longitude: coords.lon.toString(),
+    current_weather: 'true',
+    daily: 'temperature_2m_max,temperature_2m_min,weathercode,precipitation_sum',
+    timezone: 'auto',
+    forecast_days: '2',
+  })
+  try {
+    const res = await fetch(`https://api.open-meteo.com/v1/forecast?${params}`)
+    if (!res.ok) return null
+    return parseDestinationNowWeather(await res.json())
+  } catch {
+    return null
+  }
 }
 
 export async function fetchWeatherForecast(

@@ -9,7 +9,7 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "test": "node --experimental-strip-types --test src/lib/dedupeDemoTrips.test.ts src/utils/itineraryLayout.test.ts src/lib/pwaBrandIcons.test.ts src/lib/aiProductUi.test.ts src/lib/gmailToken.test.ts src/lib/seedBookingDocuments.test.ts src/lib/authTripSync.test.ts src/lib/tripStoreAccount.test.ts src/lib/inviteError.test.ts src/lib/seedDocLink.test.ts worker/src/auth.test.ts",
+    "test": "node --experimental-strip-types --test src/lib/dedupeDemoTrips.test.ts src/utils/itineraryLayout.test.ts src/lib/pwaBrandIcons.test.ts src/lib/aiProductUi.test.ts src/lib/gmailToken.test.ts src/lib/seedBookingDocuments.test.ts src/lib/authTripSync.test.ts src/lib/tripStoreAccount.test.ts src/lib/inviteError.test.ts src/lib/seedDocLink.test.ts src/lib/tripMapPois.test.ts src/lib/homeWeather.test.ts src/lib/tripOwnership.test.ts worker/src/auth.test.ts",
     "deploy": "npm run build && cd worker && ./node_modules/.bin/wrangler pages deploy ../dist --project-name=family-trip-planner --branch=main --commit-dirty=true"
   },
   "dependencies": {

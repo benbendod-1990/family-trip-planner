@@ -25,9 +25,11 @@ describe('in-app AI product UI is unmounted', () => {
     assert.equal(text.includes('@/components/ai/'), false)
   })
 
-  it('FamilyProfile no longer mounts AiSettings', () => {
-    const text = src('../pages/FamilyProfile.tsx')
-    assert.equal(text.includes('AiSettings'), false)
+  it('Family Profile page is gone from the product', () => {
+    const app = src('../App.tsx')
+    assert.equal(app.includes('FamilyProfile'), false)
+    assert.ok(app.includes('path="/profile"'))
+    assert.match(app, /path="\/profile"[\s\S]*Navigate to="\/"/)
   })
 
   it('Travel no longer mounts SmartImportModal', () => {

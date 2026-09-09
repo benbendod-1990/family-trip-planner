@@ -12,10 +12,10 @@ import { dismissBootShell } from './boot'
  * is opened, and they pull in the heaviest dependencies.
  */
 const Quickstart = lazy(() => import('./pages/Quickstart'))
-const FamilyProfile = lazy(() => import('./pages/FamilyProfile'))
 const AppLayout = lazy(() => import('./components/layout/AppLayout'))
 const Dashboard = lazy(() => import('./pages/Dashboard'))
 const Itinerary = lazy(() => import('./pages/Itinerary'))
+const MapPage = lazy(() => import('./pages/Map'))
 const Family = lazy(() => import('./pages/Family'))
 const Budget = lazy(() => import('./pages/Budget'))
 const Travel = lazy(() => import('./pages/Travel'))
@@ -37,19 +37,18 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/quickstart" element={<Quickstart />} />
-        <Route path="/profile" element={<FamilyProfile />} />
+        <Route path="/profile" element={<Navigate to="/" replace />} />
         <Route path="/trip/:id" element={<AppLayout />}>
           <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="itinerary" element={<Itinerary />} />
+          <Route path="map" element={<MapPage />} />
           <Route path="family" element={<Family />} />
           <Route path="tasks" element={<Tasks />} />
           <Route path="budget" element={<Budget />} />
           <Route path="travel" element={<Travel />} />
           <Route path="packing" element={<Packing />} />
           <Route path="doc" element={<TripDoc />} />
-          {/* Map merged into the itinerary — redirect old/bookmarked links. */}
-          <Route path="map" element={<Navigate to="../itinerary" replace />} />
         </Route>
       </Routes>
     </Suspense>

@@ -10,7 +10,7 @@ import {
 } from 'myk-library'
 import { useTripStore } from '@/stores/tripStore'
 import styled, { ThemeProvider } from 'styled-components'
-import { Map, Wallet, Plane, Home, ListTodo, Users, Menu, LayoutDashboard, Backpack, User, FileText } from 'lucide-react'
+import { Map, Wallet, Plane, Home, ListTodo, Users, Menu, LayoutDashboard, Backpack, FileText, CalendarRange } from 'lucide-react'
 import { useBreakpoint } from '@/hooks/useBreakpoint'
 import { warmTheme } from '@/theme/warmTheme'
 
@@ -85,7 +85,8 @@ const DrawerNav = styled.nav`
 
 const NavItems = [
   { label: 'דשבורד', path: 'dashboard', icon: <LayoutDashboard size={18} /> },
-  { label: 'לוח זמנים', path: 'itinerary', icon: <Map size={18} /> },
+  { label: 'לוח זמנים', path: 'itinerary', icon: <CalendarRange size={18} /> },
+  { label: 'מפה מצוירת', path: 'map', icon: <Map size={18} /> },
   { label: 'ציוד', path: 'packing', icon: <Backpack size={18} /> },
   { label: 'משפחה', path: 'family', icon: <Users size={18} /> },
   { label: 'משימות', path: 'tasks', icon: <ListTodo size={18} /> },
@@ -188,15 +189,6 @@ export default function AppLayout() {
               <Badge variant="info" size="sm">{trip.destination}</Badge>
               <Stack direction="row" spacing="xs" align="center" style={{ marginInlineStart: 'auto' }}>
                 <CloudSyncButton />
-                <ActionIcon
-                  onClick={() => navigate('/profile')}
-                  title="פרופיל משפחתי — סיכום טיולים קודמים והעדפות"
-                  aria-label="פרופיל משפחתי"
-                  variant="subtle"
-                  size="sm"
-                >
-                  <User size={18} />
-                </ActionIcon>
               </Stack>
             </Stack>
           </Navbar>

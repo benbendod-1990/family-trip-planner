@@ -16,6 +16,7 @@ export interface Accommodation {
   confirmationNumber?: string
   notes?: string
   rating?: number
+  coords?: { lat: number; lon: number }
 }
 
 export interface CarRental {
