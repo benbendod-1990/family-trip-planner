@@ -52,14 +52,18 @@ describe('PWA brand icons', () => {
     assert.deepEqual(pngSize(join(root, 'public/icon-192.png')), { width: 192, height: 192 })
     assert.deepEqual(pngSize(join(root, 'public/icon-512.png')), { width: 512, height: 512 })
     assert.deepEqual(pngSize(join(root, 'public/favicon.png')), { width: 32, height: 32 })
-    assert.equal(existsSync(join(root, 'public/favicon.svg')), false)
+    assert.equal(existsSync(join(root, 'public/favicon.svg')), true)
+    const svg = readFileSync(join(root, 'public/favicon.svg'), 'utf8')
+    assert.equal(svg.includes('#863bff'), false)
+    assert.equal(svg.includes('#7e14ff'), false)
+    assert.equal(svg.includes('#FBF3DF'), true)
   })
 
-  it('links the PNG icons from index.html and drops the Vite SVG favicon', () => {
+  it('links the PNG icons from index.html instead of the old Vite SVG', () => {
     assert.equal(html.includes('href="/favicon.png"'), true)
     assert.equal(html.includes('href="/icon-192.png"'), true)
     assert.equal(html.includes('href="/apple-touch-icon.png"'), true)
-    assert.equal(html.includes('favicon.svg'), false)
+    assert.equal(html.includes('href="/favicon.svg"'), false)
     assert.equal(html.includes('apple-mobile-web-app-title" content="המסע של משפחת בן דוד"'), true)
   })
 })
