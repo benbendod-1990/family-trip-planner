@@ -13,6 +13,7 @@ import { Upload, Sparkles, Check, AlertCircle } from 'lucide-react'
 import styled from 'styled-components'
 import { useTripStore } from '@/stores/tripStore'
 import { parseDocument, type ParseDocumentResponse } from '@/lib/aiClient'
+import { assertProductAiEnabled } from '@/lib/aiFeatures'
 import {
   createMergeSession, mergeByConfirmation, sameFlightDirection,
   isPlaceholderFlight, isPlaceholderHotel, isPlaceholderCar,
@@ -91,6 +92,7 @@ export default function SmartImportModal({ isOpen, onClose, trip }: Props) {
   }
 
   const runParse = async (input: string, sourceName?: string) => {
+    assertProductAiEnabled()
     setStage('parsing')
     try {
       const res = await parseDocument({

@@ -9,9 +9,8 @@ import FlightFormModal from '@/components/travel/FlightFormModal'
 import AccommodationFormModal from '@/components/travel/AccommodationFormModal'
 import CarRentalFormModal from '@/components/travel/CarRentalFormModal'
 import GmailSyncInlineButton from '@/components/gmail/GmailSyncInlineButton'
-import SmartImportModal from '@/components/import/SmartImportModal'
 import type { Flight, Accommodation, CarRental, CarCategory } from '@/types/accommodation'
-import { Plus, Pencil, Trash2, Plane, Hotel, Car, Navigation, Ticket, Sparkles } from 'lucide-react'
+import { Plus, Pencil, Trash2, Plane, Hotel, Car, Navigation, Ticket } from 'lucide-react'
 import styled from 'styled-components'
 import { parseISO, format } from 'date-fns'
 import { he } from 'date-fns/locale'
@@ -53,7 +52,6 @@ export default function Travel() {
   const [editAcc, setEditAcc] = useState<Accommodation | undefined>()
   const [showAddCar, setShowAddCar] = useState(false)
   const [editCar, setEditCar] = useState<CarRental | undefined>()
-  const [showImport, setShowImport] = useState(false)
 
   const { isMobile } = useBreakpoint()
 
@@ -155,11 +153,6 @@ export default function Travel() {
   return (
     <PageWrapper $mobile={isMobile}>
       <Stack direction="row" justify="end" spacing="xs" style={{ marginBottom: 8 }}>
-        <Button size="sm" variant="ghost" onClick={() => setShowImport(true)}>
-          <Stack direction="row" spacing="xs" align="center">
-            <Sparkles size={14} /><span>ייבוא חכם (AI)</span>
-          </Stack>
-        </Button>
         <GmailSyncInlineButton />
       </Stack>
       <Tabs items={tabs} variant="enclosed" />
@@ -176,7 +169,6 @@ export default function Travel() {
       {editCar && (
         <CarRentalFormModal open={!!editCar} onClose={() => setEditCar(undefined)} tripId={trip.id} editRental={editCar} />
       )}
-      <SmartImportModal isOpen={showImport} onClose={() => setShowImport(false)} trip={trip} />
     </PageWrapper>
   )
 }

@@ -1,6 +1,7 @@
 import type { AiMessage } from '@/stores/aiStore'
 import type { TripPlan } from '@/types/trip-plan'
 import type { AiSuggestedDay } from '@/types/ai-itinerary'
+import { assertProductAiEnabled } from '@/lib/aiFeatures'
 
 interface AiConfig {
   provider: 'openai' | 'ollama'
@@ -40,6 +41,7 @@ export async function sendAiMessage(
   trip: TripPlan,
   config: AiConfig
 ): Promise<string> {
+  assertProductAiEnabled()
   const systemPrompt = buildSystemPrompt(trip)
 
   const chatMessages: ChatMessage[] = [
@@ -145,6 +147,7 @@ export async function generateDayItinerary(
   constraints: string,
   config: AiConfig
 ): Promise<AiSuggestedDay> {
+  assertProductAiEnabled()
   const messages: ChatMessage[] = [
     { role: 'system', content: buildDayPrompt(trip, dayDate, dayIndex, constraints) },
     { role: 'user', content: `צור מסלול ליום ${dayIndex + 1} (${dayDate}) ב${trip.destination}.` },
