@@ -40,10 +40,11 @@ const URLS = {
 }
 
 const MIGRATIONS = [
-  { file: '0001_init.sql',                title: 'יצירת סכמה ראשית', status: 'ran' },
-  { file: '0002_invite.sql',              title: 'פונקציות הזמנת חברים', status: 'ran' },
-  { file: '0003_fix_rls_recursion.sql',   title: 'תיקון RLS recursion',   status: 'ran' },
-  { file: '0004_save_trip_rpc.sql',       title: 'RPC לשמירה (עוקף RLS)', status: 'pending' },
+  { file: '0001_init.sql',                          title: 'יצירת סכמה ראשית', status: 'ran' },
+  { file: '0002_invite.sql',                        title: 'פונקציות הזמנת חברים', status: 'ran' },
+  { file: '0003_fix_rls_recursion.sql',             title: 'תיקון RLS recursion',   status: 'ran' },
+  { file: '0004_save_trip_rpc.sql',                 title: 'RPC לשמירה (עוקף RLS)', status: 'pending' },
+  { file: '0009_fix_invite_role_ambiguous.sql',     title: 'תיקון הזמנה: role ambiguous', status: 'pending' },
 ] as const
 
 function CopyButton({ file }: { file: string }) {
