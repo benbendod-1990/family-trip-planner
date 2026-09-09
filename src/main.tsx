@@ -12,6 +12,12 @@ import './index.css'
 
 installBootShellFailsafe()
 
+if (import.meta.env.DEV) {
+  void import('./stores/tripStore').then(({ useTripStore }) => {
+    (window as Window & { __useTripStore?: typeof useTripStore }).__useTripStore = useTripStore
+  })
+}
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ThemeProvider theme={tripTheme}>

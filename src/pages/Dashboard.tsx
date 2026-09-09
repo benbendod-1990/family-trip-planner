@@ -1,3 +1,4 @@
+import { useMemo, useState } from 'react'
 import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import { Card } from 'myk-library'
 import { ThemeProvider } from 'styled-components'
@@ -6,8 +7,12 @@ import { useTripStore, getTotalSpent } from '@/stores/tripStore'
 import { formatCurrency } from '@/utils/currency'
 import { formatDateShort, getTripDuration } from '@/utils/date'
 import { useBreakpoint } from '@/hooks/useBreakpoint'
+import { collectFrontStays } from '@/lib/tripFrontPoster'
 import { warmTheme, warmDisplayFont, warmPageBackground } from '@/theme/warmTheme'
-import TripMascot from '@/components/dashboard/TripMascot'
+import TripFrontPoster, { type FrontPosterSelect } from '@/components/map/TripFrontPoster'
+import StaySignRow from '@/components/map/StaySignRow'
+import PoiBlurbSheet from '@/components/map/PoiBlurbSheet'
+import { WashiTape } from '@/components/map/DiaryDecor'
 import ReadinessCard from '@/components/dashboard/ReadinessCard'
 import WeatherPreview from '@/components/dashboard/WeatherPreview'
 import BookingsCard from '@/components/dashboard/BookingsCard'
@@ -35,46 +40,81 @@ const PageWrapper = styled.div<{ $mobile: boolean }>`
   box-sizing: border-box;
 `
 
-const HeroCard = styled.div<{ $mobile: boolean }>`
-  padding: ${({ $mobile }) => ($mobile ? '28px 20px 24px' : '40px 32px 32px')};
-  text-align: center;
+const PosterCard = styled.section`
+  position: relative;
+  background: #FBF6E8;
+  border: 1px solid ${({ theme }) => theme.colors.gray[200]};
+  border-radius: 24px;
+  padding: 18px 12px 14px;
+  box-shadow:
+    0 1px 2px rgba(120, 90, 40, 0.06),
+    0 10px 28px rgba(80, 56, 20, 0.08);
+`
+
+const Tape = styled.div<{ $side: 'start' | 'end' }>`
+  position: absolute;
+  top: -8px;
+  ${({ $side }) => ($side === 'start' ? 'inset-inline-start: 16px;' : 'inset-inline-end: 20px;')}
+  pointer-events: none;
+`
+
+const PosterTitle = styled.h2<{ $mobile: boolean }>`
+  font-family: ${warmDisplayFont};
+  font-size: ${({ $mobile }) => ($mobile ? '22px' : '28px')};
+  font-weight: 500;
+  margin: 0 4px 4px;
+  color: ${({ theme }) => theme.colors.gray[900]};
+`
+
+const PosterSub = styled.div`
+  font-size: 13px;
+  color: ${({ theme }) => theme.colors.gray[600]};
+  margin: 0 4px 12px;
+`
+
+const PosterHint = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+  padding: 0 4px;
+  font-size: 12px;
+  color: ${({ theme }) => theme.colors.gray[600]};
+`
+
+const DayByDayLink = styled.button`
+  border: none;
+  background: transparent;
+  color: ${({ theme }) => theme.colors.primary[600]};
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0;
+`
+
+const CountdownStrip = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
   background: ${({ theme }) => theme.colors.gray[100]};
-  border-radius: 28px;
+  border-radius: 16px;
   box-shadow: ${({ theme }) => theme.shadows.sm};
 `
 
-const MascotWrap = styled.div`
-  display: flex;
-  justify-content: center;
-  margin-bottom: 12px;
-`
-
-const HeroTitle = styled.h2<{ $mobile: boolean }>`
-  font-family: ${warmDisplayFont};
-  font-size: ${({ $mobile }) => ($mobile ? '24px' : '32px')};
-  font-weight: 500;
-  margin: 0 0 6px;
-  color: ${({ theme }) => theme.colors.gray[900]};
-`
-
-const HeroSub = styled.div`
+const CountdownLabel = styled.div`
   font-size: 13px;
-  color: ${({ theme }) => theme.colors.gray[500]};
-  margin-bottom: 20px;
+  color: ${({ theme }) => theme.colors.gray[600]};
 `
 
-const HeroCaption = styled.div`
-  font-size: 13px;
-  color: ${({ theme }) => theme.colors.gray[500]};
-  margin-bottom: 4px;
-`
-
-const HeroCountdown = styled.div<{ $mobile: boolean }>`
+const CountdownValue = styled.div`
   font-family: ${warmDisplayFont};
-  font-size: ${({ $mobile }) => ($mobile ? '40px' : '52px')};
+  font-size: 22px;
   font-weight: 500;
   color: ${({ theme }) => theme.colors.gray[900]};
-  line-height: 1.1;
 `
 
 const SectionLabel = styled.div`
@@ -221,6 +261,8 @@ function DashboardContent() {
   const location = useLocation()
   const trip = useTripStore(s => s.trips.find(t => t.id === id))
   const { isMobile } = useBreakpoint()
+  const [selected, setSelected] = useState<FrontPosterSelect | null>(null)
+  const stays = useMemo(() => (trip ? collectFrontStays(trip) : []), [trip])
 
   if (!trip) return null
 
@@ -248,26 +290,51 @@ function DashboardContent() {
 
   return (
     <PageWrapper $mobile={isMobile}>
-      {/* Hero — phase-aware */}
-      <HeroCard $mobile={isMobile}>
-        <MascotWrap><TripMascot size={isMobile ? 100 : 130} /></MascotWrap>
-        <HeroTitle $mobile={isMobile}>{shortDestination} מחכה לנו</HeroTitle>
-        <HeroSub>📍 {trip.destination} · 🗓 {formatDateShort(trip.startDate)} – {formatDateShort(trip.endDate)} · ⏱ {duration} ימים</HeroSub>
+      <PosterCard>
+        <Tape $side="end"><WashiTape rotate={12} color="#C45C3E" /></Tape>
+        <Tape $side="start"><WashiTape rotate={-9} color="#5B8FA8" /></Tape>
+        <PosterTitle $mobile={isMobile}>{trip.name}</PosterTitle>
+        <PosterSub>
+          {shortDestination}
+          {' · '}
+          {formatDateShort(trip.startDate)} – {formatDateShort(trip.endDate)}
+          {' · '}
+          {duration} ימים
+        </PosterSub>
+        <StaySignRow stays={stays} />
+        <div style={{ marginTop: stays.length ? 10 : 0 }}>
+          <TripFrontPoster
+            trip={trip}
+            selectedId={selected?.id ?? null}
+            onSelect={setSelected}
+          />
+        </div>
+        <PosterHint>
+          <span>לחצו על תחנה לפירוט</span>
+          <DayByDayLink type="button" onClick={() => navigate(`/trip/${trip.id}/map`)}>
+            יום ביום
+          </DayByDayLink>
+        </PosterHint>
+      </PosterCard>
 
+      <CountdownStrip>
         {phase === 'done' ? (
-          <HeroCountdown $mobile={isMobile}>🎉 טיול נהדר!</HeroCountdown>
+          <>
+            <CountdownLabel>הטיול הסתיים</CountdownLabel>
+            <CountdownValue>טיול נהדר</CountdownValue>
+          </>
         ) : phase === 'live' ? (
           <>
-            <HeroCaption>יום {dayOfTrip} מתוך {duration} · הטיול בעיצומו</HeroCaption>
-            <HeroCountdown $mobile={isMobile}>✈️ עכשיו</HeroCountdown>
+            <CountdownLabel>יום {dayOfTrip} מתוך {duration}</CountdownLabel>
+            <CountdownValue>עכשיו</CountdownValue>
           </>
         ) : (
           <>
-            <HeroCaption>עד ההמראה · {formatDateShort(trip.startDate)}</HeroCaption>
-            <HeroCountdown $mobile={isMobile}>{daysToStart} ימים</HeroCountdown>
+            <CountdownLabel>עד ההמראה · {formatDateShort(trip.startDate)}</CountdownLabel>
+            <CountdownValue>{daysToStart} ימים</CountdownValue>
           </>
         )}
-      </HeroCard>
+      </CountdownStrip>
 
       {/* Today (during-trip) */}
       {phase === 'live' && <TodayCard trip={trip} todayISO={todayISO} />}
@@ -355,6 +422,14 @@ function DashboardContent() {
         <SectionLabel>קיצורי דרך</SectionLabel>
         <QuickActions tripId={trip.id} />
       </div>
+
+      {selected && (
+        <PoiBlurbSheet
+          target={selected}
+          mobile={isMobile}
+          onClose={() => setSelected(null)}
+        />
+      )}
 
       {isMobile && (
         <BottomNav>
