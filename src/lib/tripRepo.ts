@@ -9,6 +9,14 @@ import { supabase } from './supabase'
 import { normalizeSeedTimestamp } from './seedNormalize'
 import { rowToDocument } from './tripDocuments'
 import { fromDb, tripToPayload } from './tripPayload'
+import {
+  CANONICAL_SEED_IDENTITIES,
+  CANONICAL_SEED_IDS,
+  collapseSeedNearDuplicates,
+  loadSeedDuplicateRedirects,
+  saveSeedDuplicateRedirects,
+  type CollapseResult,
+} from './dedupeDemoTrips'
 
 type Row = Record<string, unknown>
 
@@ -105,7 +113,7 @@ async function hydrateTrip(t: Row): Promise<TripPlan> {
  * synced. Server state is authoritative here in both directions, so a document
  * deleted on the other phone stays deleted rather than being resurrected.
  */
-export function mergeRemoteTrips(local: TripPlan[], remote: TripPlan[]): TripPlan[] {
+function mergeRemoteTripsById(local: TripPlan[], remote: TripPlan[]): TripPlan[] {
   const remoteById = new Map(remote.map(t => [t.id, t]))
   const merged = local.map(l => {
     const r = remoteById.get(l.id)
@@ -117,6 +125,26 @@ export function mergeRemoteTrips(local: TripPlan[], remote: TripPlan[]): TripPla
     if (!merged.some(t => t.id === r.id)) merged.push(r)
   }
   return merged
+}
+
+/**
+ * Fold a cloud read into the local trips, then collapse seed near-duplicates
+ * (see dedupeDemoTrips). Cloud pull unions by id, so a duplicate that still
+ * lives in Supabase would otherwise reappear next to the canonical seed.
+ */
+export function foldRemoteTrips(local: TripPlan[], remote: TripPlan[]): CollapseResult {
+  const merged = mergeRemoteTripsById(local, remote)
+  const result = collapseSeedNearDuplicates(
+    merged,
+    CANONICAL_SEED_IDENTITIES,
+    loadSeedDuplicateRedirects(),
+  )
+  saveSeedDuplicateRedirects(result.redirects)
+  return result
+}
+
+export function mergeRemoteTrips(local: TripPlan[], remote: TripPlan[]): TripPlan[] {
+  return foldRemoteTrips(local, remote).trips
 }
 
 // ────────────────────────────────────────────────────────────────────────────
@@ -139,6 +167,26 @@ export async function upsertWholeTrip(plan: TripPlan): Promise<string> {
 export async function deleteTrip(tripId: string) {
   const { error } = await supabase.from('trips').delete().eq('id', tripId)
   if (error) throw error
+}
+
+/** Cloud-delete collapsed near-duplicates, but never a DEMO seed and never a trip that still holds documents. */
+export async function deleteCollapsedDuplicates(
+  droppedIds: string[],
+  sources: TripPlan[],
+): Promise<void> {
+  if (!droppedIds.length) return
+  const seedIds = CANONICAL_SEED_IDS
+  const byId = new Map(sources.map(t => [t.id, t]))
+  for (const id of droppedIds) {
+    if (seedIds.has(id)) continue
+    const src = byId.get(id)
+    if ((src?.documents ?? []).length) continue
+    try {
+      await deleteTrip(id)
+    } catch (e) {
+      console.warn('[sync] cloud delete of collapsed duplicate failed', id, e)
+    }
+  }
 }
 
 // ────────────────────────────────────────────────────────────────────────────

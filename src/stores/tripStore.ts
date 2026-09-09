@@ -12,6 +12,11 @@ import { generateId } from '@/utils/id'
 import { getDaysBetween } from '@/utils/date'
 import { DEMO_TRIP, DEMO_TRIPS } from '@/data/demoData'
 import { normalizeSeedTimestamp } from '@/lib/seedNormalize'
+import {
+  ensureDemoTrips,
+  loadSeedDuplicateRedirects,
+  saveSeedDuplicateRedirects,
+} from '@/lib/dedupeDemoTrips'
 
 interface TripStore {
   trips: TripPlan[]
@@ -464,12 +469,26 @@ export const useTripStore = create<TripStore>()(
           return
         }
 
-        // Seed any known upcoming trips that aren't in the store yet (idempotent
-        // by trip id). Lets us ship new sample trips without resetting localStorage.
-        const haveIds = new Set(state.trips.map(t => t.id))
-        const missingDemos = DEMO_TRIPS.filter(t => !haveIds.has(t.id))
-        if (missingDemos.length) {
-          state.trips = [...state.trips, ...missingDemos]
+        // Seed any known upcoming trips that aren't in the store yet, then
+        // collapse a pre-existing near-duplicate onto the canonical seed.
+        // Inject-by-id alone is how Home grew two USA Mar-2027 cards: the
+        // family already had "ארה״ב — מרץ 2027 (פלורידה משפחתי)" under a
+        // different UUID, and usa-trip.json landed next to it. Unique user
+        // edits on the duplicate are copied onto the seed; unrelated trips
+        // (Holland/Paris/Crete/Rome, a differently-titled NYC trip, …) stay.
+        const injected = ensureDemoTrips(
+          state.trips,
+          DEMO_TRIPS,
+          loadSeedDuplicateRedirects(),
+        )
+        state.trips = injected.trips
+        saveSeedDuplicateRedirects(injected.redirects)
+        if (state.activeTripId && injected.droppedIds.includes(state.activeTripId)) {
+          const target = injected.redirects[state.activeTripId]
+          state.activeTripId =
+            (target && state.trips.some(t => t.id === target) ? target : null) ??
+            state.trips[0]?.id ??
+            null
         }
 
         // One-shot: replace stale Holland trip with refreshed seed (start 18.8,
