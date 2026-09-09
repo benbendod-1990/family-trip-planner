@@ -6,33 +6,16 @@
 // for a fresh access_token on demand.
 
 import { supabase } from './supabase'
+import { workerAuthHeaders } from './workerAuth'
+import {
+  GMAIL_RECONNECT_MESSAGE,
+  GmailAuthError,
+  throwForGmailBrokerStatus,
+} from './gmailAuthError'
+
+export { GMAIL_RECONNECT_MESSAGE, GmailAuthError, throwForGmailBrokerStatus }
 
 const AI_BASE = import.meta.env.VITE_AI_BASE_URL ?? 'http://localhost:8787'
-
-/**
- * Thrown when there's no usable Gmail refresh token on file — either the user
- * never granted Gmail access, or Google revoked the token (apps in "Testing"
- * OAuth status have their refresh tokens expire after 7 days). Recoverable by
- * re-signing in with Google, so the UI surfaces a "reconnect" action instead
- * of a generic failure.
- */
-export class GmailAuthError extends Error {
-  constructor(message: string) {
-    super(message)
-    this.name = 'GmailAuthError'
-  }
-}
-
-async function authHeaders(): Promise<Record<string, string>> {
-  const { data } = await supabase.auth.getSession()
-  const token = data.session?.access_token
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-  if (token) headers['Authorization'] = `Bearer ${token}`
-  else if (import.meta.env.VITE_AI_SHARED_SECRET) {
-    headers['x-api-secret'] = import.meta.env.VITE_AI_SHARED_SECRET
-  }
-  return headers
-}
 
 // Called once right after sign-in, when Supabase still has the
 // provider_refresh_token in the session. Silently no-ops if there's
@@ -46,7 +29,7 @@ export async function persistGmailRefreshToken(): Promise<void> {
   try {
     const res = await fetch(`${AI_BASE}/api/gmail/store-refresh-token`, {
       method: 'POST',
-      headers: await authHeaders(),
+      headers: await workerAuthHeaders(),
       body: JSON.stringify({
         refresh_token: refresh,
         scope: 'https://www.googleapis.com/auth/gmail.readonly',
@@ -62,20 +45,20 @@ export async function persistGmailRefreshToken(): Promise<void> {
 }
 
 // Returns a fresh Gmail access token (Worker handles refresh).
-// Throws with a user-actionable message if no refresh token is on file.
+// Throws GmailAuthError when the session is missing/expired or no refresh
+// token is on file — the UI shows a reconnect CTA, never the raw broker body.
 export async function fetchGmailAccessToken(): Promise<string> {
+  const headers = await workerAuthHeaders()
+  if (!headers.Authorization && !headers['x-api-secret']) {
+    throw new GmailAuthError(GMAIL_RECONNECT_MESSAGE)
+  }
   const res = await fetch(`${AI_BASE}/api/gmail/access-token`, {
     method: 'POST',
-    headers: await authHeaders(),
+    headers,
   })
-  if (res.status === 412) {
-    throw new GmailAuthError(
-      'החיבור ל-Gmail פג. התחבר מחדש עם Google כדי לחדש את גישת הקריאה למיילים.'
-    )
-  }
   if (!res.ok) {
     const t = await res.text().catch(() => '')
-    throw new Error(`Gmail token broker ${res.status}: ${t.slice(0, 200)}`)
+    throwForGmailBrokerStatus(res.status, t)
   }
   const body = (await res.json()) as { access_token: string; expires_at: string }
   return body.access_token

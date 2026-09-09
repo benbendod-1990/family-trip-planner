@@ -50,11 +50,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         { listTrips, pushLocalToRemote, foldRemoteTrips, deleteCollapsedDuplicates },
         { startTripAutoSync, suppressNextPush },
         { startTripRealtime },
+        { ensureSeedBookingDocuments },
+        { persistLinkDocuments },
+        { DEMO_TRIPS },
       ] = await Promise.all([
         import('./gmailToken'),
         import('./tripRepo'),
         import('./tripAutoSync'),
         import('./tripRealtime'),
+        import('./seedBookingDocuments'),
+        import('./tripDocuments'),
+        import('@/data/demoData'),
       ])
       // Fire-and-forget: capture Google's refresh_token now, while Supabase
       // still has it in the session. After the first JWT refresh it's gone.
@@ -71,8 +77,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (localOnly.length) {
           await pushLocalToRemote(localOnly)
         }
+        const withSeedDocs = ensureSeedBookingDocuments(merged, DEMO_TRIPS)
         suppressNextPush()
-        useTripStore.setState({ trips: merged })
+        useTripStore.setState({ trips: withSeedDocs })
+        for (const t of withSeedDocs) {
+          const links = t.documents ?? []
+          if (links.length) void persistLinkDocuments(t.id, links)
+        }
       } catch (e) {
         console.error('[auth] initial pull/merge failed:', e)
       }

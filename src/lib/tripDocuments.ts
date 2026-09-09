@@ -9,6 +9,7 @@
 import { supabase } from './supabase'
 import { generateId } from '@/utils/id'
 import type { TripDocument } from '@/types/trip-plan'
+import { documentHref, encodeLinkPath, isLinkOnlyDocument } from './seedBookingDocuments'
 
 const BUCKET = 'trip-documents'
 
@@ -133,9 +134,11 @@ export async function listDocuments(tripId: string): Promise<TripDocument[]> {
 }
 
 export function rowToDocument(r: Record<string, unknown>): TripDocument {
+  const path = r.path as string
+  const url = documentHref({ path }) ?? undefined
   return {
     id: r.id as string,
-    path: r.path as string,
+    path,
     filename: r.filename as string,
     mimeType: r.mime_type as string,
     size: Number(r.size ?? 0),
@@ -145,6 +148,7 @@ export function rowToDocument(r: Record<string, unknown>): TripDocument {
     sourceMessageId: (r.source_message_id as string) ?? undefined,
     sourceSubject: (r.source_subject as string) ?? undefined,
     sourceFrom: (r.source_from as string) ?? undefined,
+    url,
   }
 }
 
@@ -153,7 +157,11 @@ export function rowToDocument(r: Record<string, unknown>): TripDocument {
  * the only way to render one — and the link expires, which is the point for
  * boarding passes and passport scans.
  */
-export async function documentUrl(path: string, expiresInSec = 60 * 60): Promise<string> {
+export async function documentUrl(doc: TripDocument | string, expiresInSec = 60 * 60): Promise<string> {
+  const asDoc = typeof doc === 'string' ? { path: doc, url: undefined } : doc
+  const href = documentHref(asDoc)
+  if (href) return href
+  const path = typeof doc === 'string' ? doc : doc.path
   const { data, error } = await supabase.storage
     .from(BUCKET)
     .createSignedUrl(path, expiresInSec)
@@ -164,12 +172,41 @@ export async function documentUrl(path: string, expiresInSec = 60 * 60): Promise
 }
 
 export async function deleteDocument(doc: TripDocument): Promise<void> {
-  const { error } = await supabase.storage.from(BUCKET).remove([doc.path])
-  if (error) throw humanize('מחיקת המסמך נכשלה', error.message)
+  if (!isLinkOnlyDocument(doc) && doc.path) {
+    const { error } = await supabase.storage.from(BUCKET).remove([doc.path])
+    if (error) throw humanize('מחיקת המסמך נכשלה', error.message)
+  }
   // The row is what the other phone reads, so it has to go too — otherwise the
   // document reappears there pointing at bytes that no longer exist.
   const { error: rowError } = await supabase.from('trip_documents').delete().eq('id', doc.id)
   if (rowError) throw humanize('מחיקת פרטי המסמך נכשלה', rowError.message)
+}
+
+/**
+ * Upsert link-only seed cards into trip_documents so the spouse's phone sees
+ * them through the server-wins path. Failures are ignored — the cards still
+ * live locally, and the trip may not be in Supabase yet.
+ */
+export async function persistLinkDocuments(tripId: string, docs: TripDocument[]): Promise<void> {
+  const rows = docs.filter(isLinkOnlyDocument).map(doc => ({
+    id: doc.id,
+    trip_id: tripId,
+    path: doc.path.startsWith('external:') ? doc.path : encodeLinkPath(documentHref(doc) ?? doc.path),
+    filename: doc.filename,
+    mime_type: doc.mimeType,
+    size: doc.size,
+    kind: doc.kind,
+    sha256: doc.sha256 ?? null,
+    source_message_id: doc.sourceMessageId ?? null,
+    source_subject: doc.sourceSubject ?? null,
+    source_from: doc.sourceFrom ?? null,
+    added_at: doc.addedAt,
+  }))
+  if (!rows.length) return
+  const { error } = await supabase.from('trip_documents').upsert(rows, { onConflict: 'id' })
+  if (error) {
+    console.warn('[tripDocuments] persistLinkDocuments failed:', error.message)
+  }
 }
 
 // Lives in its own module so the Node-side puller can share it — see the note

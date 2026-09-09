@@ -3,12 +3,13 @@ import { Button, Stack } from 'myk-library'
 import { Mail, Loader2 } from 'lucide-react'
 import { useAuth } from '@/lib/AuthContext'
 import { syncFromGmail, type GmailSyncReport } from '@/lib/gmailSync'
+import { GmailAuthError } from '@/lib/gmailToken'
 
 // Inline trigger for Gmail sync used inside trip pages (Travel, Itinerary).
 // Uses the same Supabase-token flow as the topbar CloudSyncButton — no
 // separate Google OAuth client ID, no popup, no extra env var.
 export default function GmailSyncInlineButton() {
-  const { session } = useAuth()
+  const { session, signInWithGoogle } = useAuth()
   const [busy, setBusy] = useState(false)
 
   const run = async () => {
@@ -31,11 +32,16 @@ export default function GmailSyncInlineButton() {
         : ''
       alert(`📧 ${summary} (סרקתי ${r.scanned} מיילים${ai}${skipped})${quota}`)
     } catch (e) {
-      const msg = e instanceof Error ? e.message : 'שגיאה'
-      const quota = /\b429\b|quota|rate.?limit/i.test(msg)
-      alert(quota
-        ? '⚠️ הגעת למכסת Gemini החינמית (15/דקה או 1500/יום). נסה שוב בעוד דקה־שתיים, או מחר אם זו המכסה היומית.'
-        : `סנכרון Gmail נכשל: ${msg.slice(0, 200)}`)
+      if (e instanceof GmailAuthError) {
+        const reconnect = confirm(`${e.message}\n\nלחבר מחדש עם Google עכשיו?`)
+        if (reconnect) void signInWithGoogle()
+      } else {
+        const msg = e instanceof Error ? e.message : 'שגיאה'
+        const quota = /\b429\b|quota|rate.?limit/i.test(msg)
+        alert(quota
+          ? '⚠️ הגעת למכסת Gemini החינמית (15/דקה או 1500/יום). נסה שוב בעוד דקה־שתיים, או מחר אם זו המכסה היומית.'
+          : `סנכרון Gmail נכשל: ${msg.slice(0, 200)}`)
+      }
     }
     setBusy(false)
   }

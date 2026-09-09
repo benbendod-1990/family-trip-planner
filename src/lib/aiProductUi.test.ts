@@ -43,4 +43,14 @@ describe('in-app AI product UI is unmounted', () => {
     assert.equal(gmail.includes('parseEmails'), true)
     assert.equal(gmail.includes('fetchTravelEmails'), true)
   })
+
+  it('TripDoc maps Gmail 401 to a Hebrew reconnect CTA, not raw broker JSON', () => {
+    const page = src('../pages/TripDoc.tsx')
+    assert.equal(page.includes('AuthReconnectBanner'), true)
+    assert.equal(page.includes('GmailAuthError'), true)
+    const token = src('../lib/gmailToken.ts')
+    const authErr = src('../lib/gmailAuthError.ts')
+    assert.equal(token.includes('throwForGmailBrokerStatus'), true)
+    assert.match(authErr, /status === 401/)
+  })
 })

@@ -20,6 +20,8 @@ export interface GmailAttachment {
 
 export interface GmailMessage {
   id: string
+  /** Gmail thread id — cruise receipts were identified by thread, not message. */
+  threadId?: string
   subject: string
   from: string
   date: string
@@ -215,6 +217,7 @@ export async function fetchTravelEmails(token: string, opts: FetchTravelEmailsOp
   const senders = [
     // Airlines
     'from:elal-ticketing.com', 'from:elal.co.il', 'from:israir.co.il',
+    'from:royalcaribbean.com', 'from:email.royalcaribbean.com',
     'from:ryanair.com', 'from:easyjet.com', 'from:wizzair.com', 'from:lufthansa.com',
     'from:aegeanair.com', 'from:klm.com', 'from:airfrance.com', 'from:aerlingus.com',
     'from:swiss.com', 'from:austrian.com', 'from:tap.com', 'from:vueling.com',
@@ -256,14 +259,14 @@ export async function fetchTravelEmails(token: string, opts: FetchTravelEmailsOp
   // a travel/booking word in the subject.
   const subjectFallback =
     '(subject:(confirmation OR booking OR reservation OR itinerary OR ticket OR ' +
-    'e-ticket OR eticket OR voucher OR PNR OR אישור OR הזמנה OR שובר OR "מסמכי נסיעה") ' +
+    'e-ticket OR eticket OR voucher OR PNR OR receipt OR אישור OR הזמנה OR שובר OR "מסמכי נסיעה") ' +
     'AND subject:(hotel OR flight OR car OR rental OR stay OR check-in OR resort OR ' +
-    'airline OR airways OR airport OR ' +
+    'airline OR airways OR airport OR cruise OR sailing OR ' +
     // Attractions sell direct and their subjects say "museum"/"park", never
     // "flight" — without these, "Your ticket(s) for the Railway Museum" (which
     // carries the actual ticket PDF) never matches.
     'museum OR park OR zoo OR attraction OR entrance OR admission OR ' +
-    'מלון OR טיסה OR רכב OR לינה OR דירה OR נסיעה OR מוזיאון OR פארק OR כרטיס))'
+    'מלון OR טיסה OR רכב OR לינה OR דירה OR נסיעה OR מוזיאון OR פארק OR כרטיס OR קרוז))'
 
   const baseQuery = `((${senders}) OR ${subjectFallback})`
   // Incremental: prefer `after:<epoch>` (precise) over the broad `newer_than:2y`.
@@ -281,6 +284,7 @@ export async function fetchTravelEmails(token: string, opts: FetchTravelEmailsOp
     const headers = payload.headers as Array<{ name: string; value: string }>
     return {
       id,
+      threadId: (msg.threadId as string) ?? undefined,
       subject: getHeader(headers, 'Subject'),
       from: getHeader(headers, 'From'),
       date: getHeader(headers, 'Date'),

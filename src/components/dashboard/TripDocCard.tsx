@@ -4,6 +4,7 @@ import { Card } from 'myk-library'
 import { FileText, ExternalLink, RefreshCw, CheckCircle2, AlertTriangle } from 'lucide-react'
 import { useTripStore } from '@/stores/tripStore'
 import { checkDocSync, DocSyncError } from '@/lib/tripDoc'
+import AuthReconnectBanner from '@/components/auth/AuthReconnectBanner'
 import type { DocDiffResult, DocIssue } from '@/lib/tripDocDiff'
 import type { TripPlan } from '@/types/trip-plan'
 import { formatDateShort } from '@/utils/date'
@@ -199,7 +200,7 @@ export default function TripDocCard({ trip }: Props) {
         <Title><FileText size={14} /> מסמך התכנון</Title>
         {trip.docUrl && (
           <OpenDoc href={trip.docUrl} target="_blank" rel="noopener noreferrer">
-            פתח <ExternalLink size={13} />
+            {trip.docTitle ?? 'פתח'} <ExternalLink size={13} />
           </OpenDoc>
         )}
       </Header>
@@ -235,13 +236,21 @@ export default function TripDocCard({ trip }: Props) {
       )}
 
       {error && (
-        <Banner $tone="error">
-          <AlertTriangle size={16} style={{ flexShrink: 0, marginTop: 1 }} />
-          <div>
-            {error.message}
-            {error.hint && <Hint>{error.hint}</Hint>}
-          </div>
-        </Banner>
+        error.reconnect
+          ? (
+            <AuthReconnectBanner
+              message={error.message}
+              hint={error.hint}
+            />
+          ) : (
+            <Banner $tone="error">
+              <AlertTriangle size={16} style={{ flexShrink: 0, marginTop: 1 }} />
+              <div>
+                {error.message}
+                {error.hint && <Hint>{error.hint}</Hint>}
+              </div>
+            </Banner>
+          )
       )}
 
       {result && result.inSync && (

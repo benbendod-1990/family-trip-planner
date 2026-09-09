@@ -22,7 +22,8 @@ import { fetchTravelEmails, fetchAttachment, type GmailMessage } from '@/service
 import { parseEmails, type ParsedEmail } from '@/services/emailParser'
 import { parseDocument } from './aiClient'
 import { getSinceEpochSec, recordSync } from './gmailSyncState'
-import { uploadDocument, classifyDocument } from './tripDocuments'
+import { uploadDocument, classifyDocument, deleteDocument } from './tripDocuments'
+import { findGmailPlaceholder } from './seedBookingDocuments'
 import { supabase } from './supabase'
 import { fetchGmailAccessToken } from './gmailToken'
 import { generateId } from '@/utils/id'
@@ -267,10 +268,9 @@ async function pullDocuments(
   for (const { trip, msg } of pending) {
     trip.documents = trip.documents ?? []
     for (const att of msg.attachments) {
-      // Same email + same filename means we already have it. Re-running a full
-      // sweep must not pile up duplicates of every e-ticket.
+      // Same email + same filename means we already have the real file.
       const already = trip.documents.some(
-        d => d.sourceMessageId === msg.id && d.filename === att.filename,
+        d => d.sourceMessageId === msg.id && d.filename === att.filename && d.size > 0,
       )
       if (already) continue
       try {
@@ -285,6 +285,13 @@ async function pullDocuments(
           sourceSubject: msg.subject,
           sourceFrom: msg.from,
         })
+        const placeholder = findGmailPlaceholder(trip.documents, msg)
+        if (placeholder) {
+          trip.documents = trip.documents.filter(d => d.id !== placeholder.id)
+          void deleteDocument(placeholder).catch(() => {
+            // Row may never have reached trip_documents; the local card is gone.
+          })
+        }
         trip.documents.push(doc)
         trip.updatedAt = new Date().toISOString()
         out.added++
