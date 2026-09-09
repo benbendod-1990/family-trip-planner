@@ -50,7 +50,7 @@ export default function StaySignRow({ stays }: Props) {
     <Row aria-label="לינות">
       {stays.map(stay => (
         <Board key={stay.id}>
-          <Dates>{stay.dateRange}</Dates>
+          <Dates dir="ltr">{stay.dateRange}</Dates>
           <Name>{stay.name}</Name>
         </Board>
       ))}

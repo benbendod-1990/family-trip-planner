@@ -257,7 +257,7 @@ export default function TripFrontPoster({ trip, selectedId, onSelect }: Props) {
                 >
                   {chip.text.split('\n').length > 1 ? (
                     <>
-                      <ChipDate>{chip.text.split('\n')[0]}</ChipDate>
+                      <ChipDate dir="ltr">{chip.text.split('\n')[0]}</ChipDate>
                       <div>{chip.text.split('\n').slice(1).join(' ')}</div>
                     </>
                   ) : chip.text}
