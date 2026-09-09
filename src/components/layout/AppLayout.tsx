@@ -103,7 +103,9 @@ export default function AppLayout() {
   const activeTripId = useTripStore(s => s.activeTripId)
   const setActiveTrip = useTripStore(s => s.setActiveTrip)
   const [collapsed, setCollapsed] = useState(false)
-  const [drawerOpen, setDrawerOpen] = useState(false)
+  // Open only for the current path — a route change closes it without an effect.
+  const [drawerPath, setDrawerPath] = useState<string | null>(null)
+  const drawerOpen = drawerPath === location.pathname
   const { isTablet } = useBreakpoint()
 
   const trip = trips.find(t => t.id === id)
@@ -113,11 +115,6 @@ export default function AppLayout() {
       setActiveTrip(id)
     }
   }, [id, activeTripId, setActiveTrip])
-
-  // close drawer on navigation
-  useEffect(() => {
-    setDrawerOpen(false)
-  }, [location.pathname])
 
   if (!trip) return <Navigate to="/" replace />
 
@@ -167,7 +164,7 @@ export default function AppLayout() {
             <Stack direction="row" align="center" spacing="md" style={{ padding: '0 16px', height: '100%' }}>
               {isTablet && (
                 <ActionIcon
-                  onClick={() => setDrawerOpen(true)}
+                  onClick={() => setDrawerPath(location.pathname)}
                   title="תפריט"
                   aria-label="פתח תפריט"
                   variant="subtle"
@@ -265,7 +262,7 @@ export default function AppLayout() {
       {isTablet && (
         <Drawer
           isOpen={drawerOpen}
-          onClose={() => setDrawerOpen(false)}
+          onClose={() => setDrawerPath(null)}
           placement="right"
           size="sm"
           title={
