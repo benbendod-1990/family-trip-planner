@@ -1,6 +1,5 @@
 import { useNavigate } from 'react-router-dom'
 import { Container, Card, Stack, Typography, Badge, Progress, Button, EmptyState } from 'myk-library'
-import AiSettings from '@/components/ai/AiSettings'
 import styled from 'styled-components'
 import { useArchiveStore } from '@/stores/archiveStore'
 import { computeFamilyProfile } from '@/utils/profileCalculator'
@@ -120,8 +119,6 @@ export default function FamilyProfile() {
             </Button>
             <Typography variant="h4" style={{ margin: 0 }}>🧬 הפרופיל המשפחתי שלנו</Typography>
           </Stack>
-
-          <AiSettings />
 
           {!profile ? (
             <EmptyState

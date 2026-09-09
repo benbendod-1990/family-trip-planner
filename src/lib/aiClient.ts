@@ -1,4 +1,5 @@
 import { supabase } from './supabase'
+import { assertProductAiEnabled } from './aiFeatures'
 import type { TripPlan } from '@/types/trip-plan'
 import type { TripEventCategory } from '@/types/trip'
 
@@ -75,10 +76,12 @@ async function callAi<TBody, TResult>(path: string, body: TBody): Promise<TResul
 }
 
 export function scanDeals(req: DealsRequest): Promise<DealsResponse> {
+  assertProductAiEnabled()
   return callAi('/api/deals/scan', req)
 }
 
 export function fetchBlogDigest(req: BlogDigestRequest): Promise<BlogDigestResponse> {
+  assertProductAiEnabled()
   return callAi('/api/blog/digest', req)
 }
 
@@ -122,6 +125,7 @@ export interface MapInsightsResponse {
 }
 
 export function fetchMapInsights(req: MapInsightsRequest): Promise<MapInsightsResponse> {
+  assertProductAiEnabled()
   return callAi('/api/map/insights', req)
 }
 
@@ -152,6 +156,7 @@ export interface ItineraryParseResponse {
 }
 
 export function parseItineraryText(req: ItineraryParseRequest): Promise<ItineraryParseResponse> {
+  assertProductAiEnabled()
   return callAi('/api/gemini/itinerary/parse', req)
 }
 

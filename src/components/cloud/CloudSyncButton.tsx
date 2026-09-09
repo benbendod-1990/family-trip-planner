@@ -201,7 +201,7 @@ export default function CloudSyncButton() {
           setToast({ kind: 'ok', text: `✓ AI שיחזר ${fixed} פרטים חסרים מהמיילים שלך` })
           sessionStorage.setItem('auto-placeholder-rescan-done', '1')
         } else {
-          setToast({ kind: 'info', text: 'לא נמצאו פרטים נוספים בג׳מייל. תוכל לייבא PDF/טקסט דרך "ייבוא חכם (AI)".' })
+          setToast({ kind: 'info', text: 'לא נמצאו פרטים נוספים בג׳מייל.' })
           // don't set the done flag — let next refresh retry
         }
       } catch (e) {

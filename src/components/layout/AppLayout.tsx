@@ -1,6 +1,5 @@
 import { Suspense, useEffect, useState } from 'react'
 import { Outlet, useParams, Navigate, useLocation, useNavigate } from 'react-router-dom'
-import AiChatDrawer from '@/components/ai/AiChatDrawer'
 import CloudSyncButton from '@/components/cloud/CloudSyncButton'
 import RouteFallback from '@/components/layout/RouteFallback'
 import PageErrorBoundary from '@/components/layout/PageErrorBoundary'
@@ -279,11 +278,8 @@ export default function AppLayout() {
   )
 
   return (
-    <>
-      <ThemeProvider theme={warmTheme}>
-        <ShellFrame className="warm-shell">{shellTree}</ShellFrame>
-      </ThemeProvider>
-      <AiChatDrawer />
-    </>
+    <ThemeProvider theme={warmTheme}>
+      <ShellFrame className="warm-shell">{shellTree}</ShellFrame>
+    </ThemeProvider>
   )
 }
