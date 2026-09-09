@@ -1,45 +1,95 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useParams } from 'react-router-dom'
-import { Badge, Stack, Typography } from 'myk-library'
 import styled from 'styled-components'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { useTripStore } from '@/stores/tripStore'
 import { useBreakpoint } from '@/hooks/useBreakpoint'
 import { useTripMapPois } from '@/hooks/useTripMapPois'
-import IllustratedTripMap from '@/components/map/IllustratedTripMap'
-import { warmDisplayFont } from '@/theme/warmTheme'
-import { formatDateShort } from '@/utils/date'
-import { ExternalLink, X } from 'lucide-react'
+import { warmDisplayFont, warmPageBackground } from '@/theme/warmTheme'
+import { formatDateHe, formatDateShort, getTripDuration } from '@/utils/date'
+import IllustratedOverviewMap from '@/components/map/IllustratedOverviewMap'
+import WindingDayRoad from '@/components/map/WindingDayRoad'
+import MiniTripCalendars from '@/components/map/MiniTripCalendars'
+import SegmentCards from '@/components/map/SegmentCards'
+import PoiBlurbSheet, { type BlurbTarget } from '@/components/map/PoiBlurbSheet'
+import { PostageStamp, WashiTape } from '@/components/map/DiaryDecor'
+import { collectDayStops } from '@/lib/tripMapDayStops'
+import { deriveTripSegments, flowPillsFromDays } from '@/lib/tripMapSegments'
 
-const PageWrapper = styled.div`
+const Page = styled.div<{ $mobile: boolean }>`
+  background: ${warmPageBackground};
+  min-height: 100%;
+  padding: ${({ $mobile }) => ($mobile ? '12px 12px 96px' : '24px')};
+  max-width: 1100px;
+  margin: 0 auto;
+  width: 100%;
+  min-width: 0;
+  overflow-x: hidden;
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  height: calc(100dvh - 60px);
-  max-height: calc(100dvh - 60px);
+  gap: ${({ $mobile }) => ($mobile ? '16px' : '22px')};
+`
+
+const Paper = styled.section`
+  position: relative;
+  background: #f7f3e8;
+  border: 1px solid ${({ theme }) => theme.colors.gray[200]};
+  border-radius: 22px;
+  padding: 18px 16px 20px;
+  box-shadow: ${({ theme }) => theme.shadows.sm};
+`
+
+const Tape = styled.div<{ $side: 'start' | 'end'; $top?: number }>`
+  position: absolute;
+  top: ${({ $top }) => $top ?? -8}px;
+  ${({ $side }) => ($side === 'start' ? 'inset-inline-start: 18px;' : 'inset-inline-end: 22px;')}
+  pointer-events: none;
+`
+
+const HeaderRow = styled.div`
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+`
+
+const TitleBlock = styled.div`
+  flex: 1;
   min-width: 0;
 `
 
-const Header = styled.div<{ $mobile: boolean }>`
-  padding: 10px ${({ $mobile }) => ($mobile ? '12px' : '20px')} 8px;
-  border-bottom: 1px solid ${({ theme }) => theme.colors.gray[200]};
-  flex-shrink: 0;
-  background: ${({ theme }) => theme.colors.gray[50]};
+const Title = styled.h1`
+  font-family: ${warmDisplayFont};
+  font-size: clamp(22px, 4vw, 32px);
+  font-weight: 500;
+  margin: 0 0 4px;
+  color: ${({ theme }) => theme.colors.gray[900]};
 `
 
-const ChipRow = styled.div`
+const Sub = styled.div`
+  font-size: 13px;
+  color: ${({ theme }) => theme.colors.gray[600]};
+`
+
+const SectionLabel = styled.h2`
+  font-family: ${warmDisplayFont};
+  font-size: 18px;
+  font-weight: 500;
+  margin: 0 0 8px;
+  color: ${({ theme }) => theme.colors.gray[900]};
+`
+
+const PillRow = styled.div`
   display: flex;
   gap: 8px;
   overflow-x: auto;
-  padding: 8px 0 4px;
-  -webkit-overflow-scrolling: touch;
+  padding: 4px 0 2px;
   scrollbar-width: none;
   &::-webkit-scrollbar { display: none; }
 `
 
-const Chip = styled.button<{ $active: boolean }>`
+const Pill = styled.button<{ $active?: boolean }>`
   flex-shrink: 0;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
   border: 1px solid ${({ theme, $active }) => ($active ? theme.colors.primary[400] : theme.colors.gray[200])};
   background: ${({ theme, $active }) => ($active ? theme.colors.primary[100] : theme.colors.white)};
   color: ${({ theme }) => theme.colors.gray[900]};
@@ -51,84 +101,89 @@ const Chip = styled.button<{ $active: boolean }>`
   cursor: pointer;
 `
 
-const MapStage = styled.div`
-  position: relative;
-  flex: 1;
-  min-height: 0;
-`
-
-const Panel = styled.aside<{ $mobile: boolean }>`
-  position: absolute;
-  z-index: 800;
-  background: ${({ theme }) => theme.colors.white};
-  border: 1px solid ${({ theme }) => theme.colors.gray[200]};
-  box-shadow: ${({ theme }) => theme.shadows.md};
-  padding: 14px 16px 16px;
-  ${({ $mobile }) =>
-    $mobile
-      ? `
-        left: 10px;
-        right: 10px;
-        bottom: 10px;
-        border-radius: 16px;
-        max-height: 42%;
-        overflow-y: auto;
-      `
-      : `
-        top: 12px;
-        inset-inline-start: 12px;
-        width: min(360px, calc(100% - 24px));
-        border-radius: 16px;
-      `}
-`
-
-const PanelTitle = styled.div`
-  font-family: ${warmDisplayFont};
-  font-size: 20px;
-  font-weight: 500;
-  color: ${({ theme }) => theme.colors.gray[900]};
-`
-
-const Blurb = styled.p`
-  margin: 8px 0 12px;
-  font-size: 14px;
-  line-height: 1.55;
-  color: ${({ theme }) => theme.colors.gray[700]};
-`
-
-const LinkBtn = styled.a`
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: ${({ theme }) => theme.colors.primary[500]};
-  color: #fff;
-  font-size: 13px;
-  font-weight: 600;
-  padding: 8px 12px;
-  border-radius: 999px;
-  text-decoration: none;
-  &:hover { filter: brightness(0.95); }
-`
-
-const CloseBtn = styled.button`
-  position: absolute;
-  top: 10px;
-  inset-inline-end: 10px;
-  border: none;
-  background: transparent;
-  color: ${({ theme }) => theme.colors.gray[500]};
-  cursor: pointer;
-  padding: 4px;
-`
-
-const EmptyBox = styled.div`
-  flex: 1;
+const DayStrip = styled.div`
   display: flex;
   align-items: center;
+  gap: 6px;
+`
+
+const DayScroller = styled.div`
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  flex: 1;
+  scrollbar-width: none;
+  &::-webkit-scrollbar { display: none; }
+`
+
+const DayChip = styled.button<{ $active: boolean }>`
+  flex-shrink: 0;
+  border: 1px solid ${({ theme, $active }) => ($active ? theme.colors.primary[400] : theme.colors.gray[200])};
+  background: ${({ theme, $active }) => ($active ? theme.colors.primary[100] : theme.colors.white)};
+  border-radius: 12px;
+  padding: 6px 10px;
+  font-family: inherit;
+  cursor: pointer;
+  min-width: 72px;
+  color: inherit;
+`
+
+const DayChipDate = styled.div`
+  font-size: 11px;
+  font-weight: 700;
+  color: ${({ theme }) => theme.colors.primary[600]};
+`
+
+const DayChipLabel = styled.div`
+  font-size: 12px;
+  font-weight: 600;
+  max-width: 110px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+`
+
+const IconBtn = styled.button`
+  border: 1px solid ${({ theme }) => theme.colors.gray[200]};
+  background: ${({ theme }) => theme.colors.white};
+  border-radius: 10px;
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
   justify-content: center;
-  text-align: center;
-  padding: 32px 16px;
-  color: ${({ theme }) => theme.colors.gray[600]};
+  cursor: pointer;
+  color: inherit;
+  flex-shrink: 0;
+  &:disabled { opacity: 0.35; cursor: default; }
+`
+
+const Checklist = styled.div`
+  position: relative;
+  background: ${({ theme }) => theme.colors.white};
+  border: 1px dashed ${({ theme }) => theme.colors.gray[300]};
+  border-radius: 16px;
+  padding: 16px 16px 12px;
+`
+
+const CheckItem = styled.label`
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  font-size: 14px;
+  padding: 4px 0;
+  color: ${({ theme }) => theme.colors.gray[800]};
+`
+
+const FooterBar = styled.div`
+  background: #1e3a5f;
+  color: #f7f3e8;
+  border-radius: 12px;
+  padding: 10px 14px;
+  font-size: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
 `
 
 export default function MapPage() {
@@ -136,79 +191,229 @@ export default function MapPage() {
   const trip = useTripStore(s => s.trips.find(t => t.id === id))
   const { isMobile } = useBreakpoint()
   const { pois } = useTripMapPois(trip)
-  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [selectedPoiId, setSelectedPoiId] = useState<string | null>(null)
+  const [selectedStopId, setSelectedStopId] = useState<string | null>(null)
+  const [dayIndex, setDayIndex] = useState(0)
 
-  const selected = pois.find(p => p.id === selectedId) ?? null
-  const activeId = selected?.id ?? null
+  const days = useMemo(
+    () => [...(trip?.days ?? [])].sort((a, b) => a.date.localeCompare(b.date)),
+    [trip],
+  )
+  const safeIndex = days.length === 0 ? 0 : Math.min(dayIndex, days.length - 1)
+  const activeDay = days[safeIndex]
+  const segments = useMemo(
+    () => (trip ? deriveTripSegments(trip) : []),
+    [trip],
+  )
+  const pills = useMemo(() => flowPillsFromDays(days), [days])
+
+  const dayStops = useMemo(
+    () => (activeDay ? collectDayStops(activeDay, pois) : []),
+    [activeDay, pois],
+  )
+
+  const selectedPoi = pois.find(p => p.id === selectedPoiId) ?? null
+  const selectedStop = dayStops.find(s => s.id === selectedStopId) ?? null
+
+  const blurb: BlurbTarget | null = selectedPoi
+    ? {
+        name: selectedPoi.name,
+        emoji: selectedPoi.emoji,
+        blurb: selectedPoi.blurb,
+        linkUrl: selectedPoi.linkUrl,
+        linkLabel: selectedPoi.linkLabel,
+        dayDates: selectedPoi.dayDates,
+      }
+    : selectedStop
+      ? {
+          name: selectedStop.title,
+          emoji: selectedStop.emoji,
+          blurb: selectedStop.blurb,
+          linkUrl: selectedStop.linkUrl,
+          linkLabel: selectedStop.linkLabel,
+        }
+      : null
+
+  const openTasks = (trip?.tasks ?? []).filter(t => !t.done).slice(0, 6)
+  const packingOpen = (trip?.packingItems ?? []).filter(p => !p.packed).slice(0, 4)
+  const duration = trip ? getTripDuration(trip.startDate, trip.endDate) : 0
 
   if (!trip) return null
 
-  return (
-    <PageWrapper>
-      <Header $mobile={isMobile}>
-        <Stack direction="row" align="center" spacing="sm" style={{ flexWrap: 'wrap' }}>
-          <Typography variant="h5" style={{ margin: 0, fontFamily: warmDisplayFont }}>
-            🗺️ מפה מצוירת
-          </Typography>
-          <Badge variant="info" size="sm">{trip.destination}</Badge>
-          <Badge size="sm">📍 {pois.length} מקומות</Badge>
-        </Stack>
-        <Typography variant="caption" style={{ opacity: 0.75, display: 'block', marginTop: 4 }}>
-          סיכות מלוח הזמנים — לוחצים לפתיחת הסבר קצר. מתעדכן כשמשנים מיקום באירוע.
-        </Typography>
-        {pois.length > 0 && (
-          <ChipRow>
-            {pois.map(poi => (
-              <Chip
-                key={poi.id}
-                type="button"
-                $active={poi.id === activeId}
-                onClick={() => setSelectedId(poi.id)}
-              >
-                <span>{poi.emoji}</span>
-                <span>{poi.name}</span>
-              </Chip>
-            ))}
-          </ChipRow>
-        )}
-      </Header>
+  const goDay = (next: number) => {
+    if (days.length === 0) return
+    const wrapped = (next + days.length) % days.length
+    setDayIndex(wrapped)
+    setSelectedStopId(null)
+  }
 
-      {pois.length === 0 ? (
-        <EmptyBox>
-          <Typography variant="body2">
-            אין עדיין מקומות עם מיקום גיאוגרפי. הוסיפו כתובת לאירוע בלו״ז והסיכה תופיע כאן.
-          </Typography>
-        </EmptyBox>
-      ) : (
-        <MapStage>
-          <IllustratedTripMap
+  const selectDate = (iso: string) => {
+    const i = days.findIndex(d => d.date === iso)
+    if (i >= 0) {
+      setDayIndex(i)
+      setSelectedStopId(null)
+    }
+  }
+
+  return (
+    <Page $mobile={isMobile}>
+      <Paper>
+        <Tape $side="end"><WashiTape rotate={14} color="#C45C3E" /></Tape>
+        <Tape $side="start" $top={6}><WashiTape rotate={-8} color="#5B8FA8" /></Tape>
+        <HeaderRow>
+          <PostageStamp emoji={trip.coverEmoji || '🗺️'} caption="יומן מסע" />
+          <TitleBlock>
+            <Title>{trip.name} — יומן מסע</Title>
+            <Sub>
+              {formatDateHe(trip.startDate)} – {formatDateShort(trip.endDate)}
+              {' · '}
+              {duration} ימים
+              {trip.destination ? ` · ${trip.destination}` : ''}
+            </Sub>
+            <Sub style={{ marginTop: 4 }}>מפה מצוירת מלוח הזמנים החי — מתעדכנת כשמשנים ימים ומקומות.</Sub>
+          </TitleBlock>
+        </HeaderRow>
+        {pills.length > 0 && (
+          <PillRow style={{ marginTop: 14 }}>
+            {pills.map(p => (
+              <Pill
+                key={p}
+                type="button"
+                $active={activeDay?.label === p || (activeDay?.label ?? '').includes(p)}
+                onClick={() => {
+                  const i = days.findIndex(d => (d.label ?? '').includes(p))
+                  if (i >= 0) goDay(i)
+                }}
+              >
+                {p}
+              </Pill>
+            ))}
+          </PillRow>
+        )}
+      </Paper>
+
+      {days.length > 0 && (
+        <div>
+          <SectionLabel>לוח שנה</SectionLabel>
+          <MiniTripCalendars
+            startDate={trip.startDate}
+            endDate={trip.endDate}
+            days={days}
             pois={pois}
-            selectedId={activeId}
-            onSelect={setSelectedId}
+            selectedDate={activeDay?.date ?? null}
+            onSelectDate={selectDate}
           />
-          {selected && (
-            <Panel $mobile={isMobile} dir="rtl">
-              <CloseBtn type="button" onClick={() => setSelectedId(null)} aria-label="סגור">
-                <X size={16} />
-              </CloseBtn>
-              <Stack direction="row" align="center" spacing="sm">
-                <span style={{ fontSize: 28 }}>{selected.emoji}</span>
-                <PanelTitle>{selected.name}</PanelTitle>
-              </Stack>
-              <Blurb>{selected.blurb}</Blurb>
-              {selected.dayDates.length > 0 && (
-                <Typography variant="caption" style={{ display: 'block', marginBottom: 10, opacity: 0.75 }}>
-                  בלו״ז: {selected.dayDates.map(d => formatDateShort(d)).join(' · ')}
-                </Typography>
-              )}
-              <LinkBtn href={selected.linkUrl} target="_blank" rel="noopener noreferrer">
-                <ExternalLink size={14} />
-                {selected.linkLabel}
-              </LinkBtn>
-            </Panel>
-          )}
-        </MapStage>
+        </div>
       )}
-    </PageWrapper>
+
+      <div>
+        <SectionLabel>מסלול הטיול</SectionLabel>
+        <IllustratedOverviewMap
+          pois={pois}
+          selectedId={selectedPoiId}
+          onSelect={poiId => {
+            setSelectedPoiId(poiId)
+            setSelectedStopId(null)
+          }}
+        />
+      </div>
+
+      {activeDay && (
+        <div>
+          <SectionLabel>יום ביום — דרך מצוירת</SectionLabel>
+          <DayStrip>
+            <IconBtn type="button" onClick={() => goDay(safeIndex - 1)} disabled={days.length < 2} aria-label="היום הקודם">
+              <ChevronRight size={18} />
+            </IconBtn>
+            <DayScroller>
+              {days.map((d, i) => (
+                <DayChip
+                  key={d.id}
+                  type="button"
+                  $active={i === safeIndex}
+                  onClick={() => goDay(i)}
+                >
+                  <DayChipDate>{formatDateShort(d.date)}</DayChipDate>
+                  <DayChipLabel>{d.label || `יום ${i + 1}`}</DayChipLabel>
+                </DayChip>
+              ))}
+            </DayScroller>
+            <IconBtn type="button" onClick={() => goDay(safeIndex + 1)} disabled={days.length < 2} aria-label="היום הבא">
+              <ChevronLeft size={18} />
+            </IconBtn>
+          </DayStrip>
+          <div style={{ marginTop: 10 }}>
+            <WindingDayRoad
+              day={activeDay}
+              pois={pois}
+              selectedStopId={selectedStopId}
+              onSelectStop={(stopId, poiId) => {
+                setSelectedStopId(stopId)
+                setSelectedPoiId(poiId ?? null)
+              }}
+              onSwipeDay={dir => goDay(safeIndex + dir)}
+            />
+          </div>
+        </div>
+      )}
+
+      {segments.length > 0 && (
+        <div>
+          <SectionLabel>קטעי המסע</SectionLabel>
+          <SegmentCards
+            segments={segments}
+            onSelectDay={dayId => {
+              const i = days.findIndex(d => d.id === dayId)
+              if (i >= 0) goDay(i)
+            }}
+            onSelectPoiKey={key => {
+              const poi = pois.find(p => p.key === key)
+              if (poi) {
+                setSelectedPoiId(poi.id)
+                setSelectedStopId(null)
+              }
+            }}
+          />
+        </div>
+      )}
+
+      {(openTasks.length > 0 || packingOpen.length > 0) && (
+        <Checklist>
+          <Tape $side="start"><WashiTape rotate={-10} /></Tape>
+          <SectionLabel>זכור לפני היציאה</SectionLabel>
+          {openTasks.map(t => (
+            <CheckItem key={t.id}>
+              <input type="checkbox" disabled checked={false} readOnly />
+              <span>{t.title}</span>
+            </CheckItem>
+          ))}
+          {packingOpen.map(p => (
+            <CheckItem key={p.id}>
+              <input type="checkbox" disabled checked={false} readOnly />
+              <span>{p.title}</span>
+            </CheckItem>
+          ))}
+        </Checklist>
+      )}
+
+      {pois.length > 0 && (
+        <FooterBar>
+          {pois.slice(0, 8).map(p => (
+            <span key={p.id}>{p.emoji} {p.name}</span>
+          ))}
+        </FooterBar>
+      )}
+
+      {blurb && (
+        <PoiBlurbSheet
+          target={blurb}
+          mobile={isMobile}
+          onClose={() => {
+            setSelectedPoiId(null)
+            setSelectedStopId(null)
+          }}
+        />
+      )}
+    </Page>
   )
 }

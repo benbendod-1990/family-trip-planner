@@ -39,6 +39,12 @@ const PLACE_ALIASES: Array<{ test: RegExp; key: string }> = [
   { test: /port\s*canaveral|פורט\s*קנוורל|\bcanaveral\b/i, key: 'port canaveral, florida' },
   { test: /ben\s*gurion|נתב.?ג|\btlv\b/i, key: 'ben gurion t3' },
   { test: /miami\s*international|\(mia\)|mia car rental|\bmia\b/i, key: 'miami international airport (mia)' },
+  { test: /efteling/i, key: 'efteling, kaatsheuvel' },
+  { test: /schiphol/i, key: 'schiphol airport' },
+  { test: /beekse bergen/i, key: 'safaripark beekse bergen' },
+  { test: /fiumicino|\bfco\b/i, key: 'aeroporto di fiumicino (fco)' },
+  { test: /charles de gaulle|\bcdg\b/i, key: 'charles de gaulle (cdg)' },
+  { test: /rethymn|רתימנ|aquila/i, key: 'rethymno, crete' },
 ]
 
 export function normalizePlaceText(value: string): string {
@@ -283,5 +289,16 @@ export function extractTripMapPois(trip: TripPlan): TripMapPoi[] {
   const candidates = collectPlaceCandidates(trip)
   const resolved = withResolvedCoords(candidates, {})
   const origin = focusOriginForTrip(trip, resolved)
-  return origin ? focusRegionPois(resolved, origin) : resolved
+  const focused = origin ? focusRegionPois(resolved, origin) : resolved
+  return sortPoisByItinerary(focused)
+}
+
+/** First-visit order so the dashed route follows the itinerary, not Hebrew sort. */
+export function sortPoisByItinerary(pois: TripMapPoi[]): TripMapPoi[] {
+  return [...pois].sort((a, b) => {
+    const da = a.dayDates[0] ?? '9999-99-99'
+    const db = b.dayDates[0] ?? '9999-99-99'
+    if (da !== db) return da.localeCompare(db)
+    return a.name.localeCompare(b.name, 'he')
+  })
 }
