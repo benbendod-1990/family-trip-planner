@@ -1,6 +1,6 @@
 {
-  "name": "מסע משפחתי — Family Trip Planner",
-  "short_name": "מסע משפחתי",
+  "name": "המסע של משפחת בן דוד",
+  "short_name": "משפחת בן דוד",
   "description": "תכנן את הטיול המשפחתי הבא שלך",
   "start_url": "/",
   "display": "standalone",
@@ -10,16 +10,28 @@
   "dir": "rtl",
   "icons": [
     {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
       "src": "/apple-touch-icon.png",
       "sizes": "180x180",
       "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/favicon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "purpose": "any"
     }
   ]
 }
