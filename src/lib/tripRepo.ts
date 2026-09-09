@@ -18,6 +18,7 @@ import {
   saveSeedDuplicateRedirects,
   type CollapseResult,
 } from './dedupeDemoTrips'
+import { applyCanonicalSeedDocLink, docLinkFromCloudRow, ensureSeedDocLinks } from './seedDocLink'
 
 type Row = Record<string, unknown>
 
@@ -98,6 +99,7 @@ async function hydrateTrip(t: Row): Promise<TripPlan> {
     coords: t.coords as TripPlan['coords'],
     createdAt: t.created_at as string,
     updatedAt: t.updated_at as string,
+    ...docLinkFromCloudRow(t),
   })
 }
 
@@ -114,17 +116,17 @@ function mergeRemoteTripsById(local: TripPlan[], remote: TripPlan[]): TripPlan[]
     const r = remoteById.get(l.id)
     if (!r) return l
     const winner = new Date(r.updatedAt) > new Date(l.updatedAt) ? r : l
-    return {
+    return applyCanonicalSeedDocLink({
       ...winner,
       documents: mergeServerDocuments(l.documents, r.documents),
-      // hydrateTrip has no doc_url column, so a newer cloud row would otherwise
-      // wipe the linked Google Doc. Keep whichever side still has it.
+      // Cloud rows may still omit doc_url (column added in 0010). Keep
+      // whichever side still has the link, then fall back to the seed.
       docUrl: winner.docUrl || l.docUrl || r.docUrl,
       docTitle: winner.docTitle || l.docTitle || r.docTitle,
-    }
+    })
   })
   for (const r of remote) {
-    if (!merged.some(t => t.id === r.id)) merged.push(r)
+    if (!merged.some(t => t.id === r.id)) merged.push(applyCanonicalSeedDocLink(r))
   }
   return merged
 }
@@ -142,7 +144,7 @@ export function foldRemoteTrips(local: TripPlan[], remote: TripPlan[]): Collapse
     loadSeedDuplicateRedirects(),
   )
   saveSeedDuplicateRedirects(result.redirects)
-  return result
+  return { ...result, trips: ensureSeedDocLinks(result.trips) }
 }
 
 export function mergeRemoteTrips(local: TripPlan[], remote: TripPlan[]): TripPlan[] {

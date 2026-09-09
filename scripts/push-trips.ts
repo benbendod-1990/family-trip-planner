@@ -111,6 +111,8 @@ async function pushTrip(trip: TripPlan, userId: string) {
       total_budget: trip.budget?.totalBudget ?? 0,
       currency: trip.budget?.currency ?? 'EUR',
       coords: trip.coords ?? null,
+      doc_url: trip.docUrl ?? null,
+      doc_title: trip.docTitle ?? null,
       created_by: userId,
       created_at: trip.createdAt,
       updated_at: updatedAt,

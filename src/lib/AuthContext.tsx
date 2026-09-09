@@ -54,6 +54,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         { startTripAutoSync, suppressNextPush },
         { startTripRealtime },
         { ensureSeedBookingDocuments },
+        { ensureSeedDocLinks },
         { persistLinkDocuments },
         { DEMO_TRIPS },
       ] = await Promise.all([
@@ -62,6 +63,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         import('./tripAutoSync'),
         import('./tripRealtime'),
         import('./seedBookingDocuments'),
+        import('./seedDocLink'),
         import('./tripDocuments'),
         import('@/data/demoData'),
       ])
@@ -82,7 +84,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (pushable.length) {
           await pushLocalToRemote(pushable)
         }
-        const withSeedDocs = ensureSeedBookingDocuments(merged, DEMO_TRIPS)
+        const withSeedDocs = ensureSeedDocLinks(ensureSeedBookingDocuments(merged, DEMO_TRIPS))
         suppressNextPush()
         useTripStore.setState({
           trips: withSeedDocs,
