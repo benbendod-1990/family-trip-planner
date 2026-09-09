@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect, lazy, Suspense } from 'react'
-import { useNavigate } from 'react-router-dom'
 import {
   ActionIcon, Drawer, Stack, Typography, Alert, Spinner, Button,
 } from 'myk-library'
@@ -116,7 +115,6 @@ export default function AiChatDrawer() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
-  const navigate = useNavigate()
 
   const activeTripId = useTripStore(s => s.activeTripId)
   const trips = useTripStore(s => s.trips)
@@ -208,12 +206,7 @@ export default function AiChatDrawer() {
           {!hasApiKey && (
             <div style={{ padding: '12px 16px' }}>
               <Alert variant="warning" title="נדרש API Key">
-                <Stack direction="column" spacing="xs">
-                  <span>הגדר OpenAI API Key בדף הפרופיל כדי להשתמש בעוזר AI</span>
-                  <Button size="sm" variant="secondary" onClick={() => { setOpen(false); navigate('/profile') }}>
-                    הגדרות
-                  </Button>
-                </Stack>
+                <span>עוזר ה-AI כבוי במוצר. אין דף הגדרות פרופיל.</span>
               </Alert>
             </div>
           )}

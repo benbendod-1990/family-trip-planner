@@ -361,8 +361,8 @@ function DashboardContent() {
           <NavBtn onClick={() => navigate(`/trip/${trip.id}/travel`)}>
             <Menu size={20} /> עוד
           </NavBtn>
-          <NavBtn $disabled title="בקרוב">
-            <Compass size={20} /> מה עושים?
+          <NavBtn $active={currentPath === 'map'} onClick={() => navigate(`/trip/${trip.id}/map`)}>
+            <Compass size={20} /> מפה
           </NavBtn>
           <NavBtn onClick={() => navigate(`/trip/${trip.id}/itinerary`)}>
             <CalendarRange size={20} /> ימים

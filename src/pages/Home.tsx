@@ -101,12 +101,6 @@ export default function Home() {
           <Suspense fallback={<CloudSyncSlot />}>
             <CloudSyncButton />
           </Suspense>
-          <Button variant="ghost" onClick={() => navigate('/profile')} title="הפרופיל המשפחתי שלנו">
-            <Stack direction="row" spacing="xs" align="center">
-              <span>🧬</span>
-              <span>פרופיל</span>
-            </Stack>
-          </Button>
           <Button variant="ghost" onClick={handleImport} title="ייבא טיול מ-JSON">
             <Stack direction="row" spacing="xs" align="center">
               <Upload size={16} />

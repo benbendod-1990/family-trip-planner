@@ -1,6 +1,6 @@
 import styled from 'styled-components'
 import { useNavigate } from 'react-router-dom'
-import { Map as MapIcon, Wallet, Plane, ListTodo, Backpack } from 'lucide-react'
+import { Map as MapIcon, Wallet, Plane, ListTodo, Backpack, CalendarRange } from 'lucide-react'
 
 interface Props {
   tripId: string
@@ -59,7 +59,8 @@ interface Action {
 export default function QuickActions({ tripId }: Props) {
   const navigate = useNavigate()
   const actions: Action[] = [
-    { label: 'לוח זמנים', path: 'itinerary', icon: <MapIcon size={18} /> },
+    { label: 'מפה מצוירת', path: 'map', icon: <MapIcon size={18} /> },
+    { label: 'לוח זמנים', path: 'itinerary', icon: <CalendarRange size={18} /> },
     { label: 'תקציב', path: 'budget', icon: <Wallet size={18} /> },
     { label: 'משימות', path: 'tasks', icon: <ListTodo size={18} /> },
     { label: 'ציוד', path: 'packing', icon: <Backpack size={18} /> },
