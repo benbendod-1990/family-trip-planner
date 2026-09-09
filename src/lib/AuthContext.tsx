@@ -56,7 +56,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         { ensureSeedBookingDocuments },
         { ensureSeedDocLinks },
         { persistLinkDocuments },
-        { DEMO_TRIPS },
+        { FAMILY_SEED_TRIPS },
       ] = await Promise.all([
         import('./gmailToken'),
         import('./tripRepo'),
@@ -65,7 +65,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         import('./seedBookingDocuments'),
         import('./seedDocLink'),
         import('./tripDocuments'),
-        import('@/data/demoData'),
+        import('@/data/familySeeds'),
       ])
       await switchTripStoreAccount(userId)
       // Fire-and-forget: capture Google's refresh_token now, while Supabase
@@ -84,7 +84,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (pushable.length) {
           await pushLocalToRemote(pushable)
         }
-        const withSeedDocs = ensureSeedDocLinks(ensureSeedBookingDocuments(merged, DEMO_TRIPS))
+        const withSeedDocs = ensureSeedDocLinks(ensureSeedBookingDocuments(merged, FAMILY_SEED_TRIPS))
         suppressNextPush()
         useTripStore.setState({
           trips: withSeedDocs,

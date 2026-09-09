@@ -5,7 +5,9 @@ import type { TripPlan } from '../types/trip-plan.ts'
 import type { TripDocument } from '../types/trip-plan.ts'
 import { CANONICAL_SEED_IDENTITIES } from './dedupeDemoTrips.ts'
 import {
+  dropPrivateFamilySeedsFromGuest,
   dropUnauthorizedDemoSeeds,
+  guestSafeSeeds,
   hydrateGuestTrips,
   isUnauthorizedDemoSeed,
   localTripsSafeToAutoPush,
@@ -67,29 +69,53 @@ function visibleAfterCloudPull(local: TripPlan[], remote: TripPlan[]): TripPlan[
   return [...kept, ...remote.filter(t => !have.has(t.id))]
 }
 
-describe('guest demo seeds', () => {
-  it('empty guest store gets the full canonical catalog', () => {
-    const seeds = allDemoStubs()
-    const { trips, replacedCatalog } = hydrateGuestTrips([], seeds)
+describe('guest catalog has no private family seeds', () => {
+  it('production guest seeds are empty and do not include USA', () => {
+    const demoData = readFileSync(new URL('../data/demoData.ts', import.meta.url), 'utf8')
+    assert.match(demoData, /export const GUEST_TRIPS: TripPlan\[\] = \[\]/)
+    assert.equal(guestSafeSeeds(allDemoStubs()).length, 0)
+    assert.equal(guestSafeSeeds(allDemoStubs()).some(t => t.id === USA_ID), false)
+  })
+
+  it('empty guest store does not receive USA or other family seeds', () => {
+    const { trips, replacedCatalog } = hydrateGuestTrips([], allDemoStubs())
     assert.equal(replacedCatalog, true)
-    assert.deepEqual(trips.map(t => t.id).sort(), DEMO_IDS.slice().sort())
+    assert.deepEqual(trips, [])
     for (const id of DEMO_IDS) {
-      assert.ok(trips.some(t => t.id === id))
+      assert.equal(trips.some(t => t.id === id), false)
     }
   })
 
-  it('injects missing seeds next to a guest trip that is already present', () => {
-    const seeds = allDemoStubs()
-    const holland = seeds.find(t => t.id === HOLLAND_ID)!
-    const { trips, replacedCatalog } = hydrateGuestTrips([holland], seeds)
-    assert.equal(replacedCatalog, false)
-    assert.equal(trips.length, 5)
-    assert.ok(trips.some(t => t.id === USA_ID))
-    assert.ok(trips.some(t => t.id === PARIS_ID))
+  it('strips a cached USA trip (and other family seeds) from guest persist', () => {
+    const custom = stub({
+      id: '11111111-2222-3333-4444-555555555555',
+      name: 'טיול שלי',
+      destination: 'ליסבון',
+      startDate: '2026-07-01',
+      endDate: '2026-07-05',
+    })
+    const { trips, droppedIds } = hydrateGuestTrips([...allDemoStubs(), custom], [])
+    assert.equal(trips.some(t => t.id === USA_ID), false)
+    assert.equal(trips.some(t => t.id === HOLLAND_ID), false)
+    assert.deepEqual(trips.map(t => t.id), [custom.id])
+    assert.ok(droppedIds.includes(USA_ID))
+    assert.ok(droppedIds.includes(HOLLAND_ID))
   })
 
-  it('replaces the legacy Italy demo with the full catalog', () => {
-    const seeds = allDemoStubs()
+  it('dropPrivateFamilySeedsFromGuest removes USA even next to a user trip', () => {
+    const custom = stub({
+      id: 'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee',
+      name: 'טיול חדש',
+      destination: 'יוון',
+      startDate: '2026-06-01',
+      endDate: '2026-06-08',
+    })
+    const { trips, droppedIds } = dropPrivateFamilySeedsFromGuest([usa(), custom])
+    assert.deepEqual(trips.map(t => t.id), [custom.id])
+    assert.deepEqual(droppedIds, [USA_ID])
+  })
+
+  it('replaces the legacy Italy demo with an empty guest catalog, not USA', () => {
     const italy = stub({
       id: 'demo-italy-2026',
       name: 'איטליה',
@@ -97,10 +123,11 @@ describe('guest demo seeds', () => {
       startDate: '2026-01-01',
       endDate: '2026-01-07',
     })
-    const { trips, replacedCatalog } = hydrateGuestTrips([italy], seeds)
+    const { trips, replacedCatalog } = hydrateGuestTrips([italy], allDemoStubs())
     assert.equal(replacedCatalog, true)
     assert.equal(trips.some(t => t.id === 'demo-italy-2026'), false)
-    assert.equal(trips.length, seeds.length)
+    assert.equal(trips.some(t => t.id === USA_ID), false)
+    assert.equal(trips.length, 0)
   })
 })
 
@@ -212,10 +239,10 @@ describe('account-scoped persist keys', () => {
     assert.notEqual(tripStorePersistName('user-a'), tripStorePersistName('user-b'))
   })
 
-  it('sign-out resets to guest demos instead of rehydrating a stale shared key', () => {
+  it('sign-out resets to an empty guest catalog instead of rehydrating a stale shared key', () => {
     const plan = planTripStoreAccountSwitch('user-a', null, true)
     assert.equal(plan.persistName, GUEST_TRIP_STORE_KEY)
-    assert.equal(plan.resetTo, 'guest-demos')
+    assert.equal(plan.resetTo, 'guest-empty')
   })
 
   it('a new user starts empty so the previous account’s USA cannot leak', () => {
@@ -253,14 +280,54 @@ describe('call-site regressions', () => {
     assert.ok(realtime.includes('dropUnauthorizedDemoSeeds'))
   })
 
-  it('Home hides demo loaders for a signed-in session', () => {
+  it('Home has a guest login CTA and no family-seed loaders', () => {
     const home = readFileSync(new URL('../pages/Home.tsx', import.meta.url), 'utf8')
-    assert.ok(home.includes('allowDemoLoaders'))
+    assert.equal(home.includes('DEMO_TRIPS'), false)
+    assert.equal(home.includes('FAMILY_SEED_TRIPS'), false)
+    assert.equal(home.includes("from '@/data/familySeeds'"), false)
+    assert.equal(home.includes("from '@/data/demoData'"), false)
+    assert.equal(/usa-trip\.json/.test(home), false)
+    assert.equal(home.includes(USA_ID), false)
+    assert.equal(home.includes('allowDemoLoaders'), false)
+    assert.equal(home.includes('טען '), false)
+    assert.ok(home.includes("navigate('/login')"))
+    assert.ok(home.includes('הטיולים המשפחתיים זמינים רק אחרי התחברות עם Google'))
     assert.ok(home.includes('!session && !authLoading'))
+  })
+
+  it('guest persist path never statically imports family seed JSON', () => {
+    const demoData = readFileSync(new URL('../data/demoData.ts', import.meta.url), 'utf8')
+    const store = readFileSync(new URL('../stores/tripStore.ts', import.meta.url), 'utf8')
+    const auth = readFileSync(new URL('./AuthContext.tsx', import.meta.url), 'utf8')
+    assert.equal(/usa-trip/.test(demoData), false)
+    assert.equal(/holland-trip/.test(demoData), false)
+    assert.ok(demoData.includes('GUEST_TRIPS'))
+    assert.equal(store.includes("from '@/data/familySeeds'"), false)
+    assert.equal(/usa-trip\.json/.test(store), false)
+    assert.ok(store.includes("import('@/lib/repairLiveSeedTrips')"))
+    assert.ok(store.includes('hydrateGuestTrips'))
+    assert.ok(store.includes('GUEST_TRIPS'))
+    assert.ok(store.includes('queueMicrotask'))
+    assert.ok(auth.includes("import('@/data/familySeeds')"))
+    assert.equal(auth.includes("import('@/data/demoData')"), false)
+  })
+
+  it('authenticated seed-repair helpers still know the USA trip id', () => {
+    const seeds = readFileSync(new URL('../data/familySeeds.ts', import.meta.url), 'utf8')
+    assert.ok(seeds.includes('usa-trip.json'))
+    assert.ok(seeds.includes('FAMILY_SEED_TRIPS'))
+    const auth = readFileSync(new URL('./AuthContext.tsx', import.meta.url), 'utf8')
+    assert.ok(auth.includes('FAMILY_SEED_TRIPS'))
+    assert.ok(auth.includes('ensureSeedBookingDocuments(merged, FAMILY_SEED_TRIPS)'))
   })
 
   it('does not re-enable in-app AI product UI', () => {
     const flag = readFileSync(new URL('./aiFeatures.ts', import.meta.url), 'utf8')
     assert.ok(flag.includes('AI_PRODUCT_UI_ENABLED: boolean = false'))
+  })
+
+  it('PWA precache skips the family seed itinerary chunk', () => {
+    const vite = readFileSync(new URL('../../vite.config.ts', import.meta.url), 'utf8')
+    assert.ok(vite.includes("globIgnores: ['**/familySeeds-*.js']"))
   })
 })

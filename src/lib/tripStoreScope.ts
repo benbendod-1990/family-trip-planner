@@ -8,7 +8,8 @@
  *
  * `trip-store-account` remembers the last signed-in user so a cold start can
  * rehydrate the right key before the Supabase session resolves (avoids a
- * flash of Holland/Paris/Crete/Rome on an invitee's Home).
+ * flash of Holland/Paris/Crete/Rome on an invitee's Home). Guest persist is
+ * empty — never the family seed catalog.
  */
 
 export const GUEST_TRIP_STORE_KEY = 'myk-trip-plan-store'
@@ -72,10 +73,10 @@ export function persistHasEntry(name: string): boolean {
 
 /**
  * What to put in memory after pointing persist at another account.
- * Sign-out always resets to stock guest demos — never rehydrate the old
- * unscoped key, which may still hold the previous user's cloud trips.
+ * Sign-out always resets to an empty guest catalog — never rehydrate the old
+ * unscoped key (it may still hold family seeds or the previous user's trips).
  */
-export type TripStoreAccountReset = 'noop' | 'guest-demos' | 'empty' | 'rehydrate'
+export type TripStoreAccountReset = 'noop' | 'guest-empty' | 'empty' | 'rehydrate'
 
 export function planTripStoreAccountSwitch(
   previousUserId: string | null,
@@ -87,13 +88,13 @@ export function planTripStoreAccountSwitch(
     return { persistName, resetTo: 'noop' }
   }
   if (nextUserId == null && previousUserId != null) {
-    return { persistName, resetTo: 'guest-demos' }
+    return { persistName, resetTo: 'guest-empty' }
   }
   if (nextKeyHasEntry) {
     return { persistName, resetTo: 'rehydrate' }
   }
   if (nextUserId == null) {
-    return { persistName, resetTo: 'guest-demos' }
+    return { persistName, resetTo: 'guest-empty' }
   }
   return { persistName, resetTo: 'empty' }
 }
