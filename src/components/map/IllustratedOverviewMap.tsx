@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import styled from 'styled-components'
 import type { TripMapPoi } from '@/lib/tripMapPois'
-import { layoutOverviewMap, MAP_VIEW } from '@/lib/tripMapGeo'
+import { layoutOverviewMap } from '@/lib/tripMapGeo'
 import LandmarkGlyph from '@/components/map/LandmarkGlyph'
 
 interface Props {
@@ -29,36 +29,39 @@ const Frame = styled.svg`
   height: auto;
 `
 
-const StopBtn = styled.button<{ $x: number; $y: number; $active: boolean }>`
+const IconBtn = styled.button<{ $x: number; $y: number; $active: boolean }>`
   position: absolute;
   left: ${({ $x }) => $x}%;
   top: ${({ $y }) => $y}%;
-  transform: translate(-50%, -88%);
+  transform: translate(-50%, -50%);
   border: none;
   background: transparent;
   padding: 0;
   cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  z-index: ${({ $active }) => ($active ? 4 : 3)};
+  z-index: ${({ $active }) => ($active ? 4 : 2)};
   filter: ${({ $active }) => ($active ? 'drop-shadow(0 4px 10px rgba(42,32,19,0.35))' : 'none')};
 `
 
-const StopLabel = styled.span<{ $active: boolean }>`
+const Chip = styled.button<{ $x: number; $y: number; $active: boolean }>`
+  position: absolute;
+  left: ${({ $x }) => $x}%;
+  top: ${({ $y }) => $y}%;
+  transform: translate(-50%, -50%);
   font-size: 11px;
   font-weight: 700;
   color: ${({ theme }) => theme.colors.gray[900]};
-  background: ${({ $active }) => ($active ? '#FFFDF7' : 'rgba(255,253,247,0.92)')};
+  background: ${({ $active }) => ($active ? '#FFFDF7' : 'rgba(255,253,247,0.95)')};
   border: 1px solid ${({ theme, $active }) => ($active ? theme.colors.primary[400] : theme.colors.gray[200])};
   border-radius: 999px;
-  padding: 2px 8px;
+  padding: 3px 9px;
   white-space: nowrap;
-  max-width: 128px;
+  max-width: 42%;
   overflow: hidden;
   text-overflow: ellipsis;
-  box-shadow: 0 1px 3px rgba(42, 32, 19, 0.12);
+  box-shadow: 0 1px 4px rgba(42, 32, 19, 0.12);
+  cursor: pointer;
+  font-family: inherit;
+  z-index: ${({ $active }) => ($active ? 5 : 3)};
 `
 
 const Caption = styled.div`
@@ -70,6 +73,7 @@ const Caption = styled.div`
   background: rgba(255, 253, 247, 0.82);
   border-radius: 999px;
   padding: 3px 10px;
+  z-index: 6;
 `
 
 const Empty = styled.div`
@@ -94,10 +98,12 @@ export default function IllustratedOverviewMap({ pois, selectedId, onSelect }: P
     )
   }
 
+  const { width, height } = layout
+
   return (
     <Stage>
       <Frame
-        viewBox={`0 0 ${MAP_VIEW.width} ${MAP_VIEW.height}`}
+        viewBox={`0 0 ${width} ${height}`}
         role="img"
         aria-label="מפה מצוירת של מסלול הטיול"
       >
@@ -112,18 +118,28 @@ export default function IllustratedOverviewMap({ pois, selectedId, onSelect }: P
           <path d={layout.landD} fill="#E8D9B0" stroke="#6B4F32" strokeWidth="2.2" />
         )}
         {layout.routeD && (
-          <>
-            <path d={layout.routeD} fill="none" stroke="#6B4F32" strokeWidth="7" strokeLinecap="round" opacity="0.9" />
-            <path
-              d={layout.routeD}
-              fill="none"
-              stroke="#FBF3DF"
-              strokeWidth="2.4"
-              strokeDasharray="7 8"
-              strokeLinecap="round"
-            />
-          </>
+          <path
+            d={layout.routeD}
+            fill="none"
+            stroke="#6B4F32"
+            strokeWidth="3"
+            strokeDasharray="2 11"
+            strokeLinecap="round"
+          />
         )}
+        {layout.chips.map(chip => (
+          <line
+            key={`lead-${chip.id}`}
+            x1={chip.leader.x1}
+            y1={chip.leader.y1}
+            x2={chip.leader.x2}
+            y2={chip.leader.y2}
+            stroke="#6B4F32"
+            strokeWidth="1.2"
+            strokeDasharray="3 4"
+            opacity="0.45"
+          />
+        ))}
         {layout.labels.map(l => (
           <text
             key={`${l.text}-${l.x}`}
@@ -139,19 +155,30 @@ export default function IllustratedOverviewMap({ pois, selectedId, onSelect }: P
         ))}
       </Frame>
       {layout.placed.map(p => (
-        <StopBtn
+        <IconBtn
           key={p.id}
           type="button"
-          $x={(p.x / MAP_VIEW.width) * 100}
-          $y={(p.y / MAP_VIEW.height) * 100}
+          $x={(p.x / width) * 100}
+          $y={(p.y / height) * 100}
           $active={p.id === selectedId}
           onClick={() => onSelect(p.id)}
           aria-label={p.name}
           aria-pressed={p.id === selectedId}
         >
-          <LandmarkGlyph kind={p.kind} placeKey={p.key} selected={p.id === selectedId} size={p.id === selectedId ? 64 : 54} />
-          <StopLabel $active={p.id === selectedId}>{p.name}</StopLabel>
-        </StopBtn>
+          <LandmarkGlyph kind={p.kind} placeKey={p.key} selected={p.id === selectedId} size={p.id === selectedId ? 56 : 46} />
+        </IconBtn>
+      ))}
+      {layout.chips.map(chip => (
+        <Chip
+          key={`chip-${chip.id}`}
+          type="button"
+          $x={(chip.cx / width) * 100}
+          $y={(chip.cy / height) * 100}
+          $active={chip.id === selectedId}
+          onClick={() => onSelect(chip.id)}
+        >
+          {chip.text}
+        </Chip>
       ))}
       <Caption>מסלול לפי לוח הזמנים · לחיצה על מקום פותחת הסבר</Caption>
     </Stage>

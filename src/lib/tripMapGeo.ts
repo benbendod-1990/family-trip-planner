@@ -1,4 +1,5 @@
 import type { TripCoords } from '../types/trip-plan.ts'
+import { cssPxToView, placeMapChips, shortMapLabel, type PlacedChip, type Rect } from './mapLabelLayout.ts'
 
 export interface GeoPoint {
   x: number
@@ -12,7 +13,14 @@ export interface GeoBox {
   maxLon: number
 }
 
-export const MAP_VIEW = { width: 1000, height: 720 } as const
+export const MAP_VIEW = { width: 1000, height: 920 } as const
+
+export function overviewViewBox(poiCount: number): { width: number; height: number } {
+  return {
+    width: MAP_VIEW.width,
+    height: Math.max(MAP_VIEW.height, 680 + Math.max(0, poiCount) * 26),
+  }
+}
 
 export interface WaterLabel {
   lat: number
@@ -238,6 +246,8 @@ export function spreadProjected<T extends { x: number; y: number }>(
   points: T[],
   minDist = 78,
   rounds = 18,
+  view?: { width: number; height: number },
+  pad = 80,
 ): T[] {
   const out = points.map(p => ({ ...p }))
   for (let r = 0; r < rounds; r++) {
@@ -256,6 +266,12 @@ export function spreadProjected<T extends { x: number; y: number }>(
         out[j].y += uy * push
       }
     }
+    if (view) {
+      for (const p of out) {
+        p.x = Math.min(view.width - pad, Math.max(pad, p.x))
+        p.y = Math.min(view.height - pad, Math.max(pad, p.y))
+      }
+    }
   }
   return out
 }
@@ -267,12 +283,16 @@ export interface OverviewLayout<T extends { coords: TripCoords }> {
   routeD: string
   labels: Array<GeoPoint & { text: string }>
   placed: Array<T & GeoPoint>
+  chips: PlacedChip[]
+  width: number
+  height: number
 }
 
-export function layoutOverviewMap<T extends { coords: TripCoords }>(
+export function layoutOverviewMap<T extends { coords: TripCoords; id: string; name: string }>(
   pois: T[],
-  view = MAP_VIEW,
+  viewArg?: { width: number; height: number },
 ): OverviewLayout<T> {
+  const view = viewArg ?? overviewViewBox(pois.length)
   const coords = pois.map(p => p.coords)
   const pack = matchingRegionPack(coords)
   const box = pack?.frame ?? boxFromCoords(coords)
@@ -280,19 +300,50 @@ export function layoutOverviewMap<T extends { coords: TripCoords }>(
     const pt = projectLonLat(p.coords.lat, p.coords.lon, box, view)
     return { ...p, ...pt }
   })
-  const placed = spreadProjected(raw, 110)
+  const placed = spreadProjected(raw, 170, 28, view, 92)
   const landD = pack
     ? ringsToPath(pack.rings, box)
     : landBlobFromProjected(placed.map(p => ({ x: p.x, y: p.y })))
+  const waterLabels = (pack?.labels ?? []).map(l => ({
+    ...projectLonLat(l.lat, l.lon, box, view),
+    text: l.text,
+  }))
+  const obstacles: Rect[] = waterLabels.map(l => ({
+    x: l.x - 70,
+    y: l.y - 14,
+    w: 140,
+    h: 22,
+  }))
+  const iconR = cssPxToView(30, view.width)
+  const labelReach = iconR + cssPxToView(40, view.width)
+  const chips = placeMapChips(
+    placed.map(p => {
+      const towardX = p.x < view.width / 2 ? -1 : 1
+      const towardY = p.y < view.height / 2 ? -1 : 1
+      const roomX = Math.min(p.x, view.width - p.x)
+      const roomY = Math.min(p.y, view.height - p.y)
+      const horizontal = roomX <= roomY
+      return {
+        id: p.id,
+        ax: p.x,
+        ay: p.y,
+        text: shortMapLabel(p.name, 14),
+        preferDx: horizontal ? towardX * labelReach : towardX * 18,
+        preferDy: horizontal ? towardY * 18 : towardY * labelReach,
+      }
+    }),
+    view,
+    { iconR, gap: cssPxToView(8, view.width), obstacles },
+  )
   return {
     box,
     packId: pack?.id,
     landD,
     routeD: smoothPathThrough(placed.map(p => ({ x: p.x, y: p.y }))),
-    labels: (pack?.labels ?? []).map(l => ({
-      ...projectLonLat(l.lat, l.lon, box, view),
-      text: l.text,
-    })),
+    labels: waterLabels,
     placed,
+    chips,
+    width: view.width,
+    height: view.height,
   }
 }

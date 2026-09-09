@@ -1,4 +1,4 @@
-import { useMemo, useRef, type ReactNode } from 'react'
+import { useMemo, useRef } from 'react'
 import styled from 'styled-components'
 import { format, parseISO } from 'date-fns'
 import { he } from 'date-fns/locale'
@@ -7,9 +7,9 @@ import type { TripMapPoi } from '@/lib/tripMapPois'
 import {
   collectDayStops,
   dayRoadTheme,
-  layoutWindingRoad,
-  type DayRoadTheme,
+  layoutDayPoster,
 } from '@/lib/tripMapDayStops'
+import DayRoadScenery from '@/components/map/DayRoadScenery'
 import LandmarkGlyph from '@/components/map/LandmarkGlyph'
 import { warmDisplayFont } from '@/theme/warmTheme'
 
@@ -21,11 +21,9 @@ interface Props {
   onSwipeDay?: (dir: -1 | 1) => void
 }
 
-const VIEW = { width: 1000, height: 640 }
-
 const Paper = styled.div`
   position: relative;
-  background: #f7f3e8;
+  background: #e6dcc4;
   border-radius: 18px;
   border: 1px solid ${({ theme }) => theme.colors.gray[200]};
   overflow: hidden;
@@ -44,47 +42,28 @@ const Overlay = styled.div`
   pointer-events: none;
 `
 
-const Callout = styled.button<{ $x: number; $y: number; $side: 'start' | 'end'; $active: boolean }>`
+const Chip = styled.button<{ $x: number; $y: number; $active: boolean }>`
   pointer-events: auto;
   position: absolute;
   left: ${({ $x }) => $x}%;
   top: ${({ $y }) => $y}%;
-  transform: ${({ $side }) => ($side === 'start'
-    ? 'translate(-8%, -108%)'
-    : 'translate(-92%, -108%)')};
-  max-width: min(220px, 42%);
-  text-align: right;
+  transform: translate(-50%, -50%);
+  max-width: 44%;
   border: 1px solid ${({ theme, $active }) => ($active ? theme.colors.primary[400] : theme.colors.gray[200])};
-  background: ${({ $active }) => ($active ? '#fffdf7' : 'rgba(255,253,247,0.94)')};
-  border-radius: 12px;
-  padding: 8px 10px;
+  background: ${({ $active }) => ($active ? '#fffdf7' : 'rgba(255,253,247,0.95)')};
+  border-radius: 999px;
+  padding: 4px 10px;
   cursor: pointer;
-  box-shadow: 0 4px 12px rgba(42, 32, 19, 0.12);
+  box-shadow: 0 2px 8px rgba(42, 32, 19, 0.14);
   font-family: inherit;
-  color: inherit;
-`
-
-const CalloutTime = styled.div`
-  font-size: 11px;
-  font-weight: 700;
-  color: ${({ theme }) => theme.colors.primary[600]};
-`
-
-const CalloutTitle = styled.div`
-  font-size: 13px;
-  font-weight: 700;
   color: ${({ theme }) => theme.colors.gray[900]};
-  line-height: 1.3;
-`
-
-const CalloutDetail = styled.div`
   font-size: 11px;
-  color: ${({ theme }) => theme.colors.gray[600]};
-  margin-top: 2px;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
+  font-weight: 700;
+  line-height: 1.25;
+  white-space: nowrap;
   overflow: hidden;
+  text-overflow: ellipsis;
+  z-index: ${({ $active }) => ($active ? 4 : 3)};
 `
 
 const Milestone = styled.button<{ $x: number; $y: number; $active: boolean }>`
@@ -93,26 +72,26 @@ const Milestone = styled.button<{ $x: number; $y: number; $active: boolean }>`
   left: ${({ $x }) => $x}%;
   top: ${({ $y }) => $y}%;
   transform: translate(-50%, -50%);
-  width: 28px;
-  height: 28px;
+  width: 22px;
+  height: 22px;
   border-radius: 50%;
-  border: 3px solid ${({ $active }) => ($active ? '#d67a1f' : '#f7f3e8')};
-  background: #1e3a5f;
-  color: #fff;
-  font-size: 12px;
+  border: 2px solid ${({ $active }) => ($active ? '#d67a1f' : '#1e3a5f')};
+  background: #fffdf7;
+  color: #1e3a5f;
+  font-size: 10px;
   font-weight: 800;
   cursor: pointer;
   z-index: 2;
+  box-shadow: 0 1px 3px rgba(42, 32, 19, 0.2);
 `
 
-const GlyphFloat = styled.div<{ $x: number; $y: number; $side: 'start' | 'end' }>`
+const GlyphFloat = styled.div<{ $x: number; $y: number }>`
   position: absolute;
   left: ${({ $x }) => $x}%;
   top: ${({ $y }) => $y}%;
-  transform: ${({ $side }) => ($side === 'start'
-    ? 'translate(20%, -30%)'
-    : 'translate(-120%, -30%)')};
+  transform: translate(-50%, -50%);
   pointer-events: none;
+  opacity: 0.92;
 `
 
 const TitleBar = styled.div`
@@ -121,66 +100,41 @@ const TitleBar = styled.div`
   right: 14px;
   left: 14px;
   display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 8px;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
   pointer-events: none;
+  text-align: right;
 `
 
 const DayTitle = styled.div`
   font-family: ${warmDisplayFont};
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 500;
   color: ${({ theme }) => theme.colors.gray[900]};
+  text-shadow: 0 1px 0 rgba(255, 253, 247, 0.8);
 `
 
 const DayDate = styled.div`
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
   color: ${({ theme }) => theme.colors.primary[600]};
 `
 
-const THEME_FILL: Record<DayRoadTheme, string> = {
-  disney: '#eef3e4',
-  sea: '#e4eef3',
-  island: '#eaf4e6',
-  beach: '#f3efe2',
-  airport: '#ece8f3',
-  villa: '#f4eadc',
-  default: '#f7f3e8',
-}
+const Hint = styled.div`
+  font-size: 11px;
+  color: ${({ theme }) => theme.colors.gray[600]};
+`
 
-function themeDecor(theme: DayRoadTheme): ReactNode {
-  if (theme === 'sea') {
-    return (
-      <>
-        <path d="M40 560 Q120 540 200 560 T360 560 T520 560 T680 560 T960 560" fill="none" stroke="#5B8FA8" strokeWidth="3" opacity="0.35" />
-        <path d="M80 590 Q160 574 240 590 T400 590 T560 590 T900 590" fill="none" stroke="#5B8FA8" strokeWidth="2" opacity="0.25" />
-      </>
-    )
-  }
-  if (theme === 'island' || theme === 'beach') {
-    return (
-      <>
-        <circle cx="120" cy="90" r="28" fill="#E0B44B" opacity="0.55" />
-        <path d="M820 120 Q790 90 760 120 Q790 110 820 128" fill="#7FA860" />
-        <path d="M840 128 V200" stroke="#6B4F32" strokeWidth="4" />
-      </>
-    )
-  }
-  if (theme === 'disney') {
-    return (
-      <>
-        <path d="M70 160 L110 90 L150 160 Z" fill="#fffdf7" stroke="#1E3A5F" strokeWidth="2" />
-        <rect x="92" y="130" width="16" height="30" fill="#1E3A5F" />
-        <circle cx="880" cy="80" r="10" fill="#E0B44B" opacity="0.7" />
-      </>
-    )
-  }
-  if (theme === 'airport') {
-    return <path d="M80 80 L200 120 L160 70 Z" fill="#1E3A5F" opacity="0.18" />
-  }
-  return <circle cx="900" cy="70" r="22" fill="#E0B44B" opacity="0.4" />
+function RoadCar({ x, y, angle }: { x: number; y: number; angle: number }) {
+  return (
+    <g transform={`translate(${x} ${y}) rotate(${angle})`} aria-hidden>
+      <rect x="-18" y="-9" width="36" height="16" rx="4" fill="#1E3A5F" />
+      <rect x="-4" y="-7" width="14" height="10" rx="2" fill="#5B8FA8" />
+      <circle cx="-10" cy="8" r="4" fill="#3D3120" />
+      <circle cx="10" cy="8" r="4" fill="#3D3120" />
+    </g>
+  )
 }
 
 export default function WindingDayRoad({
@@ -192,13 +146,14 @@ export default function WindingDayRoad({
 }: Props) {
   const stops = useMemo(() => collectDayStops(day, pois), [day, pois])
   const theme = dayRoadTheme(stops, day.label)
-  const layout = useMemo(
-    () => layoutWindingRoad(Math.max(1, stops.length), day.id, VIEW.width, VIEW.height),
-    [day.id, stops.length],
+  const poster = useMemo(
+    () => layoutDayPoster(stops, day.id),
+    [day.id, stops],
   )
   const touchX = useRef<number | null>(null)
-
   const dateLabel = format(parseISO(day.date), 'EEEE d בMMMM', { locale: he })
+  const { width, height, road, chips } = poster
+  const chipById = new Map(chips.map(c => [c.id, c]))
 
   return (
     <Paper
@@ -210,36 +165,55 @@ export default function WindingDayRoad({
         touchX.current = null
       }}
     >
-      <Frame viewBox={`0 0 ${VIEW.width} ${VIEW.height}`} role="img" aria-label={`מפת היום ${day.label ?? day.date}`}>
-        <rect width="100%" height="100%" fill={THEME_FILL[theme]} />
-        {themeDecor(theme)}
-        <path d={layout.d} fill="none" stroke="#6B4F32" strokeWidth="22" strokeLinecap="round" />
+      <Frame viewBox={`0 0 ${width} ${height}`} role="img" aria-label={`מפת היום ${day.label ?? day.date}`}>
+        <DayRoadScenery width={width} height={height} theme={theme} seed={day.id} />
+        <path d={road.d} fill="none" stroke="#4A3420" strokeWidth="36" strokeLinecap="round" />
+        <path d={road.d} fill="none" stroke="#6B4F32" strokeWidth="28" strokeLinecap="round" />
         <path
-          d={layout.centerline}
+          d={road.centerline}
           fill="none"
           stroke="#FBF3DF"
-          strokeWidth="4"
-          strokeDasharray="10 12"
+          strokeWidth="3.4"
+          strokeDasharray="12 14"
           strokeLinecap="round"
         />
-        <circle cx={layout.start.x} cy={layout.start.y} r="10" fill="#C45C3E" />
-        <circle cx={layout.end.x} cy={layout.end.y} r="10" fill="#1E3A5F" />
+        {chips.map(chip => (
+          <line
+            key={`lead-${chip.id}`}
+            x1={chip.leader.x1}
+            y1={chip.leader.y1}
+            x2={chip.leader.x2}
+            y2={chip.leader.y2}
+            stroke="#6B4F32"
+            strokeWidth="1.4"
+            strokeDasharray="3 4"
+            opacity="0.55"
+          />
+        ))}
+        <circle cx={road.start.x} cy={road.start.y} r="7" fill="#C45C3E" />
+        <circle cx={road.end.x} cy={road.end.y} r="7" fill="#1E3A5F" />
+        <RoadCar x={road.car.x} y={road.car.y} angle={road.car.angle} />
       </Frame>
       <Overlay>
         <TitleBar>
           <DayTitle>{day.label || 'יום בטיול'}</DayTitle>
           <DayDate>{dateLabel}</DayDate>
+          <Hint>לחצו על תחנה לפירוט</Hint>
         </TitleBar>
         {stops.map((stop, i) => {
-          const pt = layout.stops[i] ?? layout.stops[layout.stops.length - 1]
-          const xPct = (pt.x / VIEW.width) * 100
-          const yPct = (pt.y / VIEW.height) * 100
-          const side: 'start' | 'end' = i % 2 === 0 ? 'start' : 'end'
+          const pt = road.stops[i] ?? road.stops[road.stops.length - 1]
+          const chip = chipById.get(stop.id)
+          const xPct = (pt.x / width) * 100
+          const yPct = (pt.y / height) * 100
           const active = stop.id === selectedStopId
+          const gxy = {
+            x: ((pt.x + pt.nx * -42) / width) * 100,
+            y: ((pt.y + pt.ny * -42) / height) * 100,
+          }
           return (
             <div key={stop.id}>
-              <GlyphFloat $x={xPct} $y={yPct} $side={side === 'start' ? 'end' : 'start'}>
-                <LandmarkGlyph kind={stop.kind} placeKey={stop.location} size={48} />
+              <GlyphFloat $x={gxy.x} $y={gxy.y}>
+                <LandmarkGlyph kind={stop.kind} placeKey={stop.location} size={40} />
               </GlyphFloat>
               <Milestone
                 type="button"
@@ -248,21 +222,21 @@ export default function WindingDayRoad({
                 $active={active}
                 onClick={() => onSelectStop(stop.id, stop.poiId)}
                 aria-label={stop.title}
+                aria-pressed={active}
               >
                 {i + 1}
               </Milestone>
-              <Callout
-                type="button"
-                $x={xPct}
-                $y={yPct}
-                $side={side}
-                $active={active}
-                onClick={() => onSelectStop(stop.id, stop.poiId)}
-              >
-                {stop.time && <CalloutTime>{stop.time}{stop.endTime ? `–${stop.endTime}` : ''}</CalloutTime>}
-                <CalloutTitle>{stop.emoji} {stop.title}</CalloutTitle>
-                <CalloutDetail>{stop.blurb}</CalloutDetail>
-              </Callout>
+              {chip && (
+                <Chip
+                  type="button"
+                  $x={(chip.cx / width) * 100}
+                  $y={(chip.cy / height) * 100}
+                  $active={active}
+                  onClick={() => onSelectStop(stop.id, stop.poiId)}
+                >
+                  {chip.text}
+                </Chip>
+              )}
             </div>
           )
         })}
