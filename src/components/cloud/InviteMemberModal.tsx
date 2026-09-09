@@ -3,6 +3,7 @@ import styled from 'styled-components'
 import { Button, Stack, Typography } from 'myk-library'
 import { X, UserPlus, Trash2, Crown } from 'lucide-react'
 import { useAuth } from '@/lib/AuthContext'
+import { inviteFailureStatus, rpcErrorText } from '@/lib/inviteError'
 import {
   inviteUserToTrip,
   listTripMembers,
@@ -72,7 +73,7 @@ export default function InviteMemberModal({ tripId, tripName, open, onClose }: P
     try {
       setMembers(await listTripMembers(tripId))
     } catch (e) {
-      setStatus(`שגיאה: ${e instanceof Error ? e.message : 'לא ידועה'}`)
+      setStatus(`שגיאה: ${rpcErrorText(e) || 'לא ידועה'}`)
     }
   }
 
@@ -86,14 +87,7 @@ export default function InviteMemberModal({ tripId, tripName, open, onClose }: P
       setEmail('')
       await refresh()
     } catch (e) {
-      const msg = e instanceof Error ? e.message : 'שגיאה'
-      if (msg.includes('user_not_found')) {
-        setStatus(`${email} עדיין לא נרשם. בקש שייכנס פעם אחת ל-${window.location.origin}/login ואז תזמין שוב.`)
-      } else if (msg.includes('forbidden')) {
-        setStatus('רק יוצר הטיול יכול להזמין')
-      } else {
-        setStatus(`שגיאה: ${msg}`)
-      }
+      setStatus(inviteFailureStatus(e, email.trim(), window.location.origin))
     } finally {
       setBusy(false)
     }
@@ -105,7 +99,7 @@ export default function InviteMemberModal({ tripId, tripName, open, onClose }: P
       await removeUserFromTrip(tripId, m.user_id)
       await refresh()
     } catch (e) {
-      setStatus(`שגיאה בהסרה: ${e instanceof Error ? e.message : 'לא ידועה'}`)
+      setStatus(`שגיאה בהסרה: ${rpcErrorText(e) || 'לא ידועה'}`)
     }
   }
 
