@@ -5,7 +5,7 @@ import { CloudOff, Loader2, Check, AlertCircle, RefreshCw, Mail } from 'lucide-r
 import styled from 'styled-components'
 import { useAuth } from '@/lib/AuthContext'
 import { useTripStore } from '@/stores/tripStore'
-import { pushLocalToRemote, listTrips, deleteTrip, mergeRemoteTrips } from '@/lib/tripRepo'
+import { pushLocalToRemote, listTrips, deleteTrip, mergeRemoteTrips, foldRemoteTrips, deleteCollapsedDuplicates } from '@/lib/tripRepo'
 import { suppressNextPush } from '@/lib/tripAutoSync'
 import { syncFromGmail, type GmailSyncReport } from '@/lib/gmailSync'
 import { GmailAuthError } from '@/lib/gmailToken'
@@ -240,7 +240,10 @@ export default function CloudSyncButton() {
       const remoteById = new Map(remote.map(t => [t.id, t]))
       // Local wins on conflict (user's recent edits) — pick newer updatedAt.
       // Documents are the exception: the server owns them. See mergeRemoteTrips.
-      const merged = mergeRemoteTrips(trips, remote)
+      const { trips: merged, droppedIds } = foldRemoteTrips(trips, remote)
+      if (droppedIds.length) {
+        await deleteCollapsedDuplicates(droppedIds, [...trips, ...remote])
+      }
       suppressNextPush()
       useTripStore.setState({ trips: merged })
 

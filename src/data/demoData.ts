@@ -5,8 +5,10 @@ import creteTrip from './crete-trip.json'
 import romeTrip from './rome-trip.json'
 import usaTrip from './usa-trip.json'
 
-// All known upcoming trips. The first one is auto-loaded into localStorage
-// when the store is empty; the rest are available via "load sample" buttons.
+// All known upcoming trips. Empty stores get the full list; otherwise
+// onRehydrateStorage injects any seed missing by id, then collapses a
+// pre-existing near-duplicate (same destination family + overlapping dates
+// + similar title) onto that seed so Home doesn't show two copies.
 export const DEMO_TRIPS: TripPlan[] = [
   creteTrip as TripPlan,
   hollandTrip as TripPlan,
