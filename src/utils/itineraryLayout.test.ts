@@ -1,8 +1,8 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
-import { itineraryGridColumns, itineraryDaysTemplate, itineraryIsSingleColumn } from './itineraryLayout.ts'
-import { getTripDuration } from './date.ts'
+import { itineraryGridColumns, itineraryDaysTemplate, itineraryIsSingleColumn, sortDayEvents, ratingStars } from './itineraryLayout.ts'
+import { getTripDuration, formatDateHe } from './date.ts'
 
 describe('itineraryGridColumns', () => {
   it('uses a definite 1/2/3 count so auto-fit cannot freeze long trips', () => {
@@ -77,6 +77,78 @@ describe('USA seed itinerary', () => {
     assert.equal(new Set(ids).size, ids.length, 'day ids must be unique')
     for (const day of usa.days) {
       assert.ok(Array.isArray(day.events), `${day.date} must have an events array`)
+      for (const event of day.events as Array<{ startTime?: string }>) {
+        assert.equal(typeof event.startTime, 'string', `${day.date} events need startTime`)
+      }
     }
+  })
+})
+
+describe('sortDayEvents', () => {
+  const unsafeCompare = (a: { startTime?: string }, b: { startTime?: string }) =>
+    a.startTime!.localeCompare(b.startTime!)
+
+  /** WebKit-like: compare every pair in both directions. V8 TimSort often does not. */
+  function allPairsSort<T>(arr: T[], cmp: (a: T, b: T) => number): T[] {
+    const out = arr.slice()
+    for (let i = 0; i < out.length; i++) {
+      for (let j = 0; j < out.length; j++) {
+        if (i === j) continue
+        cmp(out[i], out[j])
+      }
+    }
+    return out
+  }
+
+  it('does not throw when events or startTime are missing (the iPhone sort throw)', () => {
+    assert.deepEqual(sortDayEvents(undefined), [])
+    assert.deepEqual(sortDayEvents(null), [])
+    const mixed = [
+      { id: 'b', startTime: '09:00' },
+      { id: 'a' },
+      { id: 'c', startTime: '08:00' },
+    ]
+    assert.deepEqual(sortDayEvents(mixed).map(e => e.id), ['a', 'c', 'b'])
+    assert.doesNotThrow(() => allPairsSort(mixed, (a, b) => (a.startTime ?? '').localeCompare(b.startTime ?? '')))
+  })
+
+  it('the previous localeCompare-on-startTime comparator throws on a WebKit-style all-pairs pass', () => {
+    const mixed = [{ startTime: '09:00' }, {}]
+    assert.throws(
+      () => allPairsSort(mixed, unsafeCompare),
+      (err: unknown) => err instanceof TypeError,
+    )
+  })
+})
+
+describe('ratingStars', () => {
+  it('never calls String.repeat with a non-integer', () => {
+    assert.equal(ratingStars(undefined), '')
+    assert.equal(ratingStars(-1), '')
+    assert.equal(ratingStars(3.7), '⭐⭐⭐⭐')
+    assert.equal(ratingStars(2), '⭐⭐')
+  })
+})
+
+describe('formatDateHe does not throw on junk dates', () => {
+  it('returns the input string instead of RangeError', () => {
+    assert.equal(formatDateHe('not-a-date'), 'not-a-date')
+  })
+})
+
+describe('DayColumn does not mount myk-library Timeline', () => {
+  it('uses a local event list so a 15-day trip cannot throw inside Timeline on WebKit', () => {
+    const src = readFileSync(new URL('../components/itinerary/DayColumn.tsx', import.meta.url), 'utf8')
+    assert.equal(src.includes('sortDayEvents'), true)
+    assert.equal(/\{[^}]*\bTimeline\b[^}]*\}\s*from 'myk-library'/.test(src), false)
+    assert.equal(src.includes('<Timeline'), false)
+  })
+})
+
+describe('Itinerary past-visits access is optional', () => {
+  it('does not call visits.filter without optional chaining', () => {
+    const src = readFileSync(new URL('../pages/Itinerary.tsx', import.meta.url), 'utf8')
+    assert.equal(src.includes('destMemory?.visits?.filter'), true)
+    assert.equal(src.includes('destMemory?.visits.filter'), false)
   })
 })

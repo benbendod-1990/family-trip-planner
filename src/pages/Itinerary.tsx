@@ -11,6 +11,7 @@ import {
   itineraryGridColumns,
   itineraryDaysTemplate,
   itineraryIsSingleColumn,
+  ratingStars,
 } from '@/utils/itineraryLayout'
 import { History } from 'lucide-react'
 import styled, { css } from 'styled-components'
@@ -26,7 +27,7 @@ const GridWrapper = styled.div<{ $mobile: boolean }>`
 
 /*
  * myk-library Grid uses `repeat(N, 1fr)` = minmax(auto, 1fr). That auto
- * minimum is min-content; 15 Timeline columns against overflow-x:hidden is
+ * minimum is min-content; 15 day columns against overflow-x:hidden is
  * how iOS Safari paints a cream blank instead of the itinerary. A flex
  * stack on one column, minmax(0, 1fr) otherwise, cannot blow out.
  */
@@ -76,7 +77,8 @@ export default function Itinerary() {
   const duration = getTripDuration(trip.startDate, trip.endDate)
   const columns = itineraryGridColumns(isMobile, isTablet)
   const destMemory = getDestination(trip.destination)
-  const pastVisits = destMemory?.visits.filter(v => v.tripId !== id) ?? []
+  const pastVisits = destMemory?.visits?.filter(v => v.tripId !== id) ?? []
+  const days = trip.days ?? []
 
   return (
     <div>
@@ -106,31 +108,35 @@ export default function Itinerary() {
             </Stack>
             <button onClick={() => setHidePastVisit(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#60a5fa', fontSize: 18 }}>×</button>
           </Stack>
-          {pastVisits.slice(0, 2).map(v => (
+          {pastVisits.slice(0, 2).map(v => {
+            const stars = ratingStars(v.overallRating)
+            const well = typeof v.whatWentWell === 'string' ? v.whatWentWell : ''
+            return (
             <div key={v.tripId} style={{ marginTop: 8 }}>
               <Typography variant="body2" style={{ color: '#93c5fd', fontSize: 12 }}>
                 {v.coverEmoji} <strong>{v.tripName}</strong> ({formatDateShort(v.startDate)} – {formatDateShort(v.endDate)})
-                {v.overallRating > 0 && ` · ${'⭐'.repeat(v.overallRating)}`}
+                {stars ? ` · ${stars}` : ''}
               </Typography>
-              {v.highlights.length > 0 && (
+              {(v.highlights?.length ?? 0) > 0 && (
                 <Typography variant="body2" style={{ color: '#60a5fa', fontSize: 11, marginTop: 2 }}>
                   💡 {v.highlights.slice(0, 2).join(' · ')}
                 </Typography>
               )}
-              {v.whatWentWell && (
+              {well && (
                 <Typography variant="body2" style={{ color: '#60a5fa', fontSize: 11, marginTop: 2 }}>
-                  ✓ {v.whatWentWell.substring(0, 80)}{v.whatWentWell.length > 80 ? '...' : ''}
+                  ✓ {well.substring(0, 80)}{well.length > 80 ? '...' : ''}
                 </Typography>
               )}
             </div>
-          ))}
+            )
+          })}
         </div>
       )}
 
       <GridWrapper $mobile={isMobile}>
         <DaysGrid $cols={columns}>
-          {trip.days.map((day, index) => (
-            <DayColumn key={day.id} day={day} tripId={trip.id} dayIndex={index} weather={weather[day.date]} />
+          {days.map((day, index) => (
+            <DayColumn key={day.id ?? day.date ?? index} day={day} tripId={trip.id} dayIndex={index} weather={weather[day.date]} />
           ))}
         </DaysGrid>
       </GridWrapper>

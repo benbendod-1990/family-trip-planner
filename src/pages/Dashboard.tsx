@@ -239,7 +239,7 @@ function DashboardContent() {
   const packedItems = packingItems.filter(i => i.packed).length
   const packingPct = packingItems.length > 0 ? Math.round((packedItems / packingItems.length) * 100) : 0
 
-  const totalEvents = trip.days.flatMap(d => d.events).length
+  const totalEvents = (trip.days ?? []).flatMap(d => d.events ?? []).length
 
   const { phase, daysToStart, dayOfTrip } = determinePhase(trip.startDate, trip.endDate, todayISO)
   const tip = pickTip(phase, daysToStart)
