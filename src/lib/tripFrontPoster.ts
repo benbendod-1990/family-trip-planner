@@ -128,12 +128,15 @@ function scoreStop(stop: DayStop, day: TripDay): number {
   if (looksLikeAirport(stop) && stop.kind !== 'airport') score = Math.max(score, KIND_SCORE.airport)
   const blob = `${stop.title} ${stop.location ?? ''}`.toLowerCase()
   const label = (day.label ?? '').toLowerCase()
-  if (/magic kingdom|animal kingdom|cococay|perfect day|efteling|beekse|utopia|epcot/.test(blob)) {
+  if (/magic kingdom|animal kingdom|cococay|perfect day|efteling|beekse|utopia|epcot|seaworld|peppa|gatorland|disney springs/.test(blob)) {
     score += 24
   }
   if (label.includes('מיאמי') && /miami/.test(blob)) score += 22
   if (label.includes('utopia') && /utopia/.test(blob)) score += 16
   if (/ירידה|צ׳ק-אאוט|checkout|נסיעה ל/.test(stop.title)) score -= 18
+  // Debark is transit; the day's place is Orlando (Springs / villa / park).
+  if (/ירידה/.test(stop.title) && /אורלנדו|orlando/.test(label)) score -= 40
+  if (/disney springs|seaworld|peppa|gatorland/.test(blob)) score += 18
   if (TBD.test(stop.title) || TBD.test(day.label ?? '')) score -= 20
   if ((stop.blurb?.length ?? 0) >= 40) score += 4
   if (stop.poiId) score += 6
@@ -194,7 +197,7 @@ export function collectFrontStops(
       ? catalogEntryForKey(canonicalPlaceKey(g.hero.location))
       : undefined
     const eventTitle = g.hero.title.replace(/^[^\p{L}\p{N}]+/u, '').trim()
-    const landmarkTitle = /magic kingdom|animal kingdom|cococay|utopia|efteling|beekse|epcot/i.test(eventTitle)
+    const landmarkTitle = /magic kingdom|animal kingdom|cococay|utopia|efteling|beekse|epcot|seaworld|peppa|gatorland|disney springs/i.test(eventTitle)
     const rawTitle = (
       TBD.test(eventTitle)
         ? (first.label ?? '').replace(/^TBD\s*[—–-]\s*/i, '').trim() || 'מנוחה'

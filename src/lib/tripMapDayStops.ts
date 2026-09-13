@@ -146,7 +146,7 @@ export function dayRoadTheme(stops: DayStop[], label?: string): DayRoadTheme {
   const blob = `${label ?? ''} ${stops.map(s => `${s.title} ${s.location ?? ''} ${s.kind}`).join(' ')}`.toLowerCase()
   if (/cococay|perfect day|island/.test(blob)) return 'island'
   if (/at sea|יום ים|utopia|ship/.test(blob) && !/cococay/.test(blob)) return 'sea'
-  if (/magic kingdom|animal kingdom|disney|🏰|🦁/.test(blob)) return 'disney'
+  if (/magic kingdom|animal kingdom|epcot|disney springs|seaworld|peppa|gatorland|disney|🏰|🦁|🌐/.test(blob)) return 'disney'
   if (/airport|mia|נתב|טיס/.test(blob)) return 'airport'
   if (/beach|חוף|miami beach/.test(blob)) return 'beach'
   if (/solterra|villa|וילה/.test(blob)) return 'villa'

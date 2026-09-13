@@ -124,6 +124,43 @@ function EpcotSphere({ size }: { size: number }) {
   )
 }
 
+function SeaWorldOrca({ size }: { size: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 72 72" aria-hidden>
+      <ellipse cx="36" cy="62" rx="22" ry="5" fill={COLORS.blue} opacity="0.35" />
+      <path d="M10 40 C14 22 30 16 44 22 C56 26 62 38 56 48 C50 58 28 58 16 50 C8 46 8 40 10 40 Z" fill={COLORS.navy} />
+      <path d="M18 44 C28 50 46 50 54 42 C50 52 30 54 18 44 Z" fill={COLORS.white} />
+      <path d="M52 20 L62 10 L58 24 Z" fill={COLORS.navy} />
+      <circle cx="24" cy="34" r="2.2" fill={COLORS.white} />
+    </svg>
+  )
+}
+
+function PeppaHouse({ size }: { size: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 72 72" aria-hidden>
+      <ellipse cx="36" cy="64" rx="22" ry="5" fill={COLORS.sage} opacity="0.4" />
+      <path d="M12 40 L36 16 L60 40" fill={COLORS.terracotta} />
+      <rect x="18" y="40" width="36" height="20" fill="#F7C6D4" stroke={COLORS.navy} strokeWidth="1.4" />
+      <rect x="24" y="46" width="8" height="8" fill={COLORS.blue} opacity="0.7" />
+      <rect x="40" y="48" width="8" height="12" fill={COLORS.navy} />
+      <circle cx="52" cy="28" r="6" fill="#E89BB0" />
+    </svg>
+  )
+}
+
+function SpringsBags({ size }: { size: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 72 72" aria-hidden>
+      <ellipse cx="36" cy="64" rx="20" ry="5" fill={COLORS.sand} />
+      <rect x="16" y="28" width="18" height="28" rx="2" fill={COLORS.white} stroke={COLORS.navy} strokeWidth="1.4" />
+      <path d="M20 28 Q25 18 30 28" fill="none" stroke={COLORS.navy} strokeWidth="2" />
+      <rect x="36" y="24" width="20" height="32" rx="2" fill={COLORS.gold} stroke={COLORS.navy} strokeWidth="1.4" />
+      <path d="M40 24 Q46 14 52 24" fill="none" stroke={COLORS.navy} strokeWidth="2" />
+    </svg>
+  )
+}
+
 function Villa({ size }: { size: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 72 72" aria-hidden>
@@ -243,10 +280,13 @@ function PinHouse({ size }: { size: number }) {
 function glyphKeyForPlace(placeKey?: string, kind?: GlyphKind): string {
   const k = (placeKey ?? '').toLowerCase()
   if (/magic kingdom|efteling|castle/.test(k)) return 'castle'
-  if (/animal kingdom|beekse|safari/.test(k)) return 'safari'
+  if (/animal kingdom|beekse|safari|gatorland/.test(k)) return 'safari'
   if (/cococay|perfect day/.test(k)) return 'cococay'
   if (/epcot|spaceship earth/.test(k)) return 'epcot'
-  if (/miami beach|מיאמי/.test(k)) return 'miami'
+  if (/seaworld/.test(k)) return 'seaworld'
+  if (/peppa/.test(k)) return 'peppa'
+  if (/disney springs/.test(k)) return 'springs'
+  if (/miami beach|מיאמי ביץ/.test(k)) return 'miami'
   if (/solterra|davenport/.test(k)) return 'villa'
   if (/holiday inn/.test(k)) return 'hotel'
   if (/utopia|canaveral/.test(k)) return 'utopia'
@@ -277,6 +317,9 @@ export default function LandmarkGlyph({ kind, placeKey, selected = false, size =
     : glyph === 'cococay' ? <CocoCay size={size} />
     : glyph === 'miami' ? <MiamiSkyline size={size} />
     : glyph === 'epcot' ? <EpcotSphere size={size} />
+    : glyph === 'seaworld' ? <SeaWorldOrca size={size} />
+    : glyph === 'peppa' ? <PeppaHouse size={size} />
+    : glyph === 'springs' ? <SpringsBags size={size} />
     : glyph === 'villa' ? <Villa size={size} />
     : glyph === 'hotel' ? <Hotel size={size} />
     : glyph === 'plane' ? <Plane size={size} />

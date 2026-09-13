@@ -269,6 +269,40 @@ export function repairLiveSeedTrips(trips: TripPlan[]): TripPlan[] {
     })
   }
 
+  // One-shot: USA Mar 2027 — live copies still send the family to Miami
+  // Beach / beach-rest after Utopia, and keep Animal Kingdom on 21.3.
+  // The planning Doc and Ben's call: Orlando villa + parks after the
+  // cruise, and Epcot instead of Animal Kingdom. Swap days + the stale
+  // post-cruise lodging; keep tasks/budget/family. Markers are strings
+  // the refreshed seed no longer carries, so this cannot fire twice.
+  const USA_ID = 'b38fc010-9096-45c9-b8df-191e369143dc'
+  const freshUsa = seeds.find(t => t.id === USA_ID)
+  if (freshUsa) {
+    state.trips = state.trips.map(t => {
+      if (t.id !== USA_ID) return t
+      const dayBlob = (t.days ?? [])
+        .map(d => `${d.label ?? ''} ${(d.events ?? []).map(e => `${e.title ?? ''} ${e.location ?? ''} ${e.description ?? ''}`).join(' ')}`)
+        .join('\n')
+      const stayBlob = (t.accommodations ?? []).map(a => `${a.name ?? ''} ${a.address ?? ''} ${a.notes ?? ''}`).join('\n')
+      const hasMiamiBeachReturn = /Miami Beach/i.test(dayBlob)
+      const hasBeachRestDays = /חוף\s*\/\s*מנוחה/.test(dayBlob)
+      const hasAnimalKingdom = /Animal Kingdom/i.test(dayBlob)
+      const hasCocoaLodging = /Cocoa Beach/i.test(`${dayBlob}\n${stayBlob}`)
+      if (!hasMiamiBeachReturn && !hasBeachRestDays && !hasAnimalKingdom && !hasCocoaLodging) {
+        return t
+      }
+      const seedStayIds = new Set((freshUsa.accommodations ?? []).map(a => a.id))
+      const extras = (t.accommodations ?? []).filter(a => !seedStayIds.has(a.id) && !/Holiday Inn Miami|Cocoa Beach|מיאמי\s*\/\s*Cocoa/i.test(`${a.name} ${a.address}`))
+      return {
+        ...t,
+        days: freshUsa.days,
+        accommodations: [...(freshUsa.accommodations ?? []), ...extras],
+        carRentals: freshUsa.carRentals ?? t.carRentals,
+        updatedAt: new Date().toISOString(),
+      }
+    })
+  }
+
   // One-shot: replace stale Crete trip — original seed assumed a 7-night
   // stay (21–28/5) based on partial Aquila correspondence; actual trip
   // was 21–24/5. Detect stale by old endDate.

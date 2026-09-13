@@ -95,28 +95,17 @@
     },
     {
       "id": "c73f19fc-0360-4520-a02d-70b5a721a7c5",
-      "name": "לינה אחרי הקרוז — TBD (מיאמי / Cocoa Beach)",
-      "type": "hotel",
-      "address": "Miami / Cocoa Beach, Florida",
+      "name": "Solterra / Windsor Hills — אורלנדו חלק ב׳ (מועדף)",
+      "type": "villa",
+      "address": "Davenport / Kissimmee, Florida",
       "checkIn": "2027-03-26",
-      "checkOut": "2027-03-31",
-      "cost": 0,
-      "currency": "USD",
-      "notes": "⚠️ לא הוזמן. ימים 26–31.3 אחרי הירידה מהאונייה — חוף / מנוחה, בלי כרטיסי פארק מומצאים. אופציות: אזור מיאמי ביץ׳, או Cocoa Beach (קרוב לנמל). הלילה האחרון (31.3) במלון נפרד ליד MIA."
-    },
-    {
-      "id": "d6a6b328-3d31-4924-a355-f6ec731132a1",
-      "name": "Holiday Inn Miami International Airport (מועדף)",
-      "type": "hotel",
-      "address": "Miami International Airport area, Miami, FL",
-      "checkIn": "2027-03-31",
       "checkOut": "2027-04-01",
       "cost": 0,
       "currency": "USD",
-      "notes": "⚠️ לא הוזמן. לילה אחרון לפני LY18 12:00. בחירה מועדפת מהמסמך — קרוב לשדה. 12 נפשות, כנראה כמה חדרים.",
+      "notes": "⚠️ לא הוזמן. 6 לילות אחרי הירידה מהאונייה — בחזרה לאורלנדו (פארקים / וילה). מועדף Solterra Resort או Windsor Hills, 5–6 חדרים, בריכה מחוממת ומגודרת. יציאה לפנות בוקר 1.4 ל-MIA (~04:30).",
       "coords": {
-        "lat": 25.7959,
-        "lon": -80.287
+        "lat": 28.1614,
+        "lon": -81.6167
       }
     }
   ],
@@ -143,11 +132,11 @@
       "pickupLocation": "Port Canaveral, Florida",
       "dropoffLocation": "Miami International Airport (MIA)",
       "pickupDate": "2027-03-26T09:00:00.000",
-      "dropoffDate": "2027-04-01T10:00:00.000",
+      "dropoffDate": "2027-04-01T08:30:00.000",
       "cost": 0,
       "currency": "USD",
       "driverName": "Ben Ben David",
-      "notes": "⚠️ לא הוזמן. איסוף אחרי ירידה מהאונייה (07:30–09:00). יעד ראשון: אזור מיאמי / חוף. החזרה ב-MIA בבוקר 1.4 לפני LY18 12:00."
+      "notes": "⚠️ לא הוזמן. איסוף אחרי ירידה מהאונייה (07:30–09:00). יעד ראשון: וילת אורלנדו חלק ב׳ (~שעה). החזרה ב-MIA ב-1.4 אחרי יציאה ~04:30 מהווילה, לפני LY18 12:00."
     }
   ],
   "budget": {
@@ -180,15 +169,16 @@
       {
         "id": "9fc81d6f-5863-40af-83fd-17fcc3c0a7a7",
         "category": "accommodation",
-        "label": "לינה 26–31.3 אחרי הקרוז (TBD)",
+        "label": "וילה אורלנדו חלק ב׳ 26.3–1.4 (Solterra / Windsor Hills)",
         "planned": 0,
-        "notes": "מיאמי / Cocoa Beach — בלי להמציא הזמנה."
+        "notes": "לא הוזמן. 6 לילות אחרי הקרוז — אורלנדו, פארקים ווילה."
       },
       {
         "id": "8e7827e6-a59c-4f23-a2d8-f81b83c03828",
         "category": "accommodation",
-        "label": "Holiday Inn ליד MIA · לילה 31.3",
-        "planned": 0
+        "label": "לילה ליד MIA ב-31.3 — רק אם לא יוצאים ב-04:30",
+        "planned": 0,
+        "notes": "אופציה פתוחה במסמך. ברירת המחדל: שינה בווילה באורלנדו ב-31.3 ויציאה 04:30 ל-MIA."
       },
       {
         "id": "6f843b42-c63f-4c9b-9814-62e48b8cb888",
@@ -200,9 +190,9 @@
       {
         "id": "afcf34e7-a44b-4965-ba13-76c5216c3eb1",
         "category": "activities",
-        "label": "דיסני — Magic Kingdom 20.3 + Animal Kingdom 21.3",
+        "label": "דיסני — Magic Kingdom 20.3 + Epcot 21.3",
         "planned": 0,
-        "notes": "מתוכנן, לא נקנה. לא להמציא כרטיסי פארק לימים שאחרי הקרוז."
+        "notes": "מתוכנן, לא נקנה. שני ימי דיסני לפני הקרוז: Magic Kingdom + Epcot. אחרי הקרוז: SeaWorld, Peppa Pig, Gatorland — בנפרד."
       },
       {
         "id": "993bf1cf-abc3-4e31-ad33-1c59a5a972c4",
@@ -281,8 +271,8 @@
     },
     {
       "id": "3f3b9ebb-7d8f-4cd1-892a-527fd316162d",
-      "title": "לינה 26.3–1.4: מיאמי/Cocoa Beach + Holiday Inn ליד MIA ב-31.3",
-      "description": "אחרי הירידה — ימי חוף/מנוחה בלי כרטיסי פארק. לילה אחרון מועדף Holiday Inn Miami International Airport לפני LY18 12:00.",
+      "title": "לינה 26.3–1.4: וילה באורלנדו (Solterra / Windsor Hills)",
+      "description": "אחרי הירידה — חזרה לאורלנדו (פארקים / וילה). 6 לילות. ברירת מחדל: שינה בווילה ב-31.3 ויציאה ~04:30 ל-MIA ב-1.4. לילה ליד השדה רק אם מחליטים לא לצאת לפנות בוקר.",
       "dueDate": "2026-12-15",
       "assignedTo": "bd45bc64-1a3f-41b0-8580-105f52d537fe",
       "done": false,
@@ -291,8 +281,8 @@
     },
     {
       "id": "7312fbe5-04e3-48b9-8304-8c0c62049393",
-      "title": "כרטיסי דיסני: Magic Kingdom 20.3 + Animal Kingdom 21.3 — רק אם קונים",
-      "description": "שני ימי פארק לפני הקרוז, לפי המסמך. לא לקנות כרטיסים לימים שאחרי 21.3 בלי החלטה. שולחן ל-12 בשבוע שיא — 60 יום מראש.",
+      "title": "כרטיסי דיסני: Magic Kingdom 20.3 + Epcot 21.3 — רק אם קונים",
+      "description": "שני ימי דיסני לפני הקרוז: Magic Kingdom + Epcot. אחרי הקרוז: SeaWorld 27.3, Peppa Pig 28.3, Gatorland 30.3 — כרטיסים נפרדים. שולחן ל-12 בשבוע שיא — 60 יום מראש.",
       "dueDate": "2026-12-15",
       "assignedTo": "5ce1491a-ebe2-45e3-afac-e079b561c0d6",
       "done": false,
@@ -480,18 +470,18 @@
     {
       "id": "d0270321-0000-4000-8000-000000000021",
       "date": "2027-03-21",
-      "label": "Animal Kingdom",
+      "label": "Epcot",
       "events": [
         {
           "id": "e0270321-0001-4000-8000-000000000001",
           "dayId": "d0270321-0000-4000-8000-000000000021",
           "startTime": "08:00",
           "endTime": "16:00",
-          "title": "🦁 Animal Kingdom",
-          "description": "Kilimanjaro Safaris מוקדם. Na'vi River Journey, TriceraTop Spin, Festival of the Lion King. יציאה אחה״צ. ⚠️ כרטיסים טרם נקנו.",
-          "location": "Disney's Animal Kingdom",
+          "title": "🌐 Epcot",
+          "description": "Moana Journey of Water, Frozen Ever After, Remy's Ratatouille. יציאה אחה״צ לפני שהילדים מתעייפים. ⚠️ כרטיסים טרם נקנו.",
+          "location": "Epcot, Walt Disney World",
           "category": "activity",
-          "coords": { "lat": 28.3575, "lon": -81.59 }
+          "coords": { "lat": 28.3747, "lon": -81.5494 }
         },
         {
           "id": "e0270321-0002-4000-8000-000000000002",
@@ -605,7 +595,7 @@
     {
       "id": "d0270326-0000-4000-8000-000000000026",
       "date": "2027-03-26",
-      "label": "ירידה מהאונייה → מיאמי",
+      "label": "ירידה מהאונייה → אורלנדו",
       "events": [
         {
           "id": "e0270326-0001-4000-8000-000000000001",
@@ -630,98 +620,151 @@
           "id": "e0270326-0003-4000-8000-000000000003",
           "dayId": "d0270326-0000-4000-8000-000000000026",
           "startTime": "10:00",
-          "endTime": "14:00",
-          "title": "🚗 נסיעה לאזור מיאמי",
-          "description": "אחה״צ: Miami Beach. לינה TBD — עדיין לא הוזמנה.",
-          "location": "Miami Beach, Florida",
+          "endTime": "11:30",
+          "title": "🚗 נסיעה לווילה באורלנדו (~שעה)",
+          "description": "חלק ב׳ — Solterra / Windsor Hills. חזרה לאורלנדו אחרי הירידה.",
+          "location": "Davenport, Florida",
           "category": "transport"
         },
         {
           "id": "e0270326-0004-4000-8000-000000000004",
           "dayId": "d0270326-0000-4000-8000-000000000026",
-          "startTime": "16:00",
-          "title": "🏖️ ערב Miami Beach (TBD)",
-          "description": "לינה באזור מיאמי / ליד MIA — לא הוזמנה.",
-          "location": "Miami Beach, Florida",
+          "startTime": "12:00",
+          "endTime": "16:00",
+          "title": "🛍️ Disney Springs — צהריים",
+          "description": "הנחת מזוודות בווילה ואז Disney Springs. בלי כרטיס פארק היום. ⚠️ הווילה עדיין לא הוזמנה.",
+          "location": "Disney Springs, Walt Disney World",
           "category": "activity",
-          "coords": { "lat": 25.7907, "lon": -80.13 }
+          "coords": { "lat": 28.3702, "lon": -81.5192 }
+        },
+        {
+          "id": "e0270326-0005-4000-8000-000000000005",
+          "dayId": "d0270326-0000-4000-8000-000000000026",
+          "startTime": "17:00",
+          "title": "🏡 צ׳ק-אין וילה חלק ב׳ + בריכה",
+          "description": "הצטיידות בסופר, ארוחת ערב בבית.",
+          "location": "Solterra Resort, Davenport",
+          "category": "rest",
+          "coords": { "lat": 28.1614, "lon": -81.6167 }
         }
       ]
     },
     {
       "id": "d0270327-0000-4000-8000-000000000027",
       "date": "2027-03-27",
-      "label": "TBD — חוף / מנוחה",
+      "label": "SeaWorld",
       "events": [
         {
           "id": "e0270327-0001-4000-8000-000000000001",
           "dayId": "d0270327-0000-4000-8000-000000000027",
-          "startTime": "10:00",
-          "title": "TBD — יום חוף / וילה / מנוחה",
-          "description": "באפר אחרי הקרוז. מיאמי או Cocoa Beach. בלי כרטיסי פארק מומצאים.",
-          "category": "rest"
+          "startTime": "09:00",
+          "endTime": "16:00",
+          "title": "🐋 SeaWorld — Sesame Street Land",
+          "description": "מתקנים רכים, אלמו, מופע דולפינים. יציאה אחה״צ. ⚠️ כרטיסים טרם נקנו.",
+          "location": "SeaWorld Orlando",
+          "category": "activity",
+          "coords": { "lat": 28.4113, "lon": -81.4618 }
+        },
+        {
+          "id": "e0270327-0002-4000-8000-000000000002",
+          "dayId": "d0270327-0000-4000-8000-000000000027",
+          "startTime": "17:30",
+          "title": "🏡 וילה, בריכה",
+          "location": "Solterra Resort, Davenport",
+          "category": "rest",
+          "coords": { "lat": 28.1614, "lon": -81.6167 }
         }
       ]
     },
     {
       "id": "d0270328-0000-4000-8000-000000000028",
       "date": "2027-03-28",
-      "label": "TBD — חוף / מנוחה",
+      "label": "Peppa Pig",
       "events": [
         {
           "id": "e0270328-0001-4000-8000-000000000001",
           "dayId": "d0270328-0000-4000-8000-000000000028",
-          "startTime": "10:00",
-          "title": "TBD — יום רגוע",
-          "description": "באפר אחרי הקרוז. בלי כרטיסי פארק.",
-          "category": "rest"
+          "startTime": "09:30",
+          "endTime": "16:00",
+          "title": "🐷 Peppa Pig Theme Park",
+          "description": "מותאם לגילאי 1–5: Muddy Puddles Splash Pad, רכבת הרים קטנה. ⚠️ כרטיסים טרם נקנו.",
+          "location": "Peppa Pig Theme Park, Florida",
+          "category": "activity",
+          "coords": { "lat": 28.1892, "lon": -81.6908 }
+        },
+        {
+          "id": "e0270328-0002-4000-8000-000000000002",
+          "dayId": "d0270328-0000-4000-8000-000000000028",
+          "startTime": "18:00",
+          "title": "🏡 וילה / Fort Wilderness (אופציונלי)",
+          "description": "ערב חווייתי: מדורה וסרט תחת השמיים — אם האנרגיה מאפשרת.",
+          "location": "Solterra Resort, Davenport",
+          "category": "rest",
+          "coords": { "lat": 28.1614, "lon": -81.6167 }
         }
       ]
     },
     {
       "id": "d0270329-0000-4000-8000-000000000029",
       "date": "2027-03-29",
-      "label": "TBD — חוף / מנוחה",
+      "label": "וילה / מנוחה באורלנדו",
       "events": [
         {
           "id": "e0270329-0001-4000-8000-000000000001",
           "dayId": "d0270329-0000-4000-8000-000000000029",
           "startTime": "10:00",
-          "title": "TBD — יום רגוע",
-          "description": "באפר אחרי הקרוז. בלי כרטיסי פארק.",
-          "category": "rest"
+          "endTime": "15:00",
+          "title": "🏡 יום וילה — בריכה / Lazy River",
+          "description": "באפר אחרי שני ימי פארק. אופציה ממוזגת: Crayola Experience.",
+          "location": "Solterra Resort, Davenport",
+          "category": "rest",
+          "coords": { "lat": 28.1614, "lon": -81.6167 }
         }
       ]
     },
     {
       "id": "d0270330-0000-4000-8000-000000000030",
       "date": "2027-03-30",
-      "label": "TBD — חוף / מנוחה",
+      "label": "Gatorland",
       "events": [
         {
           "id": "e0270330-0001-4000-8000-000000000001",
           "dayId": "d0270330-0000-4000-8000-000000000030",
-          "startTime": "10:00",
-          "title": "TBD — יום רגוע",
-          "description": "באפר אחרי הקרוז. בלי כרטיסי פארק.",
-          "category": "rest"
+          "startTime": "09:00",
+          "endTime": "13:00",
+          "title": "🐊 Gatorland",
+          "description": "2–3 שעות בבוקר: האכלת גדיים/תוכים, רכבת קטנה. ⚠️ כרטיסים טרם נקנו.",
+          "location": "Gatorland, Orlando",
+          "category": "activity",
+          "coords": { "lat": 28.3556, "lon": -81.4033 }
+        },
+        {
+          "id": "e0270330-0002-4000-8000-000000000002",
+          "dayId": "d0270330-0000-4000-8000-000000000030",
+          "startTime": "17:00",
+          "title": "🍽️ The Boathouse, Disney Springs",
+          "description": "ארוחת ערב חגיגית — לשריין מראש.",
+          "location": "Disney Springs, Walt Disney World",
+          "category": "meal",
+          "coords": { "lat": 28.3702, "lon": -81.5192 }
         }
       ]
     },
     {
       "id": "d0270331-0000-4000-8000-000000000031",
       "date": "2027-03-31",
-      "label": "מעבר למלון ליד MIA",
+      "label": "וילה, אריזה, שינה מוקדמת",
       "events": [
         {
           "id": "e0270331-0001-4000-8000-000000000001",
           "dayId": "d0270331-0000-4000-8000-000000000031",
-          "startTime": "15:00",
-          "title": "🏨 צ׳ק-אין Holiday Inn ליד MIA (מועדף, TBD)",
-          "description": "לילה אחרון לפני LY18 מחר ב-12:00. המלון עדיין לא הוזמן.",
-          "location": "Holiday Inn Miami International Airport",
+          "startTime": "10:00",
+          "endTime": "15:00",
+          "title": "🏡 שחייה אחרונה + אריזה מלאה",
+          "description": "שינה מוקדמת מאוד. מחר יציאה ~04:30 ל-MIA. לא יורדים למיאמי הלילה אלא אם יוחלט אחרת.",
+          "location": "Solterra Resort, Davenport",
           "category": "rest",
-          "coords": { "lat": 25.7959, "lon": -80.287 }
+          "coords": { "lat": 28.1614, "lon": -81.6167 }
         }
       ]
     },
@@ -733,9 +776,10 @@
         {
           "id": "e0270401-0001-4000-8000-000000000001",
           "dayId": "d0270401-0000-4000-8000-000000000001",
-          "startTime": "09:00",
-          "endTime": "10:00",
-          "title": "🚗 החזרת רכב ב-MIA",
+          "startTime": "04:30",
+          "endTime": "08:30",
+          "title": "🚗 יציאה מאורלנדו ל-MIA (~3.5–4 שעות)",
+          "description": "יציאה לפנות בוקר מהווילה. החזרת 2 רכבים ~08:30, צ׳ק-אין 09:00.",
           "location": "Miami International Airport (MIA)",
           "category": "transport",
           "coords": { "lat": 25.7959, "lon": -80.287 }
