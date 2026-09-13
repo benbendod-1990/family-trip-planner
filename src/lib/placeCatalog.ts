@@ -43,12 +43,67 @@ export const PLACE_CATALOG: PlaceCatalogEntry[] = [
     canonicalKey: "disney's animal kingdom",
     nameHe: 'Animal Kingdom',
     blurb:
-      'פארק הטבע של דיסני — ספארי, חיות ומופעים. Kilimanjaro Safaris שווה תור מוקדם בבוקר; ליד Discovery Island יש אזורים רגועים לגילאי 3–5. כרטיסים נפרדים מ-Magic Kingdom.',
+      'פארק הטבע של דיסני — ספארי, חיות ומופעים. לא בלו״ז הנוכחי (Epcot במקומו); נשאר בקטלוג אם מחזירים את היום.',
     linkUrl: 'https://disneyworld.disney.go.com/destinations/animal-kingdom/',
     linkLabel: 'אתר דיסני הרשמי',
     kind: 'park',
     emoji: '🦁',
     coords: { lat: 28.3575, lon: -81.59 },
+  },
+  {
+    canonicalKey: 'epcot, walt disney world',
+    nameHe: 'Epcot',
+    blurb:
+      'Spaceship Earth, World Showcase, ומתקנים רגועים לילדים (Frozen, Remy, Journey of Water). בלו״ז הזה מחליף את Animal Kingdom ב-21.3 — יום מלא לפני העלייה לקרוז.',
+    linkUrl: 'https://disneyworld.disney.go.com/destinations/epcot/',
+    linkLabel: 'אתר דיסני הרשמי',
+    kind: 'park',
+    emoji: '🌐',
+    coords: { lat: 28.3747, lon: -81.5494 },
+  },
+  {
+    canonicalKey: 'disney springs, walt disney world',
+    nameHe: 'Disney Springs',
+    blurb:
+      'מתחם הקניות והאוכל של דיסני — בלי כרטיס פארק. בלו״ז: צהריים אחרי הירידה מהאונייה, וערב אפשרי ב-The Boathouse.',
+    linkUrl: 'https://www.disneysprings.com/',
+    linkLabel: 'Disney Springs',
+    kind: 'city',
+    emoji: '🛍️',
+    coords: { lat: 28.3702, lon: -81.5192 },
+  },
+  {
+    canonicalKey: 'seaworld orlando',
+    nameHe: 'SeaWorld',
+    blurb:
+      'SeaWorld אורלנדו — Sesame Street Land לפעוטות, מופעי דולפינים ואריות ים. כרטיס נפרד מדיסני. בלו״ז ב-27.3 אחרי החזרה מהקרוז.',
+    linkUrl: 'https://seaworld.com/orlando/',
+    linkLabel: 'אתר SeaWorld',
+    kind: 'park',
+    emoji: '🐋',
+    coords: { lat: 28.4113, lon: -81.4618 },
+  },
+  {
+    canonicalKey: 'peppa pig theme park, florida',
+    nameHe: 'Peppa Pig',
+    blurb:
+      'פארק קטן ליד לגולנד, מותאם לגילאי 1–5 — שלוליות, רכבת הרים עדינה ודמויות. כ־45 דק׳ מהווילה בדאוונפורט.',
+    linkUrl: 'https://www.peppapigthemepark.com/florida/',
+    linkLabel: 'אתר Peppa Pig',
+    kind: 'park',
+    emoji: '🐷',
+    coords: { lat: 28.1892, lon: -81.6908 },
+  },
+  {
+    canonicalKey: 'gatorland, orlando',
+    nameHe: 'Gatorland',
+    blurb:
+      'פארק תנינים ותיק מדרום לאורלנדו — רכבת קטנה, האכלת בעלי חיים, וביקור קצר של 2–3 שעות. מתאים לבוקר רגוע לפני אריזה.',
+    linkUrl: 'https://gatorland.com/',
+    linkLabel: 'אתר Gatorland',
+    kind: 'park',
+    emoji: '🐊',
+    coords: { lat: 28.3556, lon: -81.4033 },
   },
   {
     canonicalKey: 'port canaveral, florida',
@@ -76,7 +131,7 @@ export const PLACE_CATALOG: PlaceCatalogEntry[] = [
     canonicalKey: 'miami beach, florida',
     nameHe: 'Miami Beach',
     blurb:
-      'חוף מיאמי — טיילת, חול ואר-דקו דרום-ביץ׳. בלו״ז זה באפר אחרי הקרוז, לפני הטיסה חזרה. מתאים לערב רגוע בלי פארקים, עם אפשרות לשחות ליד המלון.',
+      'חוף מיאמי — טיילת ואר-דקו. לא בלו״ז הנוכחי: אחרי הקרוז חוזרים לאורלנדו, לא לימי חוף כאן.',
     linkUrl: 'https://en.wikipedia.org/wiki/Miami_Beach,_Florida',
     linkLabel: 'ויקיפדיה',
     kind: 'beach',
@@ -98,7 +153,7 @@ export const PLACE_CATALOG: PlaceCatalogEntry[] = [
     canonicalKey: 'solterra resort, davenport',
     nameHe: 'וילה Solterra, דאוונפורט',
     blurb:
-      'וילה מועדפת בדאוונפורט, ממערב לאורלנדו — בתים עם בריכה פרטית לקבוצה. שלושה לילות לפני הקרוז, בלי פארק ביום ההגעה אחרי הנסיעה מ-MIA. וודאו תפוסה ל-12 בכתב לפני ההזמנה.',
+      'וילה מועדפת בדאוונפורט, ממערב לאורלנדו — בתים עם בריכה פרטית לקבוצה. שלושה לילות לפני הקרוז, ושוב אחרי הירידה (26.3–1.4). בלי פארק ביום ההגעה מ-MIA. וודאו תפוסה ל-12 בכתב.',
     linkUrl: 'https://www.google.com/maps/search/?api=1&query=Solterra%20Resort%20Davenport%20Florida',
     linkLabel: 'Google Maps',
     kind: 'villa',
@@ -109,7 +164,7 @@ export const PLACE_CATALOG: PlaceCatalogEntry[] = [
     canonicalKey: 'holiday inn miami international airport',
     nameHe: 'Holiday Inn ליד MIA',
     blurb:
-      'מלון ליד שדה התעופה ללילה האחרון לפני הטיסה חזרה. צ׳ק-אין מתוכנן אחה״צ, כדי לא לצאת בבוקר המוצא ממיאמי ביץ׳ עם הילדים. קרוב להחזרת הרכב ולהמראה.',
+      'מלון ליד השדה — אופציה רק אם לא יוצאים מאורלנדו ב-04:30 ב-1.4. ברירת המחדל בלו״ז: שינה בווילה באורלנדו ב-31.3.',
     linkUrl: 'https://www.google.com/maps/search/?api=1&query=Holiday%20Inn%20Miami%20International%20Airport',
     linkLabel: 'Google Maps',
     kind: 'hotel',
