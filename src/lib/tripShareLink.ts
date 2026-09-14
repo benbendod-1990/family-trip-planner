@@ -75,6 +75,11 @@ export function formatShareExpiry(iso: string): string {
   return d.toLocaleDateString('he-IL', { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
+export function whatsappShareHref(opts: { url: string; tripName: string }): string {
+  const text = `הוזמנת לטיול ${opts.tripName}\n${opts.url}`
+  return `https://wa.me/?text=${encodeURIComponent(text)}`
+}
+
 export async function copyText(text: string): Promise<boolean> {
   try {
     await navigator.clipboard.writeText(text)
@@ -97,10 +102,22 @@ export async function copyText(text: string): Promise<boolean> {
   }
 }
 
+export type ShareLinkResult = 'shared' | 'copied' | 'failed'
+
+function isAbortError(err: unknown): boolean {
+  return !!err && typeof err === 'object' && (err as { name?: string }).name === 'AbortError'
+}
+
+/**
+ * Copy the join URL, then try the native share sheet.
+ * navigator.share / clipboard both need a user gesture on iOS — callers that
+ * await a network RPC first must show a visible toast and offer WhatsApp /
+ * copy buttons for a fresh tap.
+ */
 export async function copyAndShareTripLink(opts: {
   url: string
   tripName: string
-}): Promise<'shared' | 'copied' | 'failed'> {
+}): Promise<ShareLinkResult> {
   const copied = await copyText(opts.url)
   const share = typeof navigator !== 'undefined' ? navigator.share : undefined
   if (typeof share === 'function') {
@@ -111,7 +128,9 @@ export async function copyAndShareTripLink(opts: {
         url: opts.url,
       })
       return 'shared'
-    } catch {
+    } catch (err) {
+      // User dismissed the sheet — still a successful share attempt.
+      if (isAbortError(err)) return copied ? 'copied' : 'shared'
       return copied ? 'copied' : 'failed'
     }
   }
@@ -123,10 +142,20 @@ export function shareLinkFailureStatus(e: unknown): string {
   if (msg.includes('share_link_expired')) return 'הלינק פג תוקף. בקשו לינק חדש מבעל הטיול.'
   if (msg.includes('share_link_revoked')) return 'הלינק בוטל. בקשו לינק חדש מבעל הטיול.'
   if (msg.includes('share_link_invalid')) return 'הלינק לא תקין או שפג תוקפו.'
-  if (msg.includes('unauthenticated')) return 'התחברו עם Google כדי להצטרף לטיול.'
-  if (msg.includes('forbidden')) return 'רק יוצר הטיול יכול לשתף לינק.'
-  if (msg.includes('0012') || msg.includes('Could not find the function')) {
+  if (msg.includes('unauthenticated')) return 'התחברו עם Google כדי לשתף את הטיול.'
+  if (msg.includes('forbidden') || msg.includes('only the trip owner')) {
+    return 'רק יוצר הטיול יכול לשתף לינק.'
+  }
+  if (
+    msg.includes('0012') ||
+    msg.includes('Could not find the function') ||
+    msg.includes('PGRST202') ||
+    msg.includes('schema cache')
+  ) {
     return 'השיתוף ממתין לעדכון בשרת (מיגרציה 0012 ב-Supabase)'
+  }
+  if (/Failed to fetch|NetworkError|net::ERR|Load failed/i.test(msg)) {
+    return 'אין חיבור לרשת. בדקו את החיבור ונסו שוב.'
   }
   if (!msg || msg === 'שגיאה') return 'שגיאה לא ידועה'
   return `שגיאה: ${msg}`

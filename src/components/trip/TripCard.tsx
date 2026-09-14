@@ -10,6 +10,7 @@ import { exportTripAsJSON } from '@/utils/export'
 import { useArchiveStore } from '@/stores/archiveStore'
 import { useAuth } from '@/lib/AuthContext'
 import { destinationColor, warmDisplayFont } from '@/theme/warmTheme'
+import ShareTripButton from '@/components/trip/ShareTripButton'
 
 /*
  * Both modals are lazy because TripCard renders on Home, the eager start_url.
@@ -17,10 +18,13 @@ import { destinationColor, warmDisplayFont } from '@/theme/warmTheme'
  * was landing in the entry bundle and blocking first paint for a dialog that
  * only opens on a deliberate tap. They already render behind state flags, so
  * the chunk is not requested until the modal is actually opened.
+ *
+ * ShareTripButton is eager: a lazy chunk with fallback={null} left a hole in
+ * the action row, so the first tap hit the Card. The button dynamic-imports
+ * tripRepo, so Supabase still stays out of the Home entry bundle.
  */
 const PostTripDebriefModal = lazy(() => import('@/components/archive/PostTripDebriefModal'))
 const InviteMemberModal = lazy(() => import('@/components/cloud/InviteMemberModal'))
-const ShareTripButton = lazy(() => import('@/components/trip/ShareTripButton'))
 const TripWeatherStrip = lazy(() => import('@/components/trip/TripWeatherStrip'))
 
 const Emoji = styled.div`
@@ -91,14 +95,12 @@ export default function TripCard({ trip, index = 0 }: Props) {
         <Stack direction="row" spacing="xs">
           {session && (
             <>
-              <Suspense fallback={null}>
-                <ShareTripButton tripId={trip.id} tripName={trip.name} />
-              </Suspense>
+              <ShareTripButton tripId={trip.id} tripName={trip.name} />
               <ActionIcon
                 variant="subtle"
                 size="sm"
                 onClick={(e: React.MouseEvent) => { e.stopPropagation(); setShowInvite(true) }}
-                title="חברים והזמנה באימייל"
+                title="חברי הטיול"
                 style={{ color: '#3b82f6' }}
               >
                 <Users size={14} />

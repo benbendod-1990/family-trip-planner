@@ -14,6 +14,7 @@ import {
   formatShareExpiry,
   shareLinkFailureStatus,
   tripShareJoinUrl,
+  whatsappShareHref,
 } from '@/lib/tripShareLink'
 
 const UrlBox = styled.div`
@@ -146,6 +147,17 @@ export default function ShareTripLinkPanel({ tripId, tripName }: Props) {
             <span>העתק לינק</span>
           </Stack>
         </Button>
+        {url && (
+          <Button
+            variant="ghost"
+            onClick={() => {
+              window.open(whatsappShareHref({ url, tripName }), '_blank', 'noopener,noreferrer')
+            }}
+            disabled={busy}
+          >
+            <span>וואטסאפ</span>
+          </Button>
+        )}
       </Stack>
       {link && (
         <Stack direction="row" spacing="sm" style={{ marginTop: 8, flexWrap: 'wrap' }}>
