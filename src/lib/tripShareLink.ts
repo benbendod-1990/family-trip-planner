@@ -142,7 +142,7 @@ export function shareLinkFailureStatus(e: unknown): string {
   if (msg.includes('share_link_expired')) return 'הלינק פג תוקף. בקשו לינק חדש מבעל הטיול.'
   if (msg.includes('share_link_revoked')) return 'הלינק בוטל. בקשו לינק חדש מבעל הטיול.'
   if (msg.includes('share_link_invalid')) return 'הלינק לא תקין או שפג תוקפו.'
-  if (msg.includes('unauthenticated')) return 'התחברו עם Google כדי לשתף את הטיול.'
+  if (msg.includes('unauthenticated')) return 'התחברו עם Google כדי להמשיך.'
   if (msg.includes('forbidden') || msg.includes('only the trip owner')) {
     return 'רק יוצר הטיול יכול לשתף לינק.'
   }
