@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import {
   SHARE_TOKEN_RE,
+  copyAndShareTripLink,
   isSafeJoinPath,
   isShareToken,
   joinPathForToken,
@@ -10,6 +11,7 @@ import {
   PROD_ORIGIN,
   shareLinkFailureStatus,
   tripShareJoinUrl,
+  whatsappShareHref,
 } from './tripShareLink.ts'
 
 const TOKEN = 'a'.repeat(64)
@@ -65,6 +67,68 @@ describe('share-link Hebrew errors', () => {
     assert.match(shareLinkFailureStatus(new Error('forbidden: only the trip owner')), /יוצר הטיול/)
     assert.equal(shareLinkFailureStatus(new Error('share_link_invalid')).includes('Holland'), false)
   })
+
+  it('maps missing RPC / network / not-owner to Hebrew the card can toast', () => {
+    assert.match(
+      shareLinkFailureStatus(new Error('Could not find the function public.create_or_get_trip_share_link')),
+      /0012/,
+    )
+    assert.match(
+      shareLinkFailureStatus(new Error('PGRST202 schema cache')),
+      /0012/,
+    )
+    assert.match(
+      shareLinkFailureStatus(new Error('Failed to fetch')),
+      /אין חיבור/,
+    )
+    assert.match(
+      shareLinkFailureStatus(new Error('create_or_get_trip_share_link: forbidden')),
+      /יוצר הטיול/,
+    )
+  })
+})
+
+describe('WhatsApp join href', () => {
+  it('encodes the trip name and /join URL', () => {
+    const url = `${PROD_ORIGIN}/join/${TOKEN}`
+    const href = whatsappShareHref({ url, tripName: 'ארה״ב — מרץ 2027' })
+    assert.equal(href.startsWith('https://wa.me/?text='), true)
+    const text = decodeURIComponent(href.slice('https://wa.me/?text='.length))
+    assert.match(text, /ארה״ב/)
+    assert.equal(text.includes(url), true)
+  })
+})
+
+describe('copyAndShareTripLink', () => {
+  it('returns shared when navigator.share resolves', async () => {
+    const nav = globalThis.navigator as Navigator | undefined
+    const clipboard = { writeText: async () => {} }
+    const share = async () => {}
+    Object.defineProperty(globalThis, 'navigator', {
+      configurable: true,
+      value: { ...(nav ?? {}), clipboard, share },
+    })
+    try {
+      const result = await copyAndShareTripLink({ url: `${PROD_ORIGIN}/join/${TOKEN}`, tripName: 'USA' })
+      assert.equal(result, 'shared')
+    } finally {
+      if (nav) Object.defineProperty(globalThis, 'navigator', { configurable: true, value: nav })
+    }
+  })
+
+  it('returns copied when share is missing but clipboard works', async () => {
+    const nav = globalThis.navigator as Navigator | undefined
+    Object.defineProperty(globalThis, 'navigator', {
+      configurable: true,
+      value: { ...(nav ?? {}), clipboard: { writeText: async () => {} }, share: undefined },
+    })
+    try {
+      const result = await copyAndShareTripLink({ url: `${PROD_ORIGIN}/join/${TOKEN}`, tripName: 'USA' })
+      assert.equal(result, 'copied')
+    } finally {
+      if (nav) Object.defineProperty(globalThis, 'navigator', { configurable: true, value: nav })
+    }
+  })
 })
 
 describe('share-link call sites', () => {
@@ -82,24 +146,39 @@ describe('share-link call sites', () => {
     assert.equal(auth.includes("redirectTo: window.location.origin + import.meta.env.BASE_URL"), false)
   })
 
-  it('TripCard share button is lazy and does not static-import tripRepo', () => {
+  it('TripCard share button is eager, Home-safe, and does not static-import tripRepo', () => {
     const card = readFileSync(new URL('../components/trip/TripCard.tsx', import.meta.url), 'utf8')
     const btn = readFileSync(new URL('../components/trip/ShareTripButton.tsx', import.meta.url), 'utf8')
     assert.match(card, /ShareTripButton/)
-    assert.match(card, /lazy\(\(\) => import\('@\/components\/trip\/ShareTripButton'\)\)/)
+    assert.match(card, /from '@\/components\/trip\/ShareTripButton'/)
+    assert.equal(card.includes("lazy(() => import('@/components/trip/ShareTripButton'))"), false)
     assert.equal(card.includes("from '@/lib/tripRepo'"), false)
     assert.equal(btn.includes("from '@/lib/tripRepo'"), false)
     assert.match(btn, /import\('@\/lib\/tripRepo'\)/)
+    assert.match(btn, /createOrGetTripShareLink/)
     assert.match(btn, /שתף/)
+    assert.match(btn, /type="button"/)
+    assert.match(btn, /stopPropagation/)
+    assert.match(btn, /createPortal/)
+    assert.match(btn, /מכין לינק שיתוף/)
+    assert.match(btn, /וואטסאפ/)
+    assert.match(btn, /whatsappShareHref/)
   })
 
-  it('Invite sheet and join landing use Hebrew share copy', () => {
+  it('Invite sheet is members-only; join landing still claims the token', () => {
     const modal = readFileSync(new URL('../components/cloud/InviteMemberModal.tsx', import.meta.url), 'utf8')
     const panel = readFileSync(new URL('../components/cloud/ShareTripLinkPanel.tsx', import.meta.url), 'utf8')
     const join = readFileSync(new URL('../pages/JoinTrip.tsx', import.meta.url), 'utf8')
     assert.match(modal, /ShareTripLinkPanel/)
+    assert.match(modal, /חברי הטיול/)
+    assert.equal(modal.includes('type="email"'), false)
+    assert.equal(modal.includes('inviteUserToTrip'), false)
+    assert.equal(modal.includes('הזמן'), false)
+    assert.equal(modal.includes('הזמנות ממתינות'), false)
+    assert.equal(modal.includes('הזמינו לפי אימייל'), false)
     assert.match(panel, /העתק לינק/)
     assert.match(panel, /שתף/)
+    assert.match(panel, /וואטסאפ/)
     assert.match(panel, /בתוקף עד/)
     assert.match(panel, /חדש לינק/)
     assert.match(panel, /בטל לינק/)

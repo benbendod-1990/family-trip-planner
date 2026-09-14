@@ -14,8 +14,8 @@ import { Map, Wallet, Plane, Home, ListTodo, Users, Menu, LayoutDashboard, Backp
 import { useBreakpoint } from '@/hooks/useBreakpoint'
 import { warmTheme } from '@/theme/warmTheme'
 import { useAuth } from '@/lib/AuthContext'
+import ShareTripButton from '@/components/trip/ShareTripButton'
 
-const ShareTripButton = lazy(() => import('@/components/trip/ShareTripButton'))
 const InviteMemberModal = lazy(() => import('@/components/cloud/InviteMemberModal'))
 
 /*
@@ -196,15 +196,13 @@ export default function AppLayout() {
               <Stack direction="row" spacing="xs" align="center" style={{ marginInlineStart: 'auto' }}>
                 {session && (
                   <>
-                    <Suspense fallback={null}>
-                      <ShareTripButton tripId={trip.id} tripName={trip.name} />
-                    </Suspense>
+                    <ShareTripButton tripId={trip.id} tripName={trip.name} />
                     <ActionIcon
                       variant="subtle"
                       size="sm"
                       onClick={() => setShowInvite(true)}
-                      title="חברים והזמנה באימייל"
-                      aria-label="חברים והזמנה באימייל"
+                      title="חברי הטיול"
+                      aria-label="חברי הטיול"
                     >
                       <Users size={16} />
                     </ActionIcon>

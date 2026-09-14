@@ -101,22 +101,18 @@ describe('membership RPCs wrap PostgREST errors', () => {
     assert.equal(/if \(error\) throw error/.test(block), false)
   })
 
-  it('InviteMemberModal uses inviteFailureStatus instead of instanceof-only parsing', () => {
-    const text = readFileSync(new URL('../components/cloud/InviteMemberModal.tsx', import.meta.url), 'utf8')
-    assert.match(text, /inviteFailureStatus\(/)
-    assert.equal(text.includes("e instanceof Error ? e.message : 'שגיאה'"), false)
-  })
-
-  it('InviteMemberModal no longer demands a first login before invite', () => {
+  it('InviteMemberModal no longer uses email-invite as the share path', () => {
     const text = readFileSync(new URL('../components/cloud/InviteMemberModal.tsx', import.meta.url), 'utf8')
     assert.equal(text.includes('חייבים להיכנס פעם אחת'), false)
     assert.equal(text.includes('עדיין לא נרשם'), false)
-    assert.match(text, /מי שעוד לא נרשם/)
-    assert.match(text, /הזמנות ממתינות/)
-    assert.match(text, /outcome === 'pending'/)
-    assert.match(text, /isFamilyCatalogEmail/)
-    assert.match(text, /יוצר\/ת ממתין\/ה/)
+    assert.equal(text.includes('inviteUserToTrip'), false)
+    assert.equal(text.includes('inviteFailureStatus'), false)
+    assert.equal(text.includes('type="email"'), false)
+    assert.equal(text.includes('הזמנות ממתינות'), false)
+    assert.equal(text.includes('הזמן'), false)
     assert.match(text, /ShareTripLinkPanel/)
+    assert.match(text, /חברי הטיול/)
+    assert.match(text, /listTripMembers/)
   })
 
   it('wireUp claims pending invites before the cloud trip list', () => {
