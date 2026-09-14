@@ -133,6 +133,8 @@ describe('0012 trip_share_links SQL', () => {
     assert.match(sql, /grant execute on function public\.peek_trip_share_link\(text\) to anon, authenticated/)
     assert.match(sql, /revoke all on function public\.claim_trip_share_link\(text\) from public, anon/)
     assert.match(sql, /is_family_catalog_email/)
+    assert.match(sql, /benbendod@gmail.com/)
+    assert.match(sql, /shechter\.gal@gmail.com/)
     assert.match(sql, /when public\.trip_members\.role = 'owner' then 'owner'/)
     assert.match(sql, /gen_random_uuid\(\)::text \|\| gen_random_uuid\(\)::text/)
     assert.equal(sql.includes('raise exception \'user_not_found'), false)

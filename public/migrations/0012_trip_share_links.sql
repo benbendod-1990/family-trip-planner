@@ -60,6 +60,19 @@ create policy trip_share_links_owner_delete on public.trip_share_links
 revoke all on table public.trip_share_links from public, anon;
 grant select, insert, update on public.trip_share_links to authenticated;
 
+-- Same helper as 0011. Repeated so 0012 can be applied even if 0011 is still pending.
+create or replace function public.is_family_catalog_email(_email text)
+returns boolean
+language sql
+immutable
+parallel safe
+as $$
+  select lower(trim(coalesce(_email, ''))) in (
+    'benbendod@gmail.com',
+    'shechter.gal@gmail.com'
+  );
+$$;
+
 create or replace function public._new_trip_share_token()
 returns text
 language sql
