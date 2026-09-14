@@ -3,13 +3,21 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import {
   SHARE_TOKEN_RE,
+  assertSharePeekMatchesTrip,
+  cachedShareLinkForTrip,
   copyAndShareTripLink,
   isSafeJoinPath,
   isShareToken,
   joinPathForToken,
   oauthRedirectUrl,
   PROD_ORIGIN,
+  shareInviteText,
   shareLinkFailureStatus,
+  shareOutcomeToast,
+  sharePreparingToast,
+  shareTargetForCard,
+  shareTargetFromButton,
+  shareTargetsForCards,
   tripShareJoinUrl,
   whatsappShareHref,
 } from './tripShareLink.ts'
@@ -93,6 +101,10 @@ describe('share-link Hebrew errors', () => {
     assert.match(ambiguous, /0013/)
     assert.equal(ambiguous.includes('expires_at'), false)
     assert.equal(ambiguous.includes('42702'), false)
+    assert.match(
+      shareLinkFailureStatus(new Error('share_trip_mismatch')),
+      /טיול אחר/,
+    )
   })
 })
 
@@ -103,7 +115,10 @@ describe('WhatsApp join href', () => {
     assert.equal(href.startsWith('https://wa.me/?text='), true)
     const text = decodeURIComponent(href.slice('https://wa.me/?text='.length))
     assert.match(text, /ארה״ב/)
+    assert.match(text, /«ארה״ב — מרץ 2027»/)
     assert.equal(text.includes(url), true)
+    assert.equal(text.includes('הולנד'), false)
+    assert.equal(shareInviteText('ארה״ב — מרץ 2027').includes('הולנד'), false)
   })
 })
 
@@ -164,13 +179,17 @@ describe('share-link call sites', () => {
     assert.equal(btn.includes("from '@/lib/tripRepo'"), false)
     assert.match(btn, /import\('@\/lib\/tripRepo'\)/)
     assert.match(btn, /createOrGetTripShareLink/)
+    assert.match(btn, /shareTargetFromButton/)
+    assert.match(btn, /data-trip-id=\{tripId\}/)
+    assert.match(btn, /data-trip-name=\{tripName\}/)
+    assert.match(btn, /sharePreparingToast/)
+    assert.match(btn, /shareOutcomeToast/)
     assert.match(btn, /copyAndShareTripLink/)
     assert.match(btn, /shareLinkFailureStatus/)
     assert.match(btn, /שתף/)
     assert.match(btn, /type="button"/)
     assert.match(btn, /stopPropagation/)
     assert.match(btn, /createPortal/)
-    assert.match(btn, /מכין לינק שיתוף/)
     assert.match(btn, /וואטסאפ/)
     assert.match(btn, /whatsappShareHref/)
   })
@@ -208,6 +227,80 @@ describe('share-link call sites', () => {
     assert.match(join, /התחברות עם Google/)
     assert.match(join, /claimTripShareLink/)
     assert.match(join, /לא את כל הקטלוג/)
+  })
+})
+
+const HOLLAND_ID = '34980c90-bd66-4270-8d45-3e96787b07ef'
+const USA_ID = 'b38fc010-9096-45c9-b8df-191e369143dc'
+const HOLLAND = { id: HOLLAND_ID, name: 'הולנד — אוגוסט 2026' }
+const USA = { id: USA_ID, name: 'ארה״ב — מרץ 2027' }
+
+describe('two cards share the tapped tripId, never a sibling', () => {
+  it('maps each card to its own trip.id — USA share is not Holland', () => {
+    const targets = shareTargetsForCards([HOLLAND, USA])
+    assert.equal(targets.length, 2)
+    assert.equal(targets[0].tripId, HOLLAND_ID)
+    assert.equal(targets[1].tripId, USA_ID)
+    assert.notEqual(targets[0].tripId, targets[1].tripId)
+    assert.equal(shareTargetForCard(USA).tripId, USA_ID)
+    assert.equal(shareTargetForCard(USA).tripName, USA.name)
+    assert.equal(shareTargetForCard(USA).tripId === HOLLAND_ID, false)
+  })
+
+  it('reads data-trip-id from the tapped button, not a fallback sibling', () => {
+    const usaBtn = {
+      getAttribute: (name: string) => (name === 'data-trip-id' ? USA_ID : name === 'data-trip-name' ? USA.name : null),
+    }
+    const fromUsa = shareTargetFromButton(usaBtn, { tripId: HOLLAND_ID, tripName: HOLLAND.name })
+    assert.equal(fromUsa.tripId, USA_ID)
+    assert.equal(fromUsa.tripName, USA.name)
+    assert.equal(fromUsa.tripId === HOLLAND_ID, false)
+  })
+
+  it('Home keys cards by trip.id and TripCard passes that trip.id into ShareTripButton', () => {
+    const home = readFileSync(new URL('../pages/Home.tsx', import.meta.url), 'utf8')
+    const card = readFileSync(new URL('../components/trip/TripCard.tsx', import.meta.url), 'utf8')
+    assert.match(home, /<TripCard key=\{trip\.id\} trip=\{trip\}/)
+    assert.match(card, /<ShareTripButton key=\{trip\.id\} tripId=\{trip\.id\} tripName=\{trip\.name\} \/>/)
+    assert.equal(card.includes('trips[0]'), false)
+    assert.equal(card.includes('trips[i]'), false)
+    assert.equal(card.includes('trips[index]'), false)
+  })
+
+  it('createOrGet peeks the token and refuses a sibling trip', () => {
+    const repo = readFileSync(new URL('./tripRepo.ts', import.meta.url), 'utf8')
+    assert.match(repo, /assertSharePeekMatchesTrip/)
+    assert.match(repo, /confirmShareLinkTrip/)
+    const createAt = repo.indexOf('export async function createOrGetTripShareLink')
+    const regenAt = repo.indexOf('export async function regenerateTripShareLink')
+    const createFn = repo.slice(createAt, regenAt)
+    assert.match(createFn, /confirmShareLinkTrip\(tripId, row\)/)
+    assert.match(createFn, /create_or_get_trip_share_link/)
+    assert.equal(assertSharePeekMatchesTrip(USA_ID, { trip_id: USA_ID, trip_name: USA.name }).trip_id, USA_ID)
+    assert.throws(
+      () => assertSharePeekMatchesTrip(USA_ID, { trip_id: HOLLAND_ID, trip_name: HOLLAND.name }),
+      /share_trip_mismatch/,
+    )
+    assert.throws(() => assertSharePeekMatchesTrip(USA_ID, null), /share_trip_mismatch/)
+  })
+
+  it('does not reuse a cached Holland token when the panel is on USA', () => {
+    const hollandLink = { token: 'b'.repeat(64), expires_at: 'x', created_at: 'y' }
+    assert.equal(cachedShareLinkForTrip({ tripId: HOLLAND_ID, link: hollandLink }, USA_ID), null)
+    assert.equal(cachedShareLinkForTrip({ tripId: USA_ID, link: hollandLink }, USA_ID), hollandLink)
+    const panel = readFileSync(new URL('../components/cloud/ShareTripLinkPanel.tsx', import.meta.url), 'utf8')
+    assert.match(panel, /cachedShareLinkForTrip/)
+    assert.match(panel, /setCached\(null\)/)
+  })
+
+  it('toast and WhatsApp name the tapped trip so Ben can see USA vs Holland', () => {
+    const copied = shareOutcomeToast(USA.name, 'copied')
+    const preparing = sharePreparingToast(USA.name)
+    assert.match(copied, /ארה״ב/)
+    assert.match(preparing, /ארה״ב/)
+    assert.equal(copied.includes('הולנד'), false)
+    assert.equal(preparing.includes('הולנד'), false)
+    assert.match(shareOutcomeToast(USA.name, 'shared'), /ארה״ב/)
   })
 })
 

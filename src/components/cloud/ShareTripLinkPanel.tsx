@@ -10,9 +10,11 @@ import {
   type TripShareLink,
 } from '@/lib/tripRepo'
 import {
+  cachedShareLinkForTrip,
   copyAndShareTripLink,
   formatShareExpiry,
   shareLinkFailureStatus,
+  shareOutcomeToast,
   tripShareJoinUrl,
   whatsappShareHref,
 } from '@/lib/tripShareLink'
@@ -35,15 +37,19 @@ interface Props {
 }
 
 export default function ShareTripLinkPanel({ tripId, tripName }: Props) {
-  const [link, setLink] = useState<TripShareLink | null>(null)
+  const [cached, setCached] = useState<{ tripId: string; link: TripShareLink } | null>(null)
   const [busy, setBusy] = useState(false)
   const [status, setStatus] = useState('')
+  const link = cachedShareLinkForTrip(cached, tripId)
 
   useEffect(() => {
     let cancelled = false
+    setCached(null)
+    setStatus('')
     void getTripShareLink(tripId)
       .then(next => {
-        if (!cancelled) setLink(next)
+        if (cancelled) return
+        setCached(next ? { tripId, link: next } : null)
       })
       .catch((e: unknown) => {
         if (!cancelled) setStatus(shareLinkFailureStatus(e))
@@ -62,19 +68,19 @@ export default function ShareTripLinkPanel({ tripId, tripName }: Props) {
     if (!nativeShare) {
       const { copyText } = await import('@/lib/tripShareLink')
       const ok = await copyText(url)
-      flash(ok ? '✓ הלינק הועתק' : 'לא הצלחנו להעתיק. העתיקו ידנית.')
+      flash(ok ? `✓ הלינק ל«${tripName}» הועתק` : 'לא הצלחנו להעתיק. העתיקו ידנית.')
       return
     }
     const result = await copyAndShareTripLink({ url, tripName })
-    flash(result === 'failed' ? 'לא הצלחנו להעתיק. העתיקו ידנית.' : '✓ הלינק הועתק — אפשר לשלוח בוואטסאפ')
+    flash(shareOutcomeToast(tripName, result))
   }
 
   const onCreateOrCopy = async (nativeShare: boolean) => {
     setBusy(true)
     setStatus('')
     try {
-      const next = link ?? await createOrGetTripShareLink(tripId)
-      setLink(next)
+      const next = cachedShareLinkForTrip(cached, tripId) ?? await createOrGetTripShareLink(tripId)
+      setCached({ tripId, link: next })
       await publish(next, nativeShare)
     } catch (e) {
       flash(shareLinkFailureStatus(e))
@@ -89,7 +95,7 @@ export default function ShareTripLinkPanel({ tripId, tripName }: Props) {
     setStatus('')
     try {
       const next = await regenerateTripShareLink(tripId)
-      setLink(next)
+      setCached({ tripId, link: next })
       await publish(next, false)
     } catch (e) {
       flash(shareLinkFailureStatus(e))
@@ -104,8 +110,8 @@ export default function ShareTripLinkPanel({ tripId, tripName }: Props) {
     setStatus('')
     try {
       await revokeTripShareLink(tripId)
-      setLink(null)
-      flash('✓ הלינק בוטל')
+      setCached(null)
+      flash(`✓ הלינק ל«${tripName}» בוטל`)
     } catch (e) {
       flash(shareLinkFailureStatus(e))
     } finally {

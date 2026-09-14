@@ -196,7 +196,7 @@ export default function AppLayout() {
               <Stack direction="row" spacing="xs" align="center" style={{ marginInlineStart: 'auto' }}>
                 {session && (
                   <>
-                    <ShareTripButton tripId={trip.id} tripName={trip.name} />
+                    <ShareTripButton key={trip.id} tripId={trip.id} tripName={trip.name} />
                     {/* Members list lives in trip chrome, not on Home TripCards. */}
                     <ActionIcon
                       variant="subtle"

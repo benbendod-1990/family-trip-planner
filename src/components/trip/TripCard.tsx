@@ -90,7 +90,7 @@ export default function TripCard({ trip, index = 0 }: Props) {
       <div style={{ position: 'absolute', top: 18, left: 12 }}>
         <Stack direction="row" spacing="xs">
           {session && (
-            <ShareTripButton tripId={trip.id} tripName={trip.name} />
+            <ShareTripButton key={trip.id} tripId={trip.id} tripName={trip.name} />
           )}
           <ActionIcon
             variant="subtle"
