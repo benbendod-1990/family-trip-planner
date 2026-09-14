@@ -48,6 +48,7 @@ const MIGRATIONS = [
   { file: '0010_trip_doc_url.sql',                  title: 'קישור מסמך התכנון (doc_url)', status: 'pending' },
   { file: '0011_pending_trip_invites.sql',          title: 'הזמנות ממתינות + גל co-owner לכל הטיולים', status: 'pending' },
   { file: '0012_trip_share_links.sql',              title: 'לינק שיתוף לטיול בודד (וואטסאפ)', status: 'pending' },
+  { file: '0013_fix_share_link_expires_at.sql',     title: 'תיקון שיתוף: expires_at ambiguous', status: 'pending' },
 ] as const
 
 function CopyButton({ file }: { file: string }) {

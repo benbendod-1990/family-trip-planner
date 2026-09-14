@@ -9,6 +9,7 @@
 -- active link, revoke it, or regenerate a new token.
 --
 -- Idempotent. Merging this file does NOT apply it to production.
+-- If this already ran with unqualified expires_at, apply 0013 (42702).
 
 create table if not exists public.trip_share_links (
   id              uuid primary key default gen_random_uuid(),
@@ -136,6 +137,9 @@ $$;
 
 grant execute on function public.get_trip_share_link(uuid) to authenticated;
 
+-- RETURNS TABLE (token, expires_at, created_at) exposes those names as OUT
+-- variables. Unqualified expires_at in UPDATE/WHERE is 42702 ambiguous
+-- (PL/pgSQL variable vs table column). Always qualify as sl.expires_at.
 create or replace function public.create_or_get_trip_share_link(_trip_id uuid)
 returns table (token text, expires_at timestamptz, created_at timestamptz)
 language plpgsql
@@ -149,11 +153,11 @@ declare
 begin
   _uid := public._require_trip_owner(_trip_id);
 
-  update public.trip_share_links
+  update public.trip_share_links sl
   set revoked_at = now()
-  where trip_id = _trip_id
-    and revoked_at is null
-    and expires_at <= now();
+  where sl.trip_id = _trip_id
+    and sl.revoked_at is null
+    and sl.expires_at <= now();
 
   return query
     select sl.token, sl.expires_at, sl.created_at
@@ -204,10 +208,10 @@ as $$
 begin
   perform public._require_trip_owner(_trip_id);
 
-  update public.trip_share_links
+  update public.trip_share_links sl
   set revoked_at = now()
-  where trip_id = _trip_id
-    and revoked_at is null;
+  where sl.trip_id = _trip_id
+    and sl.revoked_at is null;
 end;
 $$;
 
@@ -329,9 +333,9 @@ begin
       else public.trip_members.role
     end;
 
-  update public.trip_share_links
+  update public.trip_share_links sl
   set last_claimed_at = now()
-  where token = _token;
+  where sl.token = _token;
 
   return query
     select _link.trip_id, _was_member;
