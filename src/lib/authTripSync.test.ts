@@ -171,6 +171,21 @@ describe('authenticated member sees only RLS-returned USA', () => {
     assert.deepEqual(visible.map(t => t.id), [USA_ID])
   })
 
+  it('first-login invitee with empty persist sees only the invited trip', () => {
+    const holland = stub({
+      id: HOLLAND_ID,
+      name: 'הולנד',
+      destination: 'הולנד',
+      startDate: '2026-08-01',
+      endDate: '2026-08-10',
+    })
+    const visible = visibleAfterCloudPull([], [holland])
+    assert.deepEqual(visible.map(t => t.id), [HOLLAND_ID])
+    for (const id of [PARIS_ID, CRETE_ID, ROME_ID, USA_ID]) {
+      assert.equal(visible.some(t => t.id === id), false)
+    }
+  })
+
   it('restores the USA planning Doc after a cloud-only hydrate that omitted docUrl', () => {
     // Invitee persist starts empty (PR #10). Cloud USA has no doc_url column,
     // so the row arrives without docUrl. Seed restore must still attach it.
@@ -271,6 +286,7 @@ describe('call-site regressions', () => {
     assert.ok(text.includes('localTripsSafeToAutoPush'))
     assert.ok(text.includes('dropUnauthorizedDemoSeeds'))
     assert.ok(text.includes('switchTripStoreAccount'))
+    assert.ok(text.includes('claimPendingInvites'))
   })
 
   it('manual sync and realtime also drop unauthorized demo seeds', () => {

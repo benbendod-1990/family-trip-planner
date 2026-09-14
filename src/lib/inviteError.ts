@@ -12,14 +12,32 @@ export function rpcErrorText(e: unknown): string {
   return ''
 }
 
-/** Hebrew status for a failed invite; never returns the tautology «שגיאה: שגיאה». */
-export function inviteFailureStatus(e: unknown, email: string, origin: string): string {
+export type InviteOutcome = 'added' | 'pending'
+
+/** Map invite_user_to_trip RPC rows to a success outcome. Missing status → added. */
+export function parseInviteOutcome(data: unknown): InviteOutcome {
+  const row = Array.isArray(data) ? data[0] : data
+  if (row && typeof row === 'object' && (row as { invite_status?: unknown }).invite_status === 'pending') {
+    return 'pending'
+  }
+  return 'added'
+}
+
+/** Hebrew status for a failed invite; never «must register first», never «שגיאה: שגיאה». */
+export function inviteFailureStatus(e: unknown, email: string, _origin?: string): string {
   const msg = rpcErrorText(e)
-  if (msg.includes('user_not_found')) {
-    return `${email} עדיין לא נרשם. בקש שייכנס פעם אחת ל-${origin}/login ואז תזמין שוב.`
+  if (msg.includes('invalid_email')) {
+    return 'אימייל לא תקין'
+  }
+  if (msg.includes('already_member')) {
+    return `${email} כבר חבר בטיול`
   }
   if (msg.includes('forbidden')) {
     return 'רק יוצר הטיול יכול להזמין'
+  }
+  if (msg.includes('user_not_found')) {
+    // Old 0002/0009 RPC still live — never tell Ben the invitee must register first.
+    return 'ההזמנה לאימייל חדש ממתינה לעדכון בשרת (מיגרציה 0011 ב-Supabase)'
   }
   if (!msg || msg === 'שגיאה') {
     return 'שגיאה לא ידועה'

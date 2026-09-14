@@ -1,14 +1,17 @@
 import { useEffect, useState } from 'react'
 import styled from 'styled-components'
 import { Button, Stack, Typography } from 'myk-library'
-import { X, UserPlus, Trash2, Crown } from 'lucide-react'
+import { X, UserPlus, Trash2, Crown, Clock } from 'lucide-react'
 import { useAuth } from '@/lib/AuthContext'
 import { inviteFailureStatus, rpcErrorText } from '@/lib/inviteError'
 import {
+  cancelTripInvite,
   inviteUserToTrip,
+  listPendingTripInvites,
   listTripMembers,
   removeUserFromTrip,
   type TripMember,
+  type TripPendingInvite,
 } from '@/lib/tripRepo'
 
 const Backdrop = styled.div`
@@ -60,6 +63,7 @@ interface Props {
 export default function InviteMemberModal({ tripId, tripName, open, onClose }: Props) {
   const { user } = useAuth()
   const [members, setMembers] = useState<TripMember[]>([])
+  const [pending, setPending] = useState<TripPendingInvite[]>([])
   const [email, setEmail] = useState('')
   const [busy, setBusy] = useState(false)
   const [status, setStatus] = useState<string>('')
@@ -71,7 +75,12 @@ export default function InviteMemberModal({ tripId, tripName, open, onClose }: P
 
   const refresh = async () => {
     try {
-      setMembers(await listTripMembers(tripId))
+      const [nextMembers, nextPending] = await Promise.all([
+        listTripMembers(tripId),
+        listPendingTripInvites(tripId).catch(() => [] as TripPendingInvite[]),
+      ])
+      setMembers(nextMembers)
+      setPending(nextPending)
     } catch (e) {
       setStatus(`שגיאה: ${rpcErrorText(e) || 'לא ידועה'}`)
     }
@@ -82,8 +91,12 @@ export default function InviteMemberModal({ tripId, tripName, open, onClose }: P
     setBusy(true)
     setStatus('')
     try {
-      await inviteUserToTrip(tripId, email.trim())
-      setStatus(`✓ ${email} נוסף לטיול`)
+      const outcome = await inviteUserToTrip(tripId, email.trim())
+      if (outcome === 'pending') {
+        setStatus(`✓ הזמנה נשלחה אל ${email.trim()}. כשייכנסו עם Google, הטיול יופיע אצלם.`)
+      } else {
+        setStatus(`✓ ${email.trim()} נוסף לטיול`)
+      }
       setEmail('')
       await refresh()
     } catch (e) {
@@ -103,6 +116,16 @@ export default function InviteMemberModal({ tripId, tripName, open, onClose }: P
     }
   }
 
+  const onCancelInvite = async (invite: TripPendingInvite) => {
+    if (!confirm(`לבטל את ההזמנה ל-${invite.email}?`)) return
+    try {
+      await cancelTripInvite(tripId, invite.email)
+      await refresh()
+    } catch (e) {
+      setStatus(`שגיאה בביטול: ${rpcErrorText(e) || 'לא ידועה'}`)
+    }
+  }
+
   if (!open) return null
 
   const meIsOwner = members.find(m => m.user_id === user?.id)?.role === 'owner'
@@ -119,7 +142,7 @@ export default function InviteMemberModal({ tripId, tripName, open, onClose }: P
 
         <div style={{ marginTop: 16 }}>
           <Typography variant="body2" style={{ color: '#6b7280', marginBottom: 8 }}>
-            הזמן בן/בת זוג או חבר. הם חייבים להיכנס פעם אחת ל-{window.location.host} עם Google לפני שתוכל להזמין.
+            הזמינו לפי אימייל. אם האדם עוד לא נרשם, ההזמנה תישמר — אחרי כניסה עם Google הטיול יופיע אצלו בלבד.
           </Typography>
           <Stack direction="row" spacing="sm">
             <Input
@@ -174,6 +197,32 @@ export default function InviteMemberModal({ tripId, tripName, open, onClose }: P
             ))
           )}
         </div>
+
+        {pending.length > 0 && (
+          <div style={{ marginTop: 24 }}>
+            <Typography variant="h6" style={{ marginBottom: 8 }}>הזמנות ממתינות</Typography>
+            {pending.map(invite => (
+              <Row key={invite.email}>
+                <Stack direction="row" spacing="sm" align="center">
+                  <Clock size={14} style={{ color: '#9ca3af' }} />
+                  <Typography variant="body2" style={{ direction: 'ltr', textAlign: 'left' }}>
+                    {invite.email}
+                  </Typography>
+                  <span style={{ fontSize: 11, color: '#9ca3af' }}>ממתין לכניסה</span>
+                </Stack>
+                {meIsOwner && (
+                  <button
+                    onClick={() => void onCancelInvite(invite)}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444' }}
+                    title="בטל הזמנה"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                )}
+              </Row>
+            ))}
+          </div>
+        )}
       </Sheet>
     </Backdrop>
   )

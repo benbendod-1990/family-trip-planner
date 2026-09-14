@@ -50,7 +50,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const wireUp = async (userId: string) => {
       const [
         { persistGmailRefreshToken },
-        { listTrips, pushLocalToRemote, foldRemoteTrips, deleteCollapsedDuplicates },
+        { listTrips, pushLocalToRemote, foldRemoteTrips, deleteCollapsedDuplicates, claimPendingInvites },
         { startTripAutoSync, suppressNextPush },
         { startTripRealtime },
         { ensureSeedBookingDocuments },
@@ -72,6 +72,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // still has it in the session. After the first JWT refresh it's gone.
       void persistGmailRefreshToken()
       try {
+        try {
+          await claimPendingInvites()
+        } catch (e) {
+          // 0011 not applied yet, or a transient RPC miss — still pull what RLS sees.
+          console.warn('[auth] claim pending invites failed:', e)
+        }
         const remote = await listTrips()
         const localTrips = useTripStore.getState().trips
         const remoteIds = new Set(remote.map(t => t.id))

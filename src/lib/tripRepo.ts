@@ -19,6 +19,7 @@ import {
   type CollapseResult,
 } from './dedupeDemoTrips'
 import { applyCanonicalSeedDocLink, docLinkFromCloudRow, ensureSeedDocLinks } from './seedDocLink'
+import { parseInviteOutcome, type InviteOutcome } from './inviteError'
 
 type Row = Record<string, unknown>
 
@@ -204,18 +205,47 @@ export interface TripMember {
   added_at: string
 }
 
-export async function inviteUserToTrip(tripId: string, email: string): Promise<void> {
-  const { error } = await supabase.rpc('invite_user_to_trip', {
+export interface TripPendingInvite {
+  email: string
+  created_at: string
+}
+
+export type { InviteOutcome }
+
+export async function inviteUserToTrip(tripId: string, email: string): Promise<InviteOutcome> {
+  const { data, error } = await supabase.rpc('invite_user_to_trip', {
     _trip_id: tripId,
     _email: email,
   })
   if (error) throw describe(error, 'invite_user_to_trip')
+  return parseInviteOutcome(data)
 }
 
 export async function listTripMembers(tripId: string): Promise<TripMember[]> {
   const { data, error } = await supabase.rpc('list_trip_members', { _trip_id: tripId })
   if (error) throw describe(error, 'list_trip_members')
   return (data ?? []) as TripMember[]
+}
+
+export async function listPendingTripInvites(tripId: string): Promise<TripPendingInvite[]> {
+  const { data, error } = await supabase.rpc('list_pending_trip_invites', { _trip_id: tripId })
+  if (error) throw describe(error, 'list_pending_trip_invites')
+  return (data ?? []) as TripPendingInvite[]
+}
+
+export async function cancelTripInvite(tripId: string, email: string): Promise<void> {
+  const { error } = await supabase.rpc('cancel_trip_invite', {
+    _trip_id: tripId,
+    _email: email,
+  })
+  if (error) throw describe(error, 'cancel_trip_invite')
+}
+
+/** Attach pending email invites for the signed-in user. Safe to call on every wireUp. */
+export async function claimPendingInvites(): Promise<number> {
+  const { data, error } = await supabase.rpc('claim_pending_invites')
+  if (error) throw describe(error, 'claim_pending_invites')
+  return typeof data === 'number' ? data : Number(data ?? 0)
 }
 
 export async function removeUserFromTrip(tripId: string, userId: string): Promise<void> {
