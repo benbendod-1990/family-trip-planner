@@ -197,6 +197,7 @@ export default function AppLayout() {
                 {session && (
                   <>
                     <ShareTripButton tripId={trip.id} tripName={trip.name} />
+                    {/* Members list lives in trip chrome, not on Home TripCards. */}
                     <ActionIcon
                       variant="subtle"
                       size="sm"

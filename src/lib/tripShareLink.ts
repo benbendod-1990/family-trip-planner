@@ -147,6 +147,12 @@ export function shareLinkFailureStatus(e: unknown): string {
     return 'רק יוצר הטיול יכול לשתף לינק.'
   }
   if (
+    msg.includes('42702') ||
+    /column reference ".+" is ambiguous/i.test(msg)
+  ) {
+    return 'שגיאת שיתוף בשרת (מיגרציה 0013). רעננו את האפליקציה ונסו שוב.'
+  }
+  if (
     msg.includes('0012') ||
     msg.includes('Could not find the function') ||
     msg.includes('PGRST202') ||
