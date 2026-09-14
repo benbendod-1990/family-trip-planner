@@ -94,6 +94,10 @@ describe('membership RPCs wrap PostgREST errors', () => {
     assert.match(block, /claimPendingInvites[\s\S]*throw describe\(error/)
     assert.match(block, /listPendingTripInvites[\s\S]*throw describe\(error/)
     assert.match(block, /cancelTripInvite[\s\S]*throw describe\(error/)
+    assert.match(block, /createOrGetTripShareLink[\s\S]*throw describe\(error/)
+    assert.match(block, /claimTripShareLink[\s\S]*throw describe\(error/)
+    assert.match(block, /peekTripShareLink[\s\S]*throw describe\(error/)
+    assert.match(block, /revokeTripShareLink[\s\S]*throw describe\(error/)
     assert.equal(/if \(error\) throw error/.test(block), false)
   })
 
@@ -107,19 +111,22 @@ describe('membership RPCs wrap PostgREST errors', () => {
     const text = readFileSync(new URL('../components/cloud/InviteMemberModal.tsx', import.meta.url), 'utf8')
     assert.equal(text.includes('חייבים להיכנס פעם אחת'), false)
     assert.equal(text.includes('עדיין לא נרשם'), false)
-    assert.match(text, /אם האדם עוד לא נרשם/)
+    assert.match(text, /מי שעוד לא נרשם/)
     assert.match(text, /הזמנות ממתינות/)
     assert.match(text, /outcome === 'pending'/)
     assert.match(text, /isFamilyCatalogEmail/)
     assert.match(text, /יוצר\/ת ממתין\/ה/)
+    assert.match(text, /ShareTripLinkPanel/)
   })
 
   it('wireUp claims pending invites before the cloud trip list', () => {
     const text = readFileSync(new URL('./AuthContext.tsx', import.meta.url), 'utf8')
     const claimAt = text.indexOf('claimPendingInvites()')
+    const shareAt = text.indexOf('claimTripShareLink(')
     const listAt = text.indexOf('listTrips()')
     assert.ok(claimAt > 0)
-    assert.ok(listAt > claimAt)
+    assert.ok(shareAt > claimAt)
+    assert.ok(listAt > shareAt)
   })
 
   it('0011 SQL stores pending invites and never raises user_not_found', () => {

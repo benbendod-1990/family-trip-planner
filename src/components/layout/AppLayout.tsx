@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import { Outlet, useParams, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import CloudSyncButton from '@/components/cloud/CloudSyncButton'
 import RouteFallback from '@/components/layout/RouteFallback'
@@ -13,6 +13,10 @@ import styled, { ThemeProvider } from 'styled-components'
 import { Map, Wallet, Plane, Home, ListTodo, Users, Menu, LayoutDashboard, Backpack, FileText, CalendarRange } from 'lucide-react'
 import { useBreakpoint } from '@/hooks/useBreakpoint'
 import { warmTheme } from '@/theme/warmTheme'
+import { useAuth } from '@/lib/AuthContext'
+
+const ShareTripButton = lazy(() => import('@/components/trip/ShareTripButton'))
+const InviteMemberModal = lazy(() => import('@/components/cloud/InviteMemberModal'))
 
 /*
  * AppShell is height:100vh + overflow:hidden and its <main> is flex:1 with
@@ -107,6 +111,8 @@ export default function AppLayout() {
   const [drawerPath, setDrawerPath] = useState<string | null>(null)
   const drawerOpen = drawerPath === location.pathname
   const { isTablet } = useBreakpoint()
+  const { session } = useAuth()
+  const [showInvite, setShowInvite] = useState(false)
 
   const trip = trips.find(t => t.id === id)
 
@@ -188,6 +194,22 @@ export default function AppLayout() {
               </TripTitle>
               <Badge variant="info" size="sm">{trip.destination}</Badge>
               <Stack direction="row" spacing="xs" align="center" style={{ marginInlineStart: 'auto' }}>
+                {session && (
+                  <>
+                    <Suspense fallback={null}>
+                      <ShareTripButton tripId={trip.id} tripName={trip.name} />
+                    </Suspense>
+                    <ActionIcon
+                      variant="subtle"
+                      size="sm"
+                      onClick={() => setShowInvite(true)}
+                      title="חברים והזמנה באימייל"
+                      aria-label="חברים והזמנה באימייל"
+                    >
+                      <Users size={16} />
+                    </ActionIcon>
+                  </>
+                )}
                 <CloudSyncButton />
               </Stack>
             </Stack>
@@ -265,6 +287,16 @@ export default function AppLayout() {
         >
           <DrawerNav>{sidebarContent}</DrawerNav>
         </Drawer>
+      )}
+      {showInvite && (
+        <Suspense fallback={null}>
+          <InviteMemberModal
+            open={showInvite}
+            onClose={() => setShowInvite(false)}
+            tripId={trip.id}
+            tripName={trip.name}
+          />
+        </Suspense>
       )}
     </>
   )

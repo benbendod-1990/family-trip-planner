@@ -60,6 +60,7 @@ https://supabase.com/dashboard/project/fmybfgryipzlfukirizp/settings/api
 | `supabase/migrations/0001_init.sql` | סכמה ראשית (trips, days, events, ...) + RLS + realtime | ✅ הורץ |
 | `supabase/migrations/0002_invite.sql` | פונקציות הזמנת חברים (invite_user_to_trip, list_trip_members, remove_user_from_trip) | ✅ הורץ |
 | `supabase/migrations/0011_pending_trip_invites.sql` | הזמנה לאימייל שעוד לא נרשם + גל co-owner על כל הטיולים (כולל רומא) | ⚠ **ממתין להרצה** |
+| `supabase/migrations/0012_trip_share_links.sql` | לינק שיתוף לטיול בודד (`/join/<token>`) בלי אימייל | ⚠ **ממתין להרצה** |
 | `supabase/migrations/0003_fix_rls_recursion.sql` | תיקון infinite-recursion ב-policies של trip_members | ✅ הורץ |
 | `supabase/migrations/0004_save_trip_rpc.sql` | RPC `save_trip(jsonb)` שעוקף RLS issues | ⚠ **ממתין להרצה** |
 

@@ -14,6 +14,7 @@ import {
   type TripMember,
   type TripPendingInvite,
 } from '@/lib/tripRepo'
+import ShareTripLinkPanel from '@/components/cloud/ShareTripLinkPanel'
 
 const Backdrop = styled.div`
   position: fixed;
@@ -161,9 +162,11 @@ export default function InviteMemberModal({ tripId, tripName, open, onClose }: P
           </button>
         </Stack>
 
+        <ShareTripLinkPanel tripId={tripId} tripName={tripName} />
+
         <div style={{ marginTop: 16 }}>
           <Typography variant="body2" style={{ color: '#6b7280', marginBottom: 8 }}>
-            הזמינו לפי אימייל. אם האדם עוד לא נרשם, ההזמנה תישמר — אחרי כניסה עם Google הטיול יופיע אצלו בלבד.
+            הזמינו לפי אימייל או שלחו לינק בוואטסאפ. מי שעוד לא נרשם יצטרף אחרי כניסה עם Google — רק לטיול הזה.
           </Typography>
           <Stack direction="row" spacing="sm">
             <Input

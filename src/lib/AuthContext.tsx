@@ -28,7 +28,7 @@ interface AuthContextValue {
   session: Session | null
   user: User | null
   loading: boolean
-  signInWithGoogle: () => Promise<void>
+  signInWithGoogle: (opts?: { redirectPath?: string }) => Promise<void>
   signOut: () => Promise<void>
 }
 
@@ -50,7 +50,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const wireUp = async (userId: string) => {
       const [
         { persistGmailRefreshToken },
-        { listTrips, pushLocalToRemote, foldRemoteTrips, deleteCollapsedDuplicates, claimPendingInvites },
+        { listTrips, pushLocalToRemote, foldRemoteTrips, deleteCollapsedDuplicates, claimPendingInvites, claimTripShareLink },
         { startTripAutoSync, suppressNextPush },
         { startTripRealtime },
         { ensureSeedBookingDocuments },
@@ -77,6 +77,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } catch (e) {
           // 0011 not applied yet, or a transient RPC miss — still pull what RLS sees.
           console.warn('[auth] claim pending invites failed:', e)
+        }
+        try {
+          const { peekPendingShareToken } = await import('./tripShareLink')
+          const shareToken = peekPendingShareToken()
+          if (shareToken) {
+            await claimTripShareLink(shareToken)
+          }
+        } catch (e) {
+          // 0012 not applied yet, or an expired/revoked token — Join page shows the error.
+          console.warn('[auth] claim share link failed:', e)
         }
         const remote = await listTrips()
         const localTrips = useTripStore.getState().trips
@@ -153,12 +163,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  const signInWithGoogle = async () => {
+  const signInWithGoogle = async (opts?: { redirectPath?: string }) => {
     const supabase = await loadSupabase()
+    const { oauthRedirectUrl } = await import('./tripShareLink')
     await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: window.location.origin + import.meta.env.BASE_URL,
+        redirectTo: oauthRedirectUrl(opts?.redirectPath),
         // gmail.readonly so the "סנכרן Gmail" button can read booking
         // confirmations. Without this the provider_token has no Gmail access.
         scopes: 'email profile https://www.googleapis.com/auth/gmail.readonly',
