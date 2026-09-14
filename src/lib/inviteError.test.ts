@@ -3,7 +3,6 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { inviteFailureStatus, parseInviteOutcome, rpcErrorText } from './inviteError.ts'
 
-const ORIGIN = 'https://family-trip-planner-end.pages.dev'
 const EMAIL = 'Edenbendavid1992@gmail.com'
 
 describe('invite error copy', () => {
@@ -11,7 +10,6 @@ describe('invite error copy', () => {
     const status = inviteFailureStatus(
       { message: 'invalid_email: not-an-email', code: 'P0001' },
       EMAIL,
-      ORIGIN,
     )
     assert.equal(status, 'אימייל לא תקין')
     assert.equal(status.includes('עדיין לא נרשם'), false)
@@ -22,7 +20,6 @@ describe('invite error copy', () => {
     const status = inviteFailureStatus(
       { message: 'already_member: edenbendavid1992@gmail.com is already a member of this trip', code: 'P0001' },
       EMAIL,
-      ORIGIN,
     )
     assert.equal(status, `${EMAIL} כבר חבר בטיול`)
   })
@@ -31,7 +28,6 @@ describe('invite error copy', () => {
     const status = inviteFailureStatus(
       { message: 'forbidden: only the trip owner may invite members', code: 'P0001' },
       EMAIL,
-      ORIGIN,
     )
     assert.equal(status, 'רק יוצר הטיול יכול להזמין')
   })
@@ -43,7 +39,7 @@ describe('invite error copy', () => {
       hint: null,
       code: 'P0001',
     }
-    const status = inviteFailureStatus(err, EMAIL, ORIGIN)
+    const status = inviteFailureStatus(err, EMAIL)
     assert.match(status, /0011/)
     assert.equal(status.includes('עדיין לא נרשם'), false)
     assert.equal(status.includes('/login'), false)
@@ -54,15 +50,15 @@ describe('invite error copy', () => {
     const wrapped = new Error(
       'invite_user_to_trip: user_not_found: Edenbendavid1992@gmail.com must sign in | P0001',
     )
-    const status = inviteFailureStatus(wrapped, EMAIL, ORIGIN)
+    const status = inviteFailureStatus(wrapped, EMAIL)
     assert.match(status, /0011/)
     assert.equal(status.includes('עדיין לא נרשם'), false)
   })
 
   it('never renders the tautology שגיאה: שגיאה', () => {
-    assert.equal(inviteFailureStatus('שגיאה', EMAIL, ORIGIN), 'שגיאה לא ידועה')
-    assert.equal(inviteFailureStatus({}, EMAIL, ORIGIN), 'שגיאה לא ידועה')
-    assert.equal(inviteFailureStatus(null, EMAIL, ORIGIN), 'שגיאה לא ידועה')
+    assert.equal(inviteFailureStatus('שגיאה', EMAIL), 'שגיאה לא ידועה')
+    assert.equal(inviteFailureStatus({}, EMAIL), 'שגיאה לא ידועה')
+    assert.equal(inviteFailureStatus(null, EMAIL), 'שגיאה לא ידועה')
   })
 
   it('reads message from a plain object when it is not an Error', () => {

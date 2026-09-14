@@ -61,6 +61,17 @@ interface Props {
   onClose: () => void
 }
 
+async function loadInviteSheet(tripId: string): Promise<{
+  members: TripMember[]
+  pending: TripPendingInvite[]
+}> {
+  const [members, pending] = await Promise.all([
+    listTripMembers(tripId),
+    listPendingTripInvites(tripId).catch(() => [] as TripPendingInvite[]),
+  ])
+  return { members, pending }
+}
+
 export default function InviteMemberModal({ tripId, tripName, open, onClose }: Props) {
   const { user } = useAuth()
   const [members, setMembers] = useState<TripMember[]>([])
@@ -71,17 +82,26 @@ export default function InviteMemberModal({ tripId, tripName, open, onClose }: P
 
   useEffect(() => {
     if (!open) return
-    void refresh()
+    let cancelled = false
+    void loadInviteSheet(tripId)
+      .then(({ members: nextMembers, pending: nextPending }) => {
+        if (cancelled) return
+        setMembers(nextMembers)
+        setPending(nextPending)
+      })
+      .catch((e: unknown) => {
+        if (!cancelled) setStatus(`שגיאה: ${rpcErrorText(e) || 'לא ידועה'}`)
+      })
+    return () => {
+      cancelled = true
+    }
   }, [open, tripId])
 
   const refresh = async () => {
     try {
-      const [nextMembers, nextPending] = await Promise.all([
-        listTripMembers(tripId),
-        listPendingTripInvites(tripId).catch(() => [] as TripPendingInvite[]),
-      ])
-      setMembers(nextMembers)
-      setPending(nextPending)
+      const next = await loadInviteSheet(tripId)
+      setMembers(next.members)
+      setPending(next.pending)
     } catch (e) {
       setStatus(`שגיאה: ${rpcErrorText(e) || 'לא ידועה'}`)
     }
@@ -101,7 +121,7 @@ export default function InviteMemberModal({ tripId, tripName, open, onClose }: P
       setEmail('')
       await refresh()
     } catch (e) {
-      setStatus(inviteFailureStatus(e, email.trim(), window.location.origin))
+      setStatus(inviteFailureStatus(e, email.trim()))
     } finally {
       setBusy(false)
     }

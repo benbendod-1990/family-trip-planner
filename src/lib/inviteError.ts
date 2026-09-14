@@ -24,7 +24,7 @@ export function parseInviteOutcome(data: unknown): InviteOutcome {
 }
 
 /** Hebrew status for a failed invite; never «must register first», never «שגיאה: שגיאה». */
-export function inviteFailureStatus(e: unknown, email: string, _origin?: string): string {
+export function inviteFailureStatus(e: unknown, email: string): string {
   const msg = rpcErrorText(e)
   if (msg.includes('invalid_email')) {
     return 'אימייל לא תקין'
