@@ -2,6 +2,7 @@ import { Navigate } from 'react-router-dom'
 import styled from 'styled-components'
 import { Button, Container, Stack, Typography } from 'myk-library'
 import { useAuth } from '@/lib/AuthContext'
+import { joinPathForToken, peekPendingShareToken } from '@/lib/tripShareLink'
 
 const Wrap = styled.div`
   min-height: 100dvh;
@@ -24,7 +25,11 @@ export default function Login() {
   const { session, loading, signInWithGoogle } = useAuth()
 
   if (loading) return null
-  if (session) return <Navigate to="/" replace />
+  if (session) {
+    const pending = peekPendingShareToken()
+    if (pending) return <Navigate to={joinPathForToken(pending)} replace />
+    return <Navigate to="/" replace />
+  }
 
   return (
     <Container>
@@ -36,7 +41,7 @@ export default function Login() {
             <Typography variant="body1" style={{ color: '#6b7280' }}>
               התחברו כדי לסנכרן את הטיול בין כל המשתמשים במשפחה
             </Typography>
-            <Button variant="primary" onClick={signInWithGoogle}>
+            <Button variant="primary" onClick={() => void signInWithGoogle()}>
               התחברות עם Google
             </Button>
           </Stack>

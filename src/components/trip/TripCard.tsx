@@ -20,6 +20,7 @@ import { destinationColor, warmDisplayFont } from '@/theme/warmTheme'
  */
 const PostTripDebriefModal = lazy(() => import('@/components/archive/PostTripDebriefModal'))
 const InviteMemberModal = lazy(() => import('@/components/cloud/InviteMemberModal'))
+const ShareTripButton = lazy(() => import('@/components/trip/ShareTripButton'))
 const TripWeatherStrip = lazy(() => import('@/components/trip/TripWeatherStrip'))
 
 const Emoji = styled.div`
@@ -89,15 +90,20 @@ export default function TripCard({ trip, index = 0 }: Props) {
       <div style={{ position: 'absolute', top: 18, left: 12 }}>
         <Stack direction="row" spacing="xs">
           {session && (
-            <ActionIcon
-              variant="subtle"
-              size="sm"
-              onClick={(e: React.MouseEvent) => { e.stopPropagation(); setShowInvite(true) }}
-              title="שתף עם בן/בת זוג"
-              style={{ color: '#3b82f6' }}
-            >
-              <Users size={14} />
-            </ActionIcon>
+            <>
+              <Suspense fallback={null}>
+                <ShareTripButton tripId={trip.id} tripName={trip.name} />
+              </Suspense>
+              <ActionIcon
+                variant="subtle"
+                size="sm"
+                onClick={(e: React.MouseEvent) => { e.stopPropagation(); setShowInvite(true) }}
+                title="חברים והזמנה באימייל"
+                style={{ color: '#3b82f6' }}
+              >
+                <Users size={14} />
+              </ActionIcon>
+            </>
           )}
           <ActionIcon
             variant="subtle"

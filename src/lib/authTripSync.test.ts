@@ -302,6 +302,7 @@ describe('call-site regressions', () => {
     assert.ok(text.includes('dropUnauthorizedDemoSeeds'))
     assert.ok(text.includes('switchTripStoreAccount'))
     assert.ok(text.includes('claimPendingInvites'))
+    assert.ok(text.includes('claimTripShareLink'))
   })
 
   it('manual sync and realtime also drop unauthorized demo seeds', () => {

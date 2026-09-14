@@ -4,14 +4,17 @@ import Home from './pages/Home'
 import Login from './pages/Login'
 import RouteFallback from './components/layout/RouteFallback'
 import { dismissBootShell } from './boot'
+import PendingShareJoinBridge from './components/cloud/PendingShareJoinBridge'
 
 /*
  * Home and Login load eagerly — they are the two entry points, so putting them
  * behind a lazy chunk would only add a round trip before the first screen.
+ * Join is a WhatsApp landing; lazy so Home's entry bundle stays free of it.
  * Everything else is split out: the trip pages are reachable only after a trip
  * is opened, and they pull in the heaviest dependencies.
  */
 const Quickstart = lazy(() => import('./pages/Quickstart'))
+const JoinTrip = lazy(() => import('./pages/JoinTrip'))
 const AppLayout = lazy(() => import('./components/layout/AppLayout'))
 const Dashboard = lazy(() => import('./pages/Dashboard'))
 const Itinerary = lazy(() => import('./pages/Itinerary'))
@@ -33,9 +36,11 @@ function App() {
 
   return (
     <Suspense fallback={<RouteFallback />}>
+      <PendingShareJoinBridge />
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/join/:token" element={<JoinTrip />} />
         <Route path="/quickstart" element={<Quickstart />} />
         <Route path="/profile" element={<Navigate to="/" replace />} />
         <Route path="/trip/:id" element={<AppLayout />}>

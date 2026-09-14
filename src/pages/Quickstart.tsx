@@ -47,6 +47,7 @@ const MIGRATIONS = [
   { file: '0009_fix_invite_role_ambiguous.sql',     title: 'תיקון הזמנה: role ambiguous', status: 'pending' },
   { file: '0010_trip_doc_url.sql',                  title: 'קישור מסמך התכנון (doc_url)', status: 'pending' },
   { file: '0011_pending_trip_invites.sql',          title: 'הזמנות ממתינות + גל co-owner לכל הטיולים', status: 'pending' },
+  { file: '0012_trip_share_links.sql',              title: 'לינק שיתוף לטיול בודד (וואטסאפ)', status: 'pending' },
 ] as const
 
 function CopyButton({ file }: { file: string }) {

@@ -247,6 +247,105 @@ export async function cancelTripInvite(tripId: string, email: string): Promise<v
   if (error) throw describe(error, 'cancel_trip_invite')
 }
 
+export interface TripShareLink {
+  token: string
+  expires_at: string
+  created_at: string
+}
+
+export interface TripSharePeek {
+  trip_id: string
+  trip_name: string
+  destination: string
+  cover_emoji: string
+  expires_at: string
+}
+
+export interface TripShareClaim {
+  trip_id: string
+  already_member: boolean
+}
+
+function parseShareLinkRow(data: unknown): TripShareLink | null {
+  const row = Array.isArray(data) ? data[0] : data
+  if (!row || typeof row !== 'object') return null
+  const r = row as Record<string, unknown>
+  if (typeof r.token !== 'string' || typeof r.expires_at !== 'string') return null
+  return {
+    token: r.token,
+    expires_at: r.expires_at,
+    created_at: typeof r.created_at === 'string' ? r.created_at : r.expires_at,
+  }
+}
+
+function parseSharePeekRow(data: unknown): TripSharePeek | null {
+  const row = Array.isArray(data) ? data[0] : data
+  if (!row || typeof row !== 'object') return null
+  const r = row as Record<string, unknown>
+  if (typeof r.trip_id !== 'string' || typeof r.trip_name !== 'string') return null
+  return {
+    trip_id: r.trip_id,
+    trip_name: r.trip_name,
+    destination: typeof r.destination === 'string' ? r.destination : '',
+    cover_emoji: typeof r.cover_emoji === 'string' ? r.cover_emoji : '🧳',
+    expires_at: typeof r.expires_at === 'string' ? r.expires_at : '',
+  }
+}
+
+function parseShareClaimRow(data: unknown): TripShareClaim {
+  const row = Array.isArray(data) ? data[0] : data
+  if (!row || typeof row !== 'object') {
+    throw new Error('claim_trip_share_link: empty response')
+  }
+  const r = row as Record<string, unknown>
+  if (typeof r.trip_id !== 'string') {
+    throw new Error('claim_trip_share_link: missing trip_id')
+  }
+  return {
+    trip_id: r.trip_id,
+    already_member: r.already_member === true,
+  }
+}
+
+export async function getTripShareLink(tripId: string): Promise<TripShareLink | null> {
+  const { data, error } = await supabase.rpc('get_trip_share_link', { _trip_id: tripId })
+  if (error) throw describe(error, 'get_trip_share_link')
+  return parseShareLinkRow(data)
+}
+
+export async function createOrGetTripShareLink(tripId: string): Promise<TripShareLink> {
+  const { data, error } = await supabase.rpc('create_or_get_trip_share_link', { _trip_id: tripId })
+  if (error) throw describe(error, 'create_or_get_trip_share_link')
+  const row = parseShareLinkRow(data)
+  if (!row) throw new Error('create_or_get_trip_share_link: empty response')
+  return row
+}
+
+export async function regenerateTripShareLink(tripId: string): Promise<TripShareLink> {
+  const { data, error } = await supabase.rpc('regenerate_trip_share_link', { _trip_id: tripId })
+  if (error) throw describe(error, 'regenerate_trip_share_link')
+  const row = parseShareLinkRow(data)
+  if (!row) throw new Error('regenerate_trip_share_link: empty response')
+  return row
+}
+
+export async function revokeTripShareLink(tripId: string): Promise<void> {
+  const { error } = await supabase.rpc('revoke_trip_share_link', { _trip_id: tripId })
+  if (error) throw describe(error, 'revoke_trip_share_link')
+}
+
+export async function peekTripShareLink(token: string): Promise<TripSharePeek | null> {
+  const { data, error } = await supabase.rpc('peek_trip_share_link', { _token: token })
+  if (error) throw describe(error, 'peek_trip_share_link')
+  return parseSharePeekRow(data)
+}
+
+export async function claimTripShareLink(token: string): Promise<TripShareClaim> {
+  const { data, error } = await supabase.rpc('claim_trip_share_link', { _token: token })
+  if (error) throw describe(error, 'claim_trip_share_link')
+  return parseShareClaimRow(data)
+}
+
 /** Attach pending email invites for the signed-in user. Safe to call on every wireUp. */
 export async function claimPendingInvites(): Promise<number> {
   const { data, error } = await supabase.rpc('claim_pending_invites')
