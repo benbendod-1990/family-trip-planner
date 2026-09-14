@@ -34,7 +34,8 @@ function describe(e: unknown, prefix?: string): Error {
 }
 
 // ────────────────────────────────────────────────────────────────────────────
-// List all trips the current user is a member of.
+// List all trips the current user is a member of (RLS). Family-catalog
+// emails are co-owners of every trip; other invitees only see memberships.
 // ────────────────────────────────────────────────────────────────────────────
 export async function listTrips(): Promise<TripPlan[]> {
   const { data: trips, error } = await supabase
@@ -208,6 +209,7 @@ export interface TripMember {
 export interface TripPendingInvite {
   email: string
   created_at: string
+  role: 'owner' | 'member'
 }
 
 export type { InviteOutcome }
@@ -230,7 +232,11 @@ export async function listTripMembers(tripId: string): Promise<TripMember[]> {
 export async function listPendingTripInvites(tripId: string): Promise<TripPendingInvite[]> {
   const { data, error } = await supabase.rpc('list_pending_trip_invites', { _trip_id: tripId })
   if (error) throw describe(error, 'list_pending_trip_invites')
-  return (data ?? []) as TripPendingInvite[]
+  return ((data ?? []) as Array<{ email: string; created_at: string; member_role?: 'owner' | 'member'; role?: 'owner' | 'member' }>).map(row => ({
+    email: row.email,
+    created_at: row.created_at,
+    role: row.member_role ?? row.role ?? 'member',
+  }))
 }
 
 export async function cancelTripInvite(tripId: string, email: string): Promise<void> {

@@ -3,6 +3,7 @@ import styled from 'styled-components'
 import { Button, Stack, Typography } from 'myk-library'
 import { X, UserPlus, Trash2, Crown, Clock } from 'lucide-react'
 import { useAuth } from '@/lib/AuthContext'
+import { isFamilyCatalogEmail } from '@/lib/familyCatalog'
 import { inviteFailureStatus, rpcErrorText } from '@/lib/inviteError'
 import {
   cancelTripInvite,
@@ -208,9 +209,11 @@ export default function InviteMemberModal({ tripId, tripName, open, onClose }: P
                   <Typography variant="body2" style={{ direction: 'ltr', textAlign: 'left' }}>
                     {invite.email}
                   </Typography>
-                  <span style={{ fontSize: 11, color: '#9ca3af' }}>ממתין לכניסה</span>
+                  <span style={{ fontSize: 11, color: '#9ca3af' }}>
+                    {invite.role === 'owner' ? 'יוצר/ת ממתין/ה' : 'ממתין לכניסה'}
+                  </span>
                 </Stack>
-                {meIsOwner && (
+                {meIsOwner && !isFamilyCatalogEmail(invite.email) && (
                   <button
                     onClick={() => void onCancelInvite(invite)}
                     style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444' }}

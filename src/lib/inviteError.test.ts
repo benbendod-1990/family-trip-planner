@@ -114,6 +114,8 @@ describe('membership RPCs wrap PostgREST errors', () => {
     assert.match(text, /אם האדם עוד לא נרשם/)
     assert.match(text, /הזמנות ממתינות/)
     assert.match(text, /outcome === 'pending'/)
+    assert.match(text, /isFamilyCatalogEmail/)
+    assert.match(text, /יוצר\/ת ממתין\/ה/)
   })
 
   it('wireUp claims pending invites before the cloud trip list', () => {
@@ -131,7 +133,8 @@ describe('membership RPCs wrap PostgREST errors', () => {
     assert.match(sql, /on_auth_user_claim_trip_invites/)
     assert.match(sql, /invite_status text/)
     assert.match(sql, /'pending'/)
-    assert.match(sql, /values \(_trip_id, _user_id, 'member'\)/)
+    assert.match(sql, /_invite_role/)
     assert.equal(/raise exception 'user_not_found/.test(sql), false)
+    assert.match(sql, /shechter\.gal@gmail.com/)
   })
 })

@@ -186,6 +186,21 @@ describe('authenticated member sees only RLS-returned USA', () => {
     }
   })
 
+  it('Rome-only invitee does not receive the rest of the family catalog', () => {
+    const rome = stub({
+      id: ROME_ID,
+      name: 'רומא',
+      destination: 'רומא, איטליה',
+      startDate: '2026-11-26',
+      endDate: '2026-11-29',
+    })
+    const visible = visibleAfterCloudPull(allDemoStubs(), [rome])
+    assert.deepEqual(visible.map(t => t.id), [ROME_ID])
+    for (const id of [HOLLAND_ID, PARIS_ID, CRETE_ID, USA_ID]) {
+      assert.equal(visible.some(t => t.id === id), false)
+    }
+  })
+
   it('restores the USA planning Doc after a cloud-only hydrate that omitted docUrl', () => {
     // Invitee persist starts empty (PR #10). Cloud USA has no doc_url column,
     // so the row arrives without docUrl. Seed restore must still attach it.
