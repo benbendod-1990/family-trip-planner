@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import styled from 'styled-components'
 import { Button, Stack, Typography } from 'myk-library'
 import { X, UserPlus, Trash2, Crown } from 'lucide-react'
@@ -64,18 +64,18 @@ export default function InviteMemberModal({ tripId, tripName, open, onClose }: P
   const [busy, setBusy] = useState(false)
   const [status, setStatus] = useState<string>('')
 
-  useEffect(() => {
-    if (!open) return
-    void refresh()
-  }, [open, tripId])
-
-  const refresh = async () => {
+  const refresh = useCallback(async () => {
     try {
       setMembers(await listTripMembers(tripId))
     } catch (e) {
       setStatus(`שגיאה: ${rpcErrorText(e) || 'לא ידועה'}`)
     }
-  }
+  }, [tripId])
+
+  useEffect(() => {
+    if (!open) return
+    void refresh()
+  }, [open, refresh])
 
   const onInvite = async () => {
     if (!email.trim()) return
