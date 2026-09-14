@@ -6,6 +6,7 @@ import type { FamilyMember } from '@/types/family'
 import type { TripTask } from '@/types/task'
 import type { PackingItem } from '@/types/packing'
 import { supabase } from './supabase'
+import { assertSharePeekMatchesTrip } from './tripShareLink'
 import { normalizeSeedTimestamp } from './seedNormalize'
 import { rowToDocument } from './tripDocuments'
 import { fromDb, tripToPayload } from './tripPayload'
@@ -313,12 +314,18 @@ export async function getTripShareLink(tripId: string): Promise<TripShareLink | 
   return parseShareLinkRow(data)
 }
 
+async function confirmShareLinkTrip(tripId: string, row: TripShareLink): Promise<TripShareLink> {
+  const peek = await peekTripShareLink(row.token)
+  assertSharePeekMatchesTrip(tripId, peek)
+  return row
+}
+
 export async function createOrGetTripShareLink(tripId: string): Promise<TripShareLink> {
   const { data, error } = await supabase.rpc('create_or_get_trip_share_link', { _trip_id: tripId })
   if (error) throw describe(error, 'create_or_get_trip_share_link')
   const row = parseShareLinkRow(data)
   if (!row) throw new Error('create_or_get_trip_share_link: empty response')
-  return row
+  return confirmShareLinkTrip(tripId, row)
 }
 
 export async function regenerateTripShareLink(tripId: string): Promise<TripShareLink> {
@@ -326,7 +333,7 @@ export async function regenerateTripShareLink(tripId: string): Promise<TripShare
   if (error) throw describe(error, 'regenerate_trip_share_link')
   const row = parseShareLinkRow(data)
   if (!row) throw new Error('regenerate_trip_share_link: empty response')
-  return row
+  return confirmShareLinkTrip(tripId, row)
 }
 
 export async function revokeTripShareLink(tripId: string): Promise<void> {

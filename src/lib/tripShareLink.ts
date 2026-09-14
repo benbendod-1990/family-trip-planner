@@ -75,9 +75,73 @@ export function formatShareExpiry(iso: string): string {
   return d.toLocaleDateString('he-IL', { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
+export function quotedTripName(name: string): string {
+  return `«${name}»`
+}
+
+export function shareInviteText(tripName: string): string {
+  return `הוזמנת לטיול ${quotedTripName(tripName)}`
+}
+
 export function whatsappShareHref(opts: { url: string; tripName: string }): string {
-  const text = `הוזמנת לטיול ${opts.tripName}\n${opts.url}`
+  const text = `${shareInviteText(opts.tripName)}\n${opts.url}`
   return `https://wa.me/?text=${encodeURIComponent(text)}`
+}
+
+/** Bind share to the tapped card — never a sibling's id. */
+export function shareTargetForCard(trip: { id: string; name: string }): { tripId: string; tripName: string } {
+  if (!trip.id) throw new Error('share requires trip.id from this card')
+  return { tripId: trip.id, tripName: trip.name }
+}
+
+export function shareTargetsForCards(
+  trips: readonly { id: string; name: string }[],
+): { tripId: string; tripName: string }[] {
+  return trips.map(shareTargetForCard)
+}
+
+export function shareTargetFromButton(
+  el: { getAttribute(name: string): string | null } | null,
+  fallback: { tripId: string; tripName: string },
+): { tripId: string; tripName: string } {
+  return shareTargetForCard({
+    id: el?.getAttribute('data-trip-id') || fallback.tripId,
+    name: el?.getAttribute('data-trip-name') || fallback.tripName,
+  })
+}
+
+/** Drop a cached token unless it was stored for this exact tripId. */
+export function cachedShareLinkForTrip<T>(
+  cached: { tripId: string; link: T } | null | undefined,
+  tripId: string,
+): T | null {
+  if (!cached || cached.tripId !== tripId) return null
+  return cached.link
+}
+
+/**
+ * After create_or_get, peek must name the trip we asked for.
+ * Stops a Holland token from being copied off the USA card.
+ */
+export function assertSharePeekMatchesTrip(
+  requestedTripId: string,
+  peek: { trip_id: string; trip_name: string } | null | undefined,
+): { trip_id: string; trip_name: string } {
+  if (!peek || peek.trip_id !== requestedTripId) {
+    throw new Error('share_trip_mismatch')
+  }
+  return peek
+}
+
+export function sharePreparingToast(tripName: string): string {
+  return `מכין לינק שיתוף ל${quotedTripName(tripName)}…`
+}
+
+export function shareOutcomeToast(tripName: string, result: ShareLinkResult): string {
+  const q = quotedTripName(tripName)
+  if (result === 'shared') return `✓ נפתח שיתוף ל${q} — הלינק מוכן`
+  if (result === 'copied') return `✓ הלינק ל${q} הועתק — אפשר לשלוח בוואטסאפ`
+  return `לא הצלחנו להעתיק אוטומטית את הלינק ל${q}. העתיקו או שלחו בוואטסאפ.`
 }
 
 export async function copyText(text: string): Promise<boolean> {
@@ -124,7 +188,7 @@ export async function copyAndShareTripLink(opts: {
     try {
       await share.call(navigator, {
         title: opts.tripName,
-        text: `הוזמנת לטיול ${opts.tripName}`,
+        text: shareInviteText(opts.tripName),
         url: opts.url,
       })
       return 'shared'
@@ -143,6 +207,9 @@ export function shareLinkFailureStatus(e: unknown): string {
   if (msg.includes('share_link_revoked')) return 'הלינק בוטל. בקשו לינק חדש מבעל הטיול.'
   if (msg.includes('share_link_invalid')) return 'הלינק לא תקין או שפג תוקפו.'
   if (msg.includes('unauthenticated')) return 'התחברו עם Google כדי להמשיך.'
+  if (msg.includes('share_trip_mismatch')) {
+    return 'הלינק שחזר מהשרת שייך לטיול אחר. לא שותף כלום — נסו שוב מהכרטיס הנכון.'
+  }
   if (msg.includes('forbidden') || msg.includes('only the trip owner')) {
     return 'רק יוצר הטיול יכול לשתף לינק.'
   }

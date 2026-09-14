@@ -6,6 +6,9 @@ import {
   copyAndShareTripLink,
   copyText,
   shareLinkFailureStatus,
+  shareOutcomeToast,
+  sharePreparingToast,
+  shareTargetFromButton,
   tripShareJoinUrl,
   whatsappShareHref,
 } from '@/lib/tripShareLink'
@@ -21,6 +24,7 @@ type ToastState = {
   kind: ToastKind
   text: string
   url?: string
+  tripName?: string
 }
 
 const ShareHit = styled.button<{ $busy: boolean }>`
@@ -127,35 +131,28 @@ export default function ShareTripButton({ tripId, tripName }: Props) {
     return () => window.clearTimeout(t)
   }, [toast])
 
-  const onShare = async (e: React.MouseEvent) => {
+  const onShare = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault()
     stopCard(e)
+    // Read id/name from THIS button before any await — not a sibling card's closure.
+    const target = shareTargetFromButton(e.currentTarget, { tripId, tripName })
     if (inFlight.current) return
     inFlight.current = true
     setBusy(true)
-    setToast({ kind: 'info', text: 'מכין לינק שיתוף…' })
+    setToast({ kind: 'info', text: sharePreparingToast(target.tripName), tripName: target.tripName })
     try {
       const { createOrGetTripShareLink } = await import('@/lib/tripRepo')
-      const link = await createOrGetTripShareLink(tripId)
+      const link = await createOrGetTripShareLink(target.tripId)
       const url = tripShareJoinUrl(link.token)
-      const result = await copyAndShareTripLink({ url, tripName })
-      if (result === 'shared') {
-        setToast({ kind: 'ok', text: '✓ נפתח שיתוף — הלינק מוכן' })
-      } else if (result === 'copied') {
-        setToast({
-          kind: 'ok',
-          text: '✓ הלינק הועתק — אפשר לשלוח בוואטסאפ',
-          url,
-        })
-      } else {
-        setToast({
-          kind: 'err',
-          text: 'לא הצלחנו להעתיק אוטומטית. העתיקו או שלחו בוואטסאפ.',
-          url,
-        })
-      }
+      const result = await copyAndShareTripLink({ url, tripName: target.tripName })
+      setToast({
+        kind: result === 'failed' ? 'err' : 'ok',
+        text: shareOutcomeToast(target.tripName, result),
+        url: result === 'shared' ? undefined : url,
+        tripName: target.tripName,
+      })
     } catch (err) {
-      setToast({ kind: 'err', text: shareLinkFailureStatus(err) })
+      setToast({ kind: 'err', text: shareLinkFailureStatus(err), tripName: target.tripName })
     } finally {
       inFlight.current = false
       setBusy(false)
@@ -165,12 +162,16 @@ export default function ShareTripButton({ tripId, tripName }: Props) {
   const onCopyAgain = async (e: React.MouseEvent, url: string) => {
     e.stopPropagation()
     const ok = await copyText(url)
+    const name = toast?.tripName ?? tripName
     setToast({
       kind: ok ? 'ok' : 'err',
-      text: ok ? '✓ הלינק הועתק' : 'לא הצלחנו להעתיק. לחצו לחיצה ארוכה על הלינק.',
+      text: ok ? `✓ הלינק ל«${name}» הועתק` : 'לא הצלחנו להעתיק. לחצו לחיצה ארוכה על הלינק.',
       url,
+      tripName: name,
     })
   }
+
+  const toastName = toast?.tripName ?? tripName
 
   return (
     <>
@@ -178,8 +179,10 @@ export default function ShareTripButton({ tripId, tripName }: Props) {
         type="button"
         $busy={busy}
         disabled={busy}
-        aria-label="שתף"
-        title="שתף"
+        data-trip-id={tripId}
+        data-trip-name={tripName}
+        aria-label={`שתף את ${tripName}`}
+        title={`שתף את ${tripName}`}
         onPointerDown={stopCard}
         onMouseDown={stopCard}
         onClick={e => { void onShare(e) }}
@@ -195,7 +198,7 @@ export default function ShareTripButton({ tripId, tripName }: Props) {
                 העתק
               </ToastCopy>
               <ToastBtn
-                href={whatsappShareHref({ url: toast.url, tripName })}
+                href={whatsappShareHref({ url: toast.url, tripName: toastName })}
                 target="_blank"
                 rel="noopener noreferrer"
               >
