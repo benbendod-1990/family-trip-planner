@@ -334,6 +334,45 @@ export function repairLiveSeedTrips(trips: TripPlan[]): TripPlan[] {
     })
   }
 
+  // One-shot: Rome is a couple trip (Ben + Gal), like Paris. The seed
+  // shipped with Ben alone and a "only one El Al ticket" task. Live
+  // Supabase may already have Gal (Yoram patched name/family) — never
+  // replace family wholesale, only add Gal if missing by name, and
+  // refresh the stale ticket task. Seed Gal UUID matches the live row
+  // so a later save_trip / repair does not wipe her.
+  const ROME_ID = '30a5d517-0db3-427f-adfa-92ef125e1f8f'
+  const ROME_TICKET_TASK_ID = '42f26a51-3f8e-4604-87c4-6f711ecf7a9a'
+  const STALE_ROME_TICKET = /יש רק כרטיס אחד|אם גל\/הילדים מצטרפים/
+  const freshRome = seeds.find(t => t.id === ROME_ID)
+  if (freshRome) {
+    state.trips = state.trips.map(t => {
+      if (t.id !== ROME_ID) return t
+      const seedGal = (freshRome.family ?? []).find(m => m.name === 'גל')
+      const hasGal = (t.family ?? []).some(m => m.name === 'גל')
+      const nameStale = !/\(בן \+ גל\)/.test(t.name)
+      const seedTask = (freshRome.tasks ?? []).find(s => s.id === ROME_TICKET_TASK_ID)
+      const liveTask = (t.tasks ?? []).find(x => x.id === ROME_TICKET_TASK_ID)
+      const taskStale =
+        !!seedTask &&
+        (!liveTask ||
+          STALE_ROME_TICKET.test(`${liveTask.title ?? ''} ${liveTask.description ?? ''}`))
+      if (hasGal && !nameStale && !taskStale) return t
+      return {
+        ...t,
+        name: nameStale ? freshRome.name : t.name,
+        family: !hasGal && seedGal ? [...(t.family ?? []), seedGal] : t.family,
+        tasks: seedTask && taskStale
+          ? liveTask
+            ? (t.tasks ?? []).map(x =>
+                x.id === ROME_TICKET_TASK_ID ? { ...seedTask } : x
+              )
+            : [...(t.tasks ?? []), seedTask]
+          : t.tasks,
+        updatedAt: new Date().toISOString(),
+      }
+    })
+  }
+
   // One-shot: every seed shipped the same family-member UUIDs, but
   // family_members.id is a global primary key — so only the first trip to
   // reach Supabase could hold them. That is the whole reason Crete and

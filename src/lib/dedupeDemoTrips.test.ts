@@ -33,7 +33,7 @@ const CRETE = {
 }
 const ROME = {
   id: '30a5d517-0db3-427f-adfa-92ef125e1f8f',
-  name: 'רומא — נובמבר 2026',
+  name: 'רומא — נובמבר 2026 (בן + גל)',
   destination: 'רומא, איטליה',
   startDate: '2026-11-26',
   endDate: '2026-12-01',
@@ -133,6 +133,13 @@ describe('titlesAreSimilar', () => {
     assert.equal(
       titlesAreSimilar('ארה״ב — מרץ 2027', 'ניו יורק — מרץ 2027'),
       false,
+    )
+  })
+
+  it('treats the old Rome title as the same trip after the couple suffix', () => {
+    assert.equal(
+      titlesAreSimilar('רומא — נובמבר 2026', 'רומא — נובמבר 2026 (בן + גל)'),
+      true,
     )
   })
 })
