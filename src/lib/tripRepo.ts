@@ -19,6 +19,7 @@ import {
   type CollapseResult,
 } from './dedupeDemoTrips'
 import { applyCanonicalSeedDocLink, docLinkFromCloudRow, ensureSeedDocLinks } from './seedDocLink'
+import { parseInviteOutcome, type InviteOutcome } from './inviteError'
 
 type Row = Record<string, unknown>
 
@@ -33,7 +34,8 @@ function describe(e: unknown, prefix?: string): Error {
 }
 
 // ────────────────────────────────────────────────────────────────────────────
-// List all trips the current user is a member of.
+// List all trips the current user is a member of (RLS). Family-catalog
+// emails are co-owners of every trip; other invitees only see memberships.
 // ────────────────────────────────────────────────────────────────────────────
 export async function listTrips(): Promise<TripPlan[]> {
   const { data: trips, error } = await supabase
@@ -204,18 +206,52 @@ export interface TripMember {
   added_at: string
 }
 
-export async function inviteUserToTrip(tripId: string, email: string): Promise<void> {
-  const { error } = await supabase.rpc('invite_user_to_trip', {
+export interface TripPendingInvite {
+  email: string
+  created_at: string
+  role: 'owner' | 'member'
+}
+
+export type { InviteOutcome }
+
+export async function inviteUserToTrip(tripId: string, email: string): Promise<InviteOutcome> {
+  const { data, error } = await supabase.rpc('invite_user_to_trip', {
     _trip_id: tripId,
     _email: email,
   })
   if (error) throw describe(error, 'invite_user_to_trip')
+  return parseInviteOutcome(data)
 }
 
 export async function listTripMembers(tripId: string): Promise<TripMember[]> {
   const { data, error } = await supabase.rpc('list_trip_members', { _trip_id: tripId })
   if (error) throw describe(error, 'list_trip_members')
   return (data ?? []) as TripMember[]
+}
+
+export async function listPendingTripInvites(tripId: string): Promise<TripPendingInvite[]> {
+  const { data, error } = await supabase.rpc('list_pending_trip_invites', { _trip_id: tripId })
+  if (error) throw describe(error, 'list_pending_trip_invites')
+  return ((data ?? []) as Array<{ email: string; created_at: string; member_role?: 'owner' | 'member'; role?: 'owner' | 'member' }>).map(row => ({
+    email: row.email,
+    created_at: row.created_at,
+    role: row.member_role ?? row.role ?? 'member',
+  }))
+}
+
+export async function cancelTripInvite(tripId: string, email: string): Promise<void> {
+  const { error } = await supabase.rpc('cancel_trip_invite', {
+    _trip_id: tripId,
+    _email: email,
+  })
+  if (error) throw describe(error, 'cancel_trip_invite')
+}
+
+/** Attach pending email invites for the signed-in user. Safe to call on every wireUp. */
+export async function claimPendingInvites(): Promise<number> {
+  const { data, error } = await supabase.rpc('claim_pending_invites')
+  if (error) throw describe(error, 'claim_pending_invites')
+  return typeof data === 'number' ? data : Number(data ?? 0)
 }
 
 export async function removeUserFromTrip(tripId: string, userId: string): Promise<void> {

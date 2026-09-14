@@ -3,8 +3,10 @@
  *
  * Guest Home must never inject family seeds (Holland/Paris/Crete/Rome/USA).
  * Those are real trips: they appear only after Google sign-in AND an RLS
- * membership. Authenticated Home must not keep seeds the RLS read omitted —
- * first-login wireUp used to push those canonical UUIDs through save_trip.
+ * membership. Family catalog (Ben + Gal) are co-owners of every cloud trip,
+ * so their RLS read is the full catalog. Other invitees see only the trips
+ * they were invited to. Authenticated Home must not keep seeds the RLS read
+ * omitted — first-login wireUp used to push those canonical UUIDs through save_trip.
  */
 
 import type { TripPlan } from '@/types/trip-plan'
