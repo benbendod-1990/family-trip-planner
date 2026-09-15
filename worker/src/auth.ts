@@ -29,7 +29,8 @@ export type AuthOutcome =
 /** 60s leeway: iPhone clocks vs Worker, and tokens that expire mid-request. */
 const EXP_SKEW_SEC = 60
 
-function emailFromJwtPayload(payload: Record<string, unknown>): string | undefined {
+/** Auth email claim only — never user_metadata (user-editable). */
+export function emailFromJwtPayload(payload: Record<string, unknown>): string | undefined {
   // Auth email claim only — never user_metadata (user-editable).
   if (typeof payload.email === 'string' && payload.email.includes('@')) {
     return payload.email.trim().toLowerCase()

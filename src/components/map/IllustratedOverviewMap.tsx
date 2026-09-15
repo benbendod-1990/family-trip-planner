@@ -40,6 +40,27 @@ const IconBtn = styled.button<{ $x: number; $y: number; $active: boolean }>`
   cursor: pointer;
   z-index: ${({ $active }) => ($active ? 4 : 2)};
   filter: ${({ $active }) => ($active ? 'drop-shadow(0 4px 10px rgba(42,32,19,0.35))' : 'none')};
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+`
+
+const SeqBadge = styled.span<{ $active: boolean }>`
+  position: absolute;
+  inset-inline-end: -4px;
+  bottom: -2px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: ${({ $active }) => ($active ? '#d67a1f' : '#1e3a5f')};
+  color: #fffdf7;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 18px;
+  text-align: center;
+  box-shadow: 0 1px 3px rgba(42, 32, 19, 0.28);
+  pointer-events: none;
 `
 
 const Chip = styled.button<{ $x: number; $y: number; $active: boolean }>`
@@ -105,28 +126,41 @@ export default function IllustratedOverviewMap({ pois, selectedId, onSelect }: P
       <Frame
         viewBox={`0 0 ${width} ${height}`}
         role="img"
-        aria-label="מפה מצוירת של מסלול הטיול"
+        aria-label="מפה מצוירת של מסלול הטיול לפי סדר הלו״ז"
       >
         <defs>
           <pattern id="diary-dots" width="18" height="18" patternUnits="userSpaceOnUse">
             <circle cx="1" cy="1" r="0.8" fill="rgba(42,32,19,0.06)" />
           </pattern>
+          <marker
+            id="overview-route-arrow"
+            viewBox="0 0 12 8"
+            markerWidth="9"
+            markerHeight="7"
+            refX="10"
+            refY="4"
+            orient="auto"
+            markerUnits="strokeWidth"
+          >
+            <path d="M0,0 L12,4 L0,8 Z" fill="#C45C3E" />
+          </marker>
         </defs>
         <rect width="100%" height="100%" fill="#d5e6e2" />
         <rect width="100%" height="100%" fill="url(#diary-dots)" />
         {layout.landD && (
           <path d={layout.landD} fill="#E8D9B0" stroke="#6B4F32" strokeWidth="2.2" />
         )}
-        {layout.routeD && (
+        {layout.hops.map(hop => (
           <path
-            d={layout.routeD}
+            key={`${hop.fromId}-${hop.toId}`}
+            d={hop.d}
             fill="none"
-            stroke="#6B4F32"
-            strokeWidth="3"
-            strokeDasharray="2 11"
+            stroke="#C45C3E"
+            strokeWidth="2.8"
             strokeLinecap="round"
+            markerEnd="url(#overview-route-arrow)"
           />
-        )}
+        ))}
         {layout.chips.map(chip => (
           <line
             key={`lead-${chip.id}`}
@@ -135,9 +169,8 @@ export default function IllustratedOverviewMap({ pois, selectedId, onSelect }: P
             x2={chip.leader.x2}
             y2={chip.leader.y2}
             stroke="#6B4F32"
-            strokeWidth="1.2"
-            strokeDasharray="3 4"
-            opacity="0.45"
+            strokeWidth="1.1"
+            opacity="0.28"
           />
         ))}
         {layout.labels.map(l => (
@@ -162,10 +195,11 @@ export default function IllustratedOverviewMap({ pois, selectedId, onSelect }: P
           $y={(p.y / height) * 100}
           $active={p.id === selectedId}
           onClick={() => onSelect(p.id)}
-          aria-label={p.name}
+          aria-label={`${p.seq}. ${p.name}`}
           aria-pressed={p.id === selectedId}
         >
           <LandmarkGlyph kind={p.kind} placeKey={p.key} selected={p.id === selectedId} size={p.id === selectedId ? 56 : 46} />
+          <SeqBadge $active={p.id === selectedId}>{p.seq}</SeqBadge>
         </IconBtn>
       ))}
       {layout.chips.map(chip => (
@@ -180,7 +214,7 @@ export default function IllustratedOverviewMap({ pois, selectedId, onSelect }: P
           {chip.text}
         </Chip>
       ))}
-      <Caption>מסלול לפי לוח הזמנים · לחיצה על מקום פותחת הסבר</Caption>
+      <Caption>מסלול ממוספר לפי הלו״ז · לחיצה על מקום פותחת הסבר</Caption>
     </Stage>
   )
 }

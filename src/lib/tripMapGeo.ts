@@ -242,6 +242,68 @@ export function smoothPathThrough(points: GeoPoint[]): string {
   return parts.join(' ')
 }
 
+export interface DirectedHop {
+  fromId: string
+  toId: string
+  fromSeq: number
+  toSeq: number
+  d: string
+}
+
+function shortenSegment(
+  a: GeoPoint,
+  b: GeoPoint,
+  pad: number,
+): { from: GeoPoint; to: GeoPoint } | null {
+  const dx = b.x - a.x
+  const dy = b.y - a.y
+  const dist = Math.hypot(dx, dy)
+  if (dist < 12) return null
+  const usable = Math.min(pad, dist * 0.28)
+  if (dist <= usable * 2 + 10) {
+    return { from: a, to: b }
+  }
+  const ux = dx / dist
+  const uy = dy / dist
+  return {
+    from: { x: a.x + ux * usable, y: a.y + uy * usable },
+    to: { x: b.x - ux * usable, y: b.y - uy * usable },
+  }
+}
+
+/**
+ * One directed hop per consecutive itinerary stop (array order = לו״ז order).
+ * A light quadratic bulge keeps the scrapbook look without a single crisscross spline.
+ */
+export function directedHopsFromPoints(
+  points: Array<{ id: string; x: number; y: number }>,
+  iconPad = 36,
+): DirectedHop[] {
+  const hops: DirectedHop[] = []
+  for (let i = 0; i < points.length - 1; i++) {
+    const a = points[i]
+    const b = points[i + 1]
+    const cut = shortenSegment(a, b, iconPad)
+    if (!cut) continue
+    const dx = cut.to.x - cut.from.x
+    const dy = cut.to.y - cut.from.y
+    const dist = Math.hypot(dx, dy) || 1
+    const nx = -dy / dist
+    const ny = dx / dist
+    const bulge = Math.min(52, Math.max(16, dist * 0.14)) * (i % 2 === 0 ? 1 : -1)
+    const cx = (cut.from.x + cut.to.x) / 2 + nx * bulge
+    const cy = (cut.from.y + cut.to.y) / 2 + ny * bulge
+    hops.push({
+      fromId: a.id,
+      toId: b.id,
+      fromSeq: i + 1,
+      toSeq: i + 2,
+      d: `M${cut.from.x.toFixed(1)},${cut.from.y.toFixed(1)} Q${cx.toFixed(1)},${cy.toFixed(1)} ${cut.to.x.toFixed(1)},${cut.to.y.toFixed(1)}`,
+    })
+  }
+  return hops
+}
+
 export function spreadProjected<T extends { x: number; y: number }>(
   points: T[],
   minDist = 78,
@@ -281,8 +343,9 @@ export interface OverviewLayout<T extends { coords: TripCoords }> {
   packId?: string
   landD: string
   routeD: string
+  hops: DirectedHop[]
   labels: Array<GeoPoint & { text: string }>
-  placed: Array<T & GeoPoint>
+  placed: Array<T & GeoPoint & { seq: number }>
   chips: PlacedChip[]
   width: number
   height: number
@@ -317,8 +380,10 @@ export function layoutOverviewMap<T extends { coords: TripCoords; id: string; na
   obstacles.push({ x: 0, y: view.height - 88, w: view.width, h: 88 })
   const iconR = cssPxToView(30, view.width)
   const labelReach = iconR + cssPxToView(40, view.width)
+  const numbered = placed.map((p, i) => ({ ...p, seq: i + 1 }))
+  const hops = directedHopsFromPoints(numbered)
   const chips = placeMapChips(
-    placed.map(p => {
+    numbered.map(p => {
       const towardX = p.x < view.width / 2 ? -1 : 1
       const towardY = p.y < view.height / 2 ? -1 : 1
       const roomX = Math.min(p.x, view.width - p.x)
@@ -340,9 +405,10 @@ export function layoutOverviewMap<T extends { coords: TripCoords; id: string; na
     box,
     packId: pack?.id,
     landD,
-    routeD: smoothPathThrough(placed.map(p => ({ x: p.x, y: p.y }))),
+    routeD: hops.map(h => h.d).join(' '),
+    hops,
     labels: waterLabels,
-    placed,
+    placed: numbered,
     chips,
     width: view.width,
     height: view.height,

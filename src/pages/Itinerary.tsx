@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { useParams, useSearchParams } from 'react-router-dom'
 import { useTripStore } from '@/stores/tripStore'
 import { useBreakpoint } from '@/hooks/useBreakpoint'
 import { useWeather } from '@/hooks/useWeather'
@@ -63,14 +63,29 @@ const PageHeaderRow = styled.div<{ $mobile: boolean }>`
   gap: ${({ $mobile }) => ($mobile ? '8px' : '0')};
 `
 
+const DayFocus = styled.div<{ $on: boolean }>`
+  scroll-margin-top: 12px;
+  border-radius: 16px;
+  outline: ${({ $on }) => ($on ? '2px solid #D67A1F' : 'none')};
+  outline-offset: 4px;
+`
+
 export default function Itinerary() {
   const { id } = useParams<{ id: string }>()
+  const [params] = useSearchParams()
   const trip = useTripStore(s => s.trips.find(t => t.id === id))
 
   const { isMobile, isTablet } = useBreakpoint()
   const { weather } = useWeather(id ?? '')
   const getDestination = useDestinationCacheStore(s => s.getDestination)
   const [hidePastVisit, setHidePastVisit] = useState(false)
+  const focusDay = params.get('day')
+
+  useEffect(() => {
+    if (!focusDay) return
+    const el = document.getElementById(`itinerary-day-${focusDay}`)
+    el?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }, [focusDay])
 
   if (!trip) return null
 
@@ -136,7 +151,13 @@ export default function Itinerary() {
       <GridWrapper $mobile={isMobile}>
         <DaysGrid $cols={columns}>
           {days.map((day, index) => (
-            <DayColumn key={day.id ?? day.date ?? index} day={day} tripId={trip.id} dayIndex={index} weather={weather[day.date]} />
+            <DayFocus
+              key={day.id ?? day.date ?? index}
+              id={`itinerary-day-${day.date}`}
+              $on={day.date === focusDay}
+            >
+              <DayColumn day={day} tripId={trip.id} dayIndex={index} weather={weather[day.date]} />
+            </DayFocus>
           ))}
         </DaysGrid>
       </GridWrapper>

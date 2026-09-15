@@ -6,7 +6,7 @@ import { userIsTripOwner } from '@/lib/tripOwnership'
 /**
  * True only after a successful membership read that lists this user as
  * owner (or admin). Guests, invitees, and failed RPCs are not owners —
- * sync-check UI must stay hidden rather than flashing on.
+ * passport UI must stay hidden rather than flashing on.
  */
 export function useIsTripOwner(tripId: string | undefined): { isOwner: boolean; loading: boolean } {
   const { user, loading: authLoading } = useAuth()

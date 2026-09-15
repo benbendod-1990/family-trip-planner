@@ -54,15 +54,22 @@ describe('Google OAuth call sites', () => {
     assert.ok(listAt > claimShareAt)
   })
 
-  it('join and login pages sign in without requesting Gmail', () => {
+  it('join, login, and the Home guest wall sign in without requesting Gmail', () => {
     const join = readFileSync(new URL('../pages/JoinTrip.tsx', import.meta.url), 'utf8')
     const login = readFileSync(new URL('../pages/Login.tsx', import.meta.url), 'utf8')
+    const home = readFileSync(new URL('../pages/Home.tsx', import.meta.url), 'utf8')
     assert.match(join, /signInWithGoogle\(\{\s*redirectPath:/)
     assert.equal(join.includes('gmail: true'), false)
     assert.match(login, /signInWithGoogle\(\)/)
     assert.equal(login.includes('gmail: true'), false)
+    assert.match(home, /signInWithGoogle\(\)/)
+    assert.equal(home.includes('gmail: true'), false)
     assert.equal(join.includes(GMAIL_READONLY_SCOPE), false)
     assert.equal(login.includes(GMAIL_READONLY_SCOPE), false)
+    assert.equal(home.includes(GMAIL_READONLY_SCOPE), false)
+    const entry = readFileSync(new URL('../components/auth/LoginEntry.tsx', import.meta.url), 'utf8')
+    assert.equal(entry.includes(GMAIL_READONLY_SCOPE), false)
+    assert.equal(entry.includes('gmail: true'), false)
   })
 
   it('session reconnect banner stays on identity scopes', () => {

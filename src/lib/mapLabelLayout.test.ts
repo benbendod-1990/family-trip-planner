@@ -107,9 +107,11 @@ describe('poster components dropped always-on blurb cards', () => {
     assert.ok(src.includes('לחצו על תחנה לפירוט'))
   })
 
-  it('overview uses a dotted path and separate icon/chip layers', () => {
+  it('overview uses numbered arrows and separate icon/chip layers', () => {
     const src = readFileSync(join(root, 'src/components/map/IllustratedOverviewMap.tsx'), 'utf8')
-    assert.ok(src.includes('strokeDasharray="2 11"'))
+    assert.ok(src.includes('overview-route-arrow'))
+    assert.ok(src.includes('layout.hops'))
+    assert.equal(src.includes('strokeDasharray="2 11"'), false)
     assert.equal(src.includes('strokeWidth="7"'), false)
     assert.ok(src.includes('layout.chips'))
     assert.equal(src.includes('leaflet'), false)

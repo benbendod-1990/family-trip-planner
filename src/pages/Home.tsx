@@ -6,7 +6,10 @@ import { useTripStore } from '@/stores/tripStore'
 import { useAuth } from '@/lib/AuthContext'
 import TripCard from '@/components/trip/TripCard'
 import TripFormModal from '@/components/trip/TripFormModal'
-import { Plus, Upload } from 'lucide-react'
+import { AuthEntryCard } from '@/components/auth/AuthEntryScreen'
+import GoogleSignInButton from '@/components/auth/GoogleSignInButton'
+import { Plus, Upload, Users } from 'lucide-react'
+import { isFamilyCatalogEmail } from '@/lib/familyCatalog'
 import styled from 'styled-components'
 import { importTripFromFile } from '@/utils/export'
 import { generateId } from '@/utils/id'
@@ -66,10 +69,17 @@ const ButtonRow = styled.div<{ $mobile: boolean }>`
   `}
 `
 
+const GuestWall = styled.div`
+  display: flex;
+  justify-content: center;
+  padding: 24px 0 40px;
+`
+
 export default function Home() {
   const navigate = useNavigate()
   const trips = useTripStore(s => s.trips)
-  const { session, loading: authLoading } = useAuth()
+  const { session, user, loading: authLoading, signInWithGoogle } = useAuth()
+  const showAdminUsers = isFamilyCatalogEmail(user?.email)
   const [showCreate, setShowCreate] = useState(false)
   const { isMobile, isTablet } = useBreakpoint()
   const isGuest = !session && !authLoading
@@ -96,6 +106,14 @@ export default function Home() {
           <Typography variant="body2" style={{ color: '#8F7B5C' }}>
             תכנן את הטיול המשפחתי הבא שלך
           </Typography>
+          {showAdminUsers && (
+            <Button variant="ghost" size="sm" onClick={() => navigate('/admin/users')} title="מי נרשם לאפליקציה">
+              <Stack direction="row" spacing="xs" align="center">
+                <Users size={14} />
+                <span>משתמשים רשומים</span>
+              </Stack>
+            </Button>
+          )}
         </Stack>
         <ButtonRow $mobile={isMobile}>
           <Suspense fallback={<CloudSyncSlot />}>
@@ -117,18 +135,28 @@ export default function Home() {
       </Header>
 
       {trips.length === 0 ? (
-        <Stack direction="column" spacing="md" align="center" style={{ padding: '32px 0' }}>
-          <EmptyState
-            title={isGuest ? 'התחברו כדי לראות את הטיולים' : 'אין טיולים עדיין'}
-            description={
-              isGuest
-                ? 'הטיולים המשפחתיים זמינים רק אחרי התחברות עם Google'
-                : 'עדיין אין טיולים שמורים לחשבון הזה'
-            }
-            actionText={isGuest ? 'התחברות עם Google' : 'צור טיול ראשון'}
-            onAction={() => (isGuest ? navigate('/login') : setShowCreate(true))}
-          />
-        </Stack>
+        isGuest ? (
+          <GuestWall>
+            <AuthEntryCard
+              title="התחברו כדי לראות את הטיולים"
+              subtitle="הטיולים המשפחתיים זמינים רק אחרי התחברות עם Google"
+              footnote="כניסה עם חשבון Google. רק אימייל ופרופיל."
+            >
+              <GoogleSignInButton onClick={() => void signInWithGoogle()}>
+                התחברות עם Google
+              </GoogleSignInButton>
+            </AuthEntryCard>
+          </GuestWall>
+        ) : (
+          <Stack direction="column" spacing="md" align="center" style={{ padding: '32px 0' }}>
+            <EmptyState
+              title="אין טיולים עדיין"
+              description="עדיין אין טיולים שמורים לחשבון הזה"
+              actionText="צור טיול ראשון"
+              onAction={() => setShowCreate(true)}
+            />
+          </Stack>
+        )
       ) : (
         <Grid columns={isMobile ? 1 : isTablet ? 2 : 3} gap="md">
           {trips.map((trip, i) => (

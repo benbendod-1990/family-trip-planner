@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import styled from 'styled-components'
-import { Button, Container, Stack, Typography } from 'myk-library'
 import { useAuth } from '@/lib/AuthContext'
 import {
   clearPendingShareToken,
@@ -10,22 +9,47 @@ import {
   shareLinkFailureStatus,
   stashPendingShareToken,
 } from '@/lib/tripShareLink'
+import AuthEntryScreen from '@/components/auth/AuthEntryScreen'
+import GoogleSignInButton from '@/components/auth/GoogleSignInButton'
 
-const Wrap = styled.div`
-  min-height: 100dvh;
-  display: grid;
-  place-items: center;
-  padding: 32px 16px;
+const GhostButton = styled.button`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 8px 14px;
+  border: none;
+  background: transparent;
+  color: ${({ theme }) => theme.colors.gray[600]};
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  touch-action: manipulation;
+
+  &:hover {
+    color: ${({ theme }) => theme.colors.gray[800]};
+  }
+
+  &:focus-visible {
+    outline: 2px solid ${({ theme }) => theme.colors.primary[500]};
+    outline-offset: 3px;
+    border-radius: 10px;
+  }
 `
 
-const Card = styled.div`
-  background: #fff;
-  border: 1px solid ${({ theme }) => theme.colors.gray[200]};
-  border-radius: 16px;
-  padding: 32px;
-  max-width: 420px;
-  width: 100%;
-  text-align: center;
+const Status = styled.p`
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: ${({ theme }) => theme.colors.gray[500]};
+`
+
+const ErrorText = styled.p`
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #b45309;
 `
 
 interface PeekInfo {
@@ -128,60 +152,44 @@ export default function JoinTrip() {
 
   if (!token) {
     return (
-      <Container>
-        <Wrap>
-          <Card dir="rtl">
-            <Stack direction="column" spacing="lg" align="center">
-              <div style={{ fontSize: 48 }}>🔗</div>
-              <Typography variant="h2">לינק שיתוף לא תקין</Typography>
-              <Typography variant="body1" style={{ color: '#6b7280' }}>
-                בקשו מבעל הטיול לינק חדש.
-              </Typography>
-              <Button variant="primary" onClick={onDecline}>חזרה הביתה</Button>
-            </Stack>
-          </Card>
-        </Wrap>
-      </Container>
+      <AuthEntryScreen
+        mark="🔗"
+        title="לינק שיתוף לא תקין"
+        subtitle="בקשו מבעל הטיול לינק חדש."
+      >
+        <GhostButton type="button" onClick={onDecline}>חזרה הביתה</GhostButton>
+      </AuthEntryScreen>
     )
   }
 
   const heading = peek?.trip_name ?? 'טיול משפחתי'
+  const waiting = loading || peek === undefined || busy || (session && peek && !status)
 
   return (
-    <Container>
-      <Wrap>
-        <Card dir="rtl">
-          <Stack direction="column" spacing="lg" align="center">
-            <div style={{ fontSize: 48 }}>{peek?.cover_emoji ?? '🧳'}</div>
-            <Typography variant="h2">הוזמנת לטיול</Typography>
-            <Typography variant="h5" style={{ margin: 0 }}>{heading}</Typography>
-            {peek?.destination && (
-              <Typography variant="body2" style={{ color: '#6b7280' }}>
-                {peek.destination}
-              </Typography>
-            )}
-            <Typography variant="body1" style={{ color: '#6b7280' }}>
-              אחרי כניסה עם Google תראו רק את הטיול הזה, לא את כל הקטלוג המשפחתי.
-            </Typography>
-            {status && (
-              <Typography variant="body2" style={{ color: '#ef4444' }}>{status}</Typography>
-            )}
-            {loading || peek === undefined || busy || (session && peek && !status) ? (
-              <Typography variant="body2" style={{ color: '#6b7280' }}>
-                {session && peek ? 'מצרפים אותך לטיול…' : 'טוען…'}
-              </Typography>
-            ) : (
-              <Button
-                variant="primary"
-                onClick={() => void signInWithGoogle({ redirectPath: joinPathForToken(token) })}
-              >
-                התחברות עם Google
-              </Button>
-            )}
-            <Button variant="ghost" onClick={onDecline}>לא תודה</Button>
-          </Stack>
-        </Card>
-      </Wrap>
-    </Container>
+    <AuthEntryScreen
+      mark={peek?.cover_emoji ?? '🧳'}
+      title="הוזמנת לטיול"
+      lead={heading}
+      subtitle={
+        <>
+          {peek?.destination ? <>{peek.destination}<br /></> : null}
+          אחרי כניסה עם Google תראו רק את הטיול הזה, לא את כל הקטלוג המשפחתי.
+        </>
+      }
+    >
+      {status ? <ErrorText>{status}</ErrorText> : null}
+      {waiting ? (
+        <Status>
+          {session && peek ? 'מצרפים אותך לטיול…' : 'טוען…'}
+        </Status>
+      ) : (
+        <GoogleSignInButton
+          onClick={() => void signInWithGoogle({ redirectPath: joinPathForToken(token) })}
+        >
+          התחברות עם Google
+        </GoogleSignInButton>
+      )}
+      <GhostButton type="button" onClick={onDecline}>לא תודה</GhostButton>
+    </AuthEntryScreen>
   )
 }

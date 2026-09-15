@@ -20,6 +20,7 @@ import {
   registerWebAuthnCredential,
   type WebAuthnAssertionBody,
 } from './webauthn'
+import { callerMayPullTripDoc } from './docPullAuth'
 
 export interface Env {
   ANTHROPIC_API_KEY: string
@@ -129,6 +130,9 @@ export default {
       // browser can't fetch it directly, no CORS). No AI key needed, so it
       // sits ahead of both the Gemini and Anthropic guards.
       if (url.pathname === '/api/docs/pull') {
+        if (!callerMayPullTripDoc(caller)) {
+          return json({ error: 'forbidden', detail: 'family catalog only' }, 403, cors)
+        }
         const body = (await req.json()) as DocPullRequest
         const r = await pullDocText(body)
         if ('error' in r) return json({ error: r.error, detail: r.detail }, r.status, cors)

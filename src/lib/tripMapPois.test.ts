@@ -126,6 +126,53 @@ describe('map page wiring does not leak family seeds', () => {
   })
 })
 
+describe('overview route follows first-visit itinerary time', () => {
+  it('numbers Florida stops in לו״ז order, not Hebrew name order', () => {
+    const keys = extractTripMapPois(usa).map(p => p.key)
+    const idx = (frag: string) => keys.findIndex(k => k.includes(frag))
+    const order = [
+      idx('miami international'),
+      idx('solterra'),
+      idx('magic kingdom'),
+      idx('epcot'),
+      idx('canaveral'),
+      idx('cococay'),
+      idx('disney springs'),
+      idx('seaworld'),
+      idx('peppa'),
+      idx('gatorland'),
+    ]
+    assert.ok(order.every(i => i >= 0), `missing pin: ${keys.join(', ')}`)
+    for (let i = 1; i < order.length; i++) {
+      assert.ok(order[i - 1] < order[i], `${keys[order[i - 1]]} should precede ${keys[order[i]]}`)
+    }
+  })
+
+  it('reorders the path when an event moves later in the schedule', () => {
+    const before = extractTripMapPois(usa).map(p => p.key)
+    const mkBefore = before.findIndex(k => k.includes('magic kingdom'))
+    const gatorBefore = before.findIndex(k => k.includes('gatorland'))
+    assert.ok(mkBefore >= 0 && mkBefore < gatorBefore)
+
+    const edited = structuredClone(usa)
+    const mkDay = edited.days.find(d =>
+      (d.events ?? []).some(e => /magic kingdom/i.test(e.location ?? '')),
+    )
+    assert.ok(mkDay)
+    const mk = mkDay!.events.find(e => /magic kingdom/i.test(e.location ?? ''))
+    assert.ok(mk)
+    mkDay!.events = mkDay!.events.filter(e => e.id !== mk!.id)
+    const later = edited.days.find(d => d.date === '2027-03-31')
+    assert.ok(later)
+    later!.events.push({ ...mk!, dayId: later!.id, startTime: '12:00' })
+
+    const after = extractTripMapPois(edited).map(p => p.key)
+    const mkAfter = after.findIndex(k => k.includes('magic kingdom'))
+    const gatorAfter = after.findIndex(k => k.includes('gatorland'))
+    assert.ok(gatorAfter >= 0 && gatorAfter < mkAfter)
+  })
+})
+
 describe('Family Profile is removed from the product UI', () => {
   it('deletes the FamilyProfile page', () => {
     assert.equal(existsSync(join(root, 'src/pages/FamilyProfile.tsx')), false)

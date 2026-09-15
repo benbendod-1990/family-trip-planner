@@ -19,6 +19,8 @@ export interface PlaceCandidate {
   eventIds: string[]
   dayDates: string[]
   dayLabels: string[]
+  /** Earliest itinerary stamp (`YYYY-MM-DDTHH:mm`) so the overview path follows the לו״ז. */
+  firstVisitAt?: string
 }
 
 export interface TripMapPoi extends PlaceCandidate {
@@ -140,6 +142,11 @@ interface AccLike {
   coords?: TripCoords
 }
 
+export function itineraryVisitStamp(dayDate?: string, startTime?: string): string | undefined {
+  if (!dayDate) return undefined
+  return `${dayDate}T${startTime?.trim() || '99:99'}`
+}
+
 function pushSource(
   buckets: Map<string, {
     location: string
@@ -148,6 +155,7 @@ function pushSource(
     dayLabels: string[]
     descriptions: string[]
     coords?: TripCoords
+    firstVisitAt?: string
   }>,
   location: string,
   source: {
@@ -156,6 +164,7 @@ function pushSource(
     dayLabel?: string
     description?: string
     coords?: TripCoords
+    startTime?: string
   },
 ) {
   const key = canonicalPlaceKey(location)
@@ -181,6 +190,10 @@ function pushSource(
   }
   if (source.description?.trim()) bucket.descriptions.push(source.description)
   if (!bucket.coords && source.coords) bucket.coords = source.coords
+  const stamp = itineraryVisitStamp(source.dayDate, source.startTime)
+  if (stamp && (!bucket.firstVisitAt || stamp < bucket.firstVisitAt)) {
+    bucket.firstVisitAt = stamp
+  }
 }
 
 /**
@@ -195,6 +208,7 @@ export function collectPlaceCandidates(trip: Pick<TripPlan, 'days' | 'accommodat
     dayLabels: string[]
     descriptions: string[]
     coords?: TripCoords
+    firstVisitAt?: string
   }>()
 
   for (const day of trip.days ?? []) {
@@ -207,6 +221,7 @@ export function collectPlaceCandidates(trip: Pick<TripPlan, 'days' | 'accommodat
         dayLabel: day.label,
         description: event.description,
         coords: event.coords,
+        startTime: event.startTime,
       })
     }
   }
@@ -249,6 +264,7 @@ export function collectPlaceCandidates(trip: Pick<TripPlan, 'days' | 'accommodat
       eventIds: bucket.eventIds,
       dayDates: bucket.dayDates,
       dayLabels: bucket.dayLabels,
+      firstVisitAt: bucket.firstVisitAt,
     })
   }
 
@@ -298,12 +314,12 @@ export function extractTripMapPois(trip: TripPlan): TripMapPoi[] {
   return sortPoisByItinerary(focused)
 }
 
-/** First-visit order so the dashed route follows the itinerary, not Hebrew sort. */
+/** First-visit order so the numbered route follows the itinerary, not Hebrew sort. */
 export function sortPoisByItinerary(pois: TripMapPoi[]): TripMapPoi[] {
   return [...pois].sort((a, b) => {
-    const da = a.dayDates[0] ?? '9999-99-99'
-    const db = b.dayDates[0] ?? '9999-99-99'
-    if (da !== db) return da.localeCompare(db)
+    const ta = a.firstVisitAt ?? `${a.dayDates[0] ?? '9999-99-99'}T99:99`
+    const tb = b.firstVisitAt ?? `${b.dayDates[0] ?? '9999-99-99'}T99:99`
+    if (ta !== tb) return ta.localeCompare(tb)
     return a.name.localeCompare(b.name, 'he')
   })
 }

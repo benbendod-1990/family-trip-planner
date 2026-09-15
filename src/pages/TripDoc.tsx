@@ -4,15 +4,15 @@ import { Stack, Typography, Button, EmptyState, Spinner, Badge, Card } from 'myk
 import { FileText, BookOpen, Upload, Trash2, ExternalLink, Image as ImageIcon, MailSearch, Lock } from 'lucide-react'
 import styled from 'styled-components'
 import { useTripStore } from '@/stores/tripStore'
+import { useAuth } from '@/lib/AuthContext'
+import { isFamilyCatalogEmail } from '@/lib/familyCatalog'
 import { useBreakpoint } from '@/hooks/useBreakpoint'
+import { useIsTripOwner } from '@/hooks/useIsTripOwner'
 import { fetchDocText } from '@/lib/tripDoc'
 import { documentUrl, deleteDocument, uploadDocument, classifyDocument } from '@/lib/tripDocuments'
 import { pullAllDocuments } from '@/lib/gmailSync'
 import { GmailAuthError, GmailForbiddenError } from '@/lib/gmailToken'
 import { documentHref, isLinkOnlyDocument } from '@/lib/seedBookingDocuments'
-import { isFamilyCatalogEmail } from '@/lib/familyCatalog'
-import { useAuth } from '@/lib/AuthContext'
-import { useIsTripOwner } from '@/hooks/useIsTripOwner'
 import { ensureSensitiveUnlocked, probeAuthenticator, WebAuthnUnavailableError, type UnlockCopy } from '@/lib/webauthnUnlock'
 import { hasPassportFile, isPendingPassport, isSensitiveKind } from '@/lib/sensitiveDocument'
 import TripDocCard from '@/components/dashboard/TripDocCard'
@@ -121,7 +121,8 @@ export default function TripDoc() {
   const trip = useTripStore(s => s.trips.find(t => t.id === id))
   const { isMobile } = useBreakpoint()
   const { user } = useAuth()
-  const canGmail = isFamilyCatalogEmail(user?.email)
+  const isAdmin = isFamilyCatalogEmail(user?.email)
+  const canGmail = isAdmin
   const { isOwner, loading: ownerLoading } = useIsTripOwner(id)
   const [gmailReconnect, setGmailReconnect] = useState(false)
 
@@ -292,7 +293,7 @@ export default function TripDoc() {
   }
 
   const readPlan = async () => {
-    if (!trip.docUrl) return
+    if (!isAdmin || !trip.docUrl) return
     setPlanBusy(true)
     setPlanError(null)
     try {
@@ -557,7 +558,7 @@ export default function TripDoc() {
       <Stack direction="column" spacing="sm">
         <Typography variant="body1" style={{ fontWeight: 600 }}>מסמך התכנון</Typography>
         <TripDocCard trip={trip} />
-        {trip.docUrl && !planText && (
+        {isAdmin && trip.docUrl && !planText && (
           <Button onClick={readPlan} disabled={planBusy} variant="ghost">
             <Stack direction="row" spacing="xs" align="center" justify="center">
               {planBusy ? <Spinner size="sm" /> : <BookOpen size={16} />}
