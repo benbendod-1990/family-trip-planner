@@ -98,9 +98,18 @@ describe('share-link Hebrew errors', () => {
         'create_or_get_trip_share_link: column reference "expires_at" is ambiguous | It could refer to either a PL/pgSQL variable or a table column. | 42702',
       ),
     )
-    assert.match(ambiguous, /0013/)
+    assert.match(ambiguous, /שגיאת שיתוף בשרת/)
+    assert.equal(ambiguous.includes('0013'), false)
     assert.equal(ambiguous.includes('expires_at'), false)
     assert.equal(ambiguous.includes('42702'), false)
+    const claimAmbiguous = shareLinkFailureStatus(
+      new Error(
+        'claim_trip_share_link: column reference "trip_id" is ambiguous | It could refer to either a PL/pgSQL variable or a table column. | 42702',
+      ),
+    )
+    assert.match(claimAmbiguous, /שגיאת שיתוף בשרת/)
+    assert.equal(claimAmbiguous.includes('0013'), false)
+    assert.equal(claimAmbiguous.includes('trip_id'), false)
     assert.match(
       shareLinkFailureStatus(new Error('share_trip_mismatch')),
       /טיול אחר/,
@@ -424,5 +433,39 @@ describe('0013 share-link RETURNS TABLE vs column names', () => {
     const page = readFileSync(new URL('../pages/Quickstart.tsx', import.meta.url), 'utf8')
     assert.match(page, /0013_fix_share_link_expires_at\.sql/)
     assert.match(page, /0012_trip_share_links\.sql/)
+  })
+})
+
+describe('0014 claim_trip_share_link RETURNS TABLE vs ON CONFLICT columns', () => {
+  it('is copied to public/migrations and matches supabase/', () => {
+    const a = readFileSync(new URL('../../supabase/migrations/0014_fix_claim_share_link_trip_id_ambiguous.sql', import.meta.url), 'utf8')
+    const b = readFileSync(new URL('../../public/migrations/0014_fix_claim_share_link_trip_id_ambiguous.sql', import.meta.url), 'utf8')
+    assert.equal(a, b)
+  })
+
+  it('uses ON CONFLICT ON CONSTRAINT trip_members_pkey, not (trip_id, user_id)', () => {
+    const sql = readFileSync(new URL('../../supabase/migrations/0014_fix_claim_share_link_trip_id_ambiguous.sql', import.meta.url), 'utf8')
+    const body = functionBody(sql, 'claim_trip_share_link')
+    assert.match(body, /on conflict on constraint trip_members_pkey do update/)
+    assert.equal(/on conflict \(trip_id,\s*user_id\)/.test(body), false)
+    assert.deepEqual(bareClashColumnHits(body), [])
+    assert.match(sql, /revoke all on function public\.claim_trip_share_link\(text\) from public, anon/)
+    assert.match(sql, /grant execute on function public\.claim_trip_share_link\(text\) to authenticated/)
+  })
+
+  it('0014 recreates the 0013 claim body except the conflict target', () => {
+    const a = readFileSync(new URL('../../supabase/migrations/0013_fix_share_link_expires_at.sql', import.meta.url), 'utf8')
+    const b = readFileSync(new URL('../../supabase/migrations/0014_fix_claim_share_link_trip_id_ambiguous.sql', import.meta.url), 'utf8')
+    const oldBody = functionBody(a, 'claim_trip_share_link').replace(
+      /on conflict \(trip_id, user_id\) do update/,
+      'on conflict on constraint trip_members_pkey do update',
+    )
+    assert.equal(oldBody, functionBody(b, 'claim_trip_share_link'))
+  })
+
+  it('Quickstart lists 0014 next to 0013', () => {
+    const page = readFileSync(new URL('../pages/Quickstart.tsx', import.meta.url), 'utf8')
+    assert.match(page, /0014_fix_claim_share_link_trip_id_ambiguous\.sql/)
+    assert.match(page, /0013_fix_share_link_expires_at\.sql/)
   })
 })

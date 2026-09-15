@@ -217,7 +217,7 @@ export function shareLinkFailureStatus(e: unknown): string {
     msg.includes('42702') ||
     /column reference ".+" is ambiguous/i.test(msg)
   ) {
-    return 'שגיאת שיתוף בשרת (מיגרציה 0013). רעננו את האפליקציה ונסו שוב.'
+    return 'שגיאת שיתוף בשרת. רעננו את האפליקציה ונסו שוב.'
   }
   if (
     msg.includes('0012') ||
