@@ -67,6 +67,7 @@ describe('USA live-seed repair wiring', () => {
     assert.match(src, /Animal Kingdom/)
     assert.match(src, /חוף\\s\*\\\/\\s\*מנוחה/)
     assert.match(src, /days: freshUsa\.days/)
+    assert.match(src, /applyUsaBudgetRepair/)
     assert.equal(STALE.test(JSON.stringify(usa)), false)
   })
 

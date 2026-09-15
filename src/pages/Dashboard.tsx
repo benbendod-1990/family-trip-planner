@@ -22,6 +22,7 @@ import TodayCard from '@/components/dashboard/TodayCard'
 import SpendingInsight from '@/components/dashboard/SpendingInsight'
 import QuickActions from '@/components/dashboard/QuickActions'
 import MiniStat from '@/components/dashboard/MiniStat'
+import { USA_TRIP_ID } from '@/data/usaBudget'
 import { Wallet, ListTodo, CalendarDays, Backpack, Menu, Compass, CalendarRange, Sun } from 'lucide-react'
 import { differenceInCalendarDays, parseISO } from 'date-fns'
 
@@ -344,9 +345,13 @@ function DashboardContent() {
         <SectionLabel>סקירה מהירה</SectionLabel>
         <StatsGrid $mobile={isMobile}>
           <MiniStat
-            title="תקציב"
+            title={trip.id === USA_TRIP_ID ? 'שולם ידוע' : 'תקציב'}
             value={formatCurrency(totalSpent, currency)}
-            description={totalBudget > 0 ? `מתוך ${formatCurrency(totalBudget, currency)}` : 'לא הוגדר'}
+            description={
+              trip.id === USA_TRIP_ID
+                ? 'לא מסגרת כוללת — פירוט בעמוד הכסף'
+                : totalBudget > 0 ? `מתוך ${formatCurrency(totalBudget, currency)}` : 'לא הוגדר'
+            }
             icon={<Wallet size={16} />}
             color={budgetPct > 90 ? '#ef4444' : '#D67A1F'}
           />

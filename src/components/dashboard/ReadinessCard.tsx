@@ -2,6 +2,7 @@ import styled from 'styled-components'
 import { Card, Typography } from 'myk-library'
 import type { TripPlan } from '@/types/trip-plan'
 import { getTripDuration } from '@/utils/date'
+import { USA_TRIP_ID } from '@/data/usaBudget'
 
 interface Props {
   trip: TripPlan
@@ -111,7 +112,8 @@ export default function ReadinessCard({ trip }: Props) {
     }, 0)
     return nights >= duration - 1
   })()
-  const budgetSet = trip.budget.totalBudget > 0
+  const usaLedger = trip.id === USA_TRIP_ID && (trip.budget.items?.length ?? 0) > 0
+  const budgetSet = usaLedger || trip.budget.totalBudget > 0
   const eventsPlanned = (trip.days ?? []).flatMap(d => d.events ?? []).length >= duration
 
   const checks: Check[] = [
@@ -130,7 +132,7 @@ export default function ReadinessCard({ trip }: Props) {
     {
       label: 'תקציב',
       ok: budgetSet,
-      detail: budgetSet ? 'מוגדר' : 'לא הוגדר',
+      detail: usaLedger ? 'פירוט בעמוד הכסף' : budgetSet ? 'מוגדר' : 'לא הוגדר',
       icon: '💰',
     },
     {

@@ -7,6 +7,7 @@
 
 import type { TripPlan } from '@/types/trip-plan'
 import { FAMILY_SEED_TRIPS } from '@/data/familySeeds'
+import { applyUsaBudgetRepair } from '@/data/usaBudget'
 import { normalizePersistedTripFields } from '@/lib/seedNormalize'
 import { ensureSeedBookingDocuments } from '@/lib/seedBookingDocuments'
 import { ensureSeedDocLinks } from '@/lib/seedDocLink'
@@ -301,6 +302,10 @@ export function repairLiveSeedTrips(trips: TripPlan[]): TripPlan[] {
         updatedAt: new Date().toISOString(),
       }
     })
+    // One-shot: first USA seed shipped a $0 budget (combined flight +
+    // "3 cabins" placeholders). Swap in the documented ledger — rules live
+    // in usaBudget.ts — without touching user-added expense rows.
+    state.trips = state.trips.map(t => applyUsaBudgetRepair(t, freshUsa.budget))
   }
 
   // One-shot: replace stale Crete trip — original seed assumed a 7-night
