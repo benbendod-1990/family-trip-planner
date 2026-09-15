@@ -12,15 +12,13 @@ import { formatCurrency, CURRENCY_OPTIONS } from '@/utils/currency'
 import ExpenseFormModal from '@/components/budget/ExpenseFormModal'
 import UsaBudgetLedger from '@/components/budget/UsaBudgetLedger'
 import type { BudgetItem } from '@/types/budget'
-import { Plus, Pencil, Trash2, Wallet } from 'lucide-react'
+import { Plus, Pencil, Trash2, Wallet, Receipt, Handshake, Landmark } from 'lucide-react'
 import styled from 'styled-components'
 import {
-  USA_BUDGET_FRAME,
   USA_BUDGET_SEED_ITEM_IDS,
   USA_TRIP_ID,
   formatUsd,
-  usaPaidToSupplierUsd,
-  usaSupplierRemainingUsd,
+  usaMoneyHeadlines,
 } from '@/data/usaBudget'
 
 const CATEGORY_LABEL: Record<string, string> = {
@@ -90,7 +88,7 @@ export default function Budget() {
   return (
     <PageWrapper $mobile={isMobile}>
       <Stack direction="row" align="center" justify="between">
-        <Typography variant="h5" style={{ margin: 0 }}>💰 תקציב</Typography>
+        <Typography variant="h5" style={{ margin: 0 }}>{isUsa ? '💰 כסף' : '💰 תקציב'}</Typography>
         <Button variant="primary" size="sm" onClick={() => setShowAdd(true)} style={{ whiteSpace: 'nowrap', flexShrink: 0 }}>
           <Stack direction="row" spacing="xs" align="center">
             <Plus size={14} />
@@ -101,7 +99,7 @@ export default function Budget() {
 
       {isUsa && (
         <Alert variant="warning" title="בלי המצאות מ-WhatsApp">
-          אין סכומי «כבר שולם» עם תאריך לטיול 2027 בצ׳אט. אשראי מול אבנר הוזכר בלי סכום. יתרות כאן הן לספקים; התחשבנות בין בני המשפחה ריקה עד שיהיה הסכם עם סכום.
+          אין סכומי «כבר שולם» עם תאריך לטיול 2027 בצ׳אט, ואין IOU מאדם לאדם. אשראי מול אבנר הוזכר בלי סכום. שלוש השאלות למטה: כמה עלה, כמה להחזיר לאבנר פר זוג, וכמה נשאר לשלם.
         </Alert>
       )}
 
@@ -111,30 +109,34 @@ export default function Budget() {
         </Alert>
       )}
 
-      {isUsa ? (
-        <Grid columns={isMobile ? 1 : isTablet ? 2 : 3} gap="md">
-          <StatCard
-            title="מסגרת עם קרוז"
-            value={formatUsd(USA_BUDGET_FRAME.withCruiseUsd)}
-            icon={<Wallet size={20} />}
-            description="אומדן רמי — לא שולם"
-            color="#f59e0b"
-            onClick={!editBudget ? () => { setNewTotal(totalBudget); setNewCurrency(currency); setEditBudget(true) } : undefined}
-          />
-          <StatCard
-            title="יתרה לספקים"
-            value={formatUsd(usaSupplierRemainingUsd())}
-            color="#B5630F"
-            description="RC 3753418 / 3753537 / 3753278"
-          />
-          <StatCard
-            title="שולם לספק (ידוע)"
-            value={formatUsd(usaPaidToSupplierUsd())}
-            color="#10b981"
-            description="פיקדון אבנר + Refreshment/VOOM של בן"
-          />
-        </Grid>
-      ) : (
+      {isUsa ? (() => {
+        const headlines = usaMoneyHeadlines()
+        return (
+          <Grid columns={isMobile ? 1 : isTablet ? 2 : 3} gap="md">
+            <StatCard
+              title="כמה עלה עד עכשיו"
+              value={formatUsd(headlines.paidSoFarUsd)}
+              icon={<Receipt size={20} />}
+              color="#10b981"
+              description="פיקדון אבנר $200 + Refreshment $146.24 + VOOM $87.96 · טיסות וקרוז לא אושרו כשולמו"
+            />
+            <StatCard
+              title="מה צריך לשלם לאבנר פר זוג"
+              value={headlines.oweAvnerLabel ?? 'טרם ידוע'}
+              icon={<Handshake size={20} />}
+              color="#B5630F"
+              description="בן+גל / עדן+ליבי / אגם+שובל · נוסחה בלי מחיר יחידה"
+            />
+            <StatCard
+              title="כמה נשאר לשלם (צפוי)"
+              value={formatUsd(headlines.remainingKnownUsd)}
+              icon={<Landmark size={20} />}
+              color="#d97706"
+              description={`יתרות RC ידועות · טיסות ≈ $${headlines.unconfirmedAdultFlightsUsd.toLocaleString('en-US')} לא אושרו · פארקים ≈ $${headlines.parksEstimateLowUsd.toLocaleString('en-US')}–$${headlines.parksEstimateHighUsd.toLocaleString('en-US')} · וילה/ESTA TBD`}
+            />
+          </Grid>
+        )
+      })() : (
         <Grid columns={isMobile ? 1 : isTablet ? 2 : 3} gap="md">
           <StatCard
             title="תקציב כולל"

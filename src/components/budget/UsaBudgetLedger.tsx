@@ -1,16 +1,18 @@
 import styled from 'styled-components'
 import { Badge, Typography } from 'myk-library'
 import {
+  USA_BUDGET_FRAME,
+  USA_COUPLE_SETTLEMENTS,
   USA_ESTIMATE_LINES,
   USA_PAYMENT_RULES,
   USA_SETTLEMENT_HONESTY,
-  USA_SETTLEMENT_LINES,
   USA_SUPPLIER_LINES,
   formatUsd,
   type UsaBudgetLine,
+  type UsaCoupleSettlement,
   type UsaMoney,
 } from '@/data/usaBudget'
-import { AlertTriangle, BookOpen, Calculator, Handshake, Landmark } from 'lucide-react'
+import { AlertTriangle, BookOpen, Handshake, Landmark, Receipt } from 'lucide-react'
 
 function Money({ money }: { money: UsaMoney }) {
   if (money.kind === 'tbd') {
@@ -43,6 +45,34 @@ function LineCard({ line }: { line: UsaBudgetLine }) {
   )
 }
 
+function CoupleCard({ couple }: { couple: UsaCoupleSettlement }) {
+  return (
+    <Couple>
+      <CoupleHead>
+        <LineTitle>{couple.label}</LineTitle>
+        <Badge size="sm">טרם ידוע</Badge>
+      </CoupleHead>
+      <Payer>ילדים שאבנר מכסה: {couple.kidsAvnerCovers}</Payer>
+      <Sub>להחזיר לאבנר (נוסחה, בלי סכום)</Sub>
+      {couple.oweAvner.map(line => (
+        <Owe key={line.id}>
+          <LineTop>
+            <LineTitle as="div">{line.label}</LineTitle>
+            <Money money={line.money} />
+          </LineTop>
+          <Notes>{line.formula}</Notes>
+        </Owe>
+      ))}
+      <Sub>משלמים לספק — לא לאבנר</Sub>
+      <List>
+        {couple.paySupplierNotAvner.map(note => (
+          <li key={note}>{note}</li>
+        ))}
+      </List>
+    </Couple>
+  )
+}
+
 export default function UsaBudgetLedger() {
   const remaining = USA_SUPPLIER_LINES.filter(l => l.remainingDue)
   const paid = USA_SUPPLIER_LINES.filter(l => l.paidToSupplier)
@@ -53,6 +83,61 @@ export default function UsaBudgetLedger() {
 
   return (
     <Wrap>
+      <Section>
+        <Head>
+          <Receipt size={16} />
+          <Typography variant="h6" style={{ margin: 0 }}>1. כמה עלה עד עכשיו</Typography>
+        </Head>
+        <Hint>
+          רק סכומים עם קבלה שכבר יצאו מחשבון. טיסות אל על ויתרות הקרוז <strong>לא</strong> כאן — אין אישור תשלום מתוארך.
+        </Hint>
+        {paid.map(line => <LineCard key={line.id} line={line} />)}
+      </Section>
+
+      <Section>
+        <Head>
+          <Handshake size={16} />
+          <Typography variant="h6" style={{ margin: 0 }}>2. מה צריך לשלם לאבנר פר זוג</Typography>
+        </Head>
+        <Hint>
+          אבנר מכסה: טיסות ילדים, חלק הילדים בקרוז, פארקים לכולם, וילה + אוכל בית, רכב/ים לקבוצה, הוא ורחל.
+          הזוגות מחזירים חלק מבוגרים בפארקים/וילה/רכב — בלי מחיר יחידה אין סכום, לא ממציאים.
+        </Hint>
+        <Empty>
+          <AlertTriangle size={16} />
+          <div>
+            <strong>{USA_SETTLEMENT_HONESTY.title}</strong>
+            <Notes>{USA_SETTLEMENT_HONESTY.body}</Notes>
+            <Source>מקור: {USA_SETTLEMENT_HONESTY.source}</Source>
+          </div>
+        </Empty>
+        {USA_COUPLE_SETTLEMENTS.map(couple => (
+          <CoupleCard key={couple.id} couple={couple} />
+        ))}
+      </Section>
+
+      <Section>
+        <Head>
+          <Landmark size={16} />
+          <Typography variant="h6" style={{ margin: 0 }}>3. כמה נשאר לשלם (צפוי)</Typography>
+        </Head>
+        <Hint>
+          יתרות RC הן מספרים ידועים לספק. טיסות, פארקים, וילה, ESTA וביטוח מסומנים כאומדן או TBD — לא נסכמים למעטפת טיול.
+        </Hint>
+        <Sub>יתרות ידועות לרויאל קריביאן</Sub>
+        {remaining.map(line => <LineCard key={line.id} line={line} />)}
+        <Sub>טיסות מבוגרים — עלות ידועה, תשלום לא אושר</Sub>
+        {knownFare.map(line => <LineCard key={line.id} line={line} />)}
+        <Sub>אומדן פארקים (רמי) — לא נקנה</Sub>
+        {USA_ESTIMATE_LINES.map(line => <LineCard key={line.id} line={line} />)}
+        <Sub>עדיין לא הוזמן / סכום לא ידוע</Sub>
+        {open.map(line => <LineCard key={line.id} line={line} />)}
+        <Footnote>
+          רמי ציין פעם מעטפת לכל הטיול ~{formatUsd(USA_BUDGET_FRAME.withoutCruiseUsd)} בלי קרוז / ~{formatUsd(USA_BUDGET_FRAME.withCruiseUsd)} עם Utopia.
+          זה אומדן ישן, לא «תקציב שיש» ולא הסכום שמוצג למעלה. {USA_BUDGET_FRAME.source}.
+        </Footnote>
+      </Section>
+
       <Section>
         <Head>
           <BookOpen size={16} />
@@ -69,56 +154,6 @@ export default function UsaBudgetLedger() {
             <Source>מקור: {rule.source}</Source>
           </Rule>
         ))}
-      </Section>
-
-      <Section>
-        <Head>
-          <Landmark size={16} />
-          <Typography variant="h6" style={{ margin: 0 }}>יתרות לספקים</Typography>
-        </Head>
-        <Hint>
-          יתרה = מה שנשאר לשלם לספק (אל על / רויאל קריביאן). זה לא חוב בין בני משפחה.
-        </Hint>
-        <Sub>נותר לשלם</Sub>
-        {remaining.map(line => <LineCard key={line.id} line={line} />)}
-        <Sub>שולם לספק (ידוע מקבלה)</Sub>
-        {paid.map(line => <LineCard key={line.id} line={line} />)}
-        {knownFare.length > 0 && (
-          <>
-            <Sub>עלות ידועה — תשלום לספק לא אושר עם תאריך</Sub>
-            {knownFare.map(line => <LineCard key={line.id} line={line} />)}
-          </>
-        )}
-        <Sub>עדיין לא הוזמן / סכום לא ידוע</Sub>
-        {open.map(line => <LineCard key={line.id} line={line} />)}
-      </Section>
-
-      <Section>
-        <Head>
-          <Calculator size={16} />
-          <Typography variant="h6" style={{ margin: 0 }}>אומדנים</Typography>
-        </Head>
-        <Hint>מספרי רמי ושיחות WhatsApp — לתכנון בלבד, לא תשלום שבוצע ולא יתרת ספק.</Hint>
-        {USA_ESTIMATE_LINES.map(line => <LineCard key={line.id} line={line} />)}
-      </Section>
-
-      <Section>
-        <Head>
-          <Handshake size={16} />
-          <Typography variant="h6" style={{ margin: 0 }}>התחשבנות בין בני המשפחה</Typography>
-        </Head>
-        {USA_SETTLEMENT_LINES.length === 0 ? (
-          <Empty>
-            <AlertTriangle size={16} />
-            <div>
-              <strong>{USA_SETTLEMENT_HONESTY.title}</strong>
-              <Notes>{USA_SETTLEMENT_HONESTY.body}</Notes>
-              <Source>מקור: {USA_SETTLEMENT_HONESTY.source}</Source>
-            </div>
-          </Empty>
-        ) : (
-          USA_SETTLEMENT_LINES.map(line => <LineCard key={line.id} line={line} />)
-        )}
       </Section>
     </Wrap>
   )
@@ -180,6 +215,34 @@ const Line = styled.div`
   border-radius: 10px;
   background: ${({ theme }) => theme.colors.gray[100]};
   border: 1px solid ${({ theme }) => theme.colors.gray[200]};
+`
+
+const Couple = styled(Line)`
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+`
+
+const CoupleHead = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+`
+
+const Owe = styled.div`
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: ${({ theme }) => theme.colors.white};
+  border: 1px solid ${({ theme }) => theme.colors.gray[200]};
+`
+
+const List = styled.ul`
+  margin: 0;
+  padding: 0 1.2em 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: ${({ theme }) => theme.colors.gray[700]};
 `
 
 const LineTop = styled.div`
@@ -251,4 +314,11 @@ const Empty = styled.div`
   border-radius: 10px;
   background: rgba(214, 122, 31, 0.12);
   color: #b5630f;
+`
+
+const Footnote = styled.p`
+  margin: 8px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: ${({ theme }) => theme.colors.gray[500]};
 `

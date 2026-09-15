@@ -13,7 +13,7 @@ import { withUsaSeedBudget } from './usaBudget'
  *
  * USA budget overlay: `src/data/usaBudget.ts` is the money source of truth
  * (JSON is kept in sync by test). Overlay so a missed JSON edit cannot ship
- * a $0 Budget page.
+ * an empty USA ledger. `totalBudget` is 0 on purpose — not a whole-trip envelope.
  */
 export const FAMILY_SEED_TRIPS: TripPlan[] = [
   creteTrip as TripPlan,

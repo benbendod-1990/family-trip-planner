@@ -73,12 +73,19 @@ export interface UsaBudgetLine {
 
 export const USA_BUDGET_CURRENCY = 'USD'
 
-/** Rami frame — label as estimate, never as paid. */
+/**
+ * Rami once quoted a whole-trip envelope. Ben rejected showing that as
+ * «how much budget we have». Kept only to (a) detect live copies that
+ * still carry it as totalBudget and (b) a demoted footnote.
+ */
 export const USA_BUDGET_FRAME = {
   withCruiseUsd: 38100,
   withoutCruiseUsd: 32000,
-  source: 'רמי — אומדן מסגרת לכל הטיול, לא שולם',
+  source: 'רמי — אומדן מעטפת לכל הטיול, לא תקציב שיש ולא סכום לתשלום',
 } as const
+
+export const USA_PARKS_ESTIMATE = { fourDayUsd: 7280, fiveDayUsd: 7880 } as const
+export const USA_ADULT_FLIGHT_USD = 1228
 
 export const USA_PAYMENT_RULES: UsaBudgetRule[] = [
   {
@@ -322,33 +329,13 @@ export const USA_SUPPLIER_LINES: UsaBudgetLine[] = [
 
 export const USA_ESTIMATE_LINES: UsaBudgetLine[] = [
   {
-    id: 'est-frame-with-cruise',
-    section: 'estimate',
-    category: 'other',
-    label: 'מסגרת כל הטיול — עם Utopia',
-    money: { kind: 'usd', amount: USA_BUDGET_FRAME.withCruiseUsd },
-    payerLabel: 'אומדן רמי · לא שולם',
-    notes: 'כולל קרוז. לא יתרה לספק ולא העברה ששולמה.',
-    source: USA_BUDGET_FRAME.source,
-  },
-  {
-    id: 'est-frame-without-cruise',
-    section: 'estimate',
-    category: 'other',
-    label: 'מסגרת כל הטיול — בלי קרוז',
-    money: { kind: 'usd', amount: USA_BUDGET_FRAME.withoutCruiseUsd },
-    payerLabel: 'אומדן רמי · לא שולם',
-    notes: 'בלי Utopia. לא שולם.',
-    source: USA_BUDGET_FRAME.source,
-  },
-  {
     id: 'est-parks-4d',
     section: 'estimate',
     category: 'activities',
     label: 'פארקים 4 ימים (7 מבוגרים + 3 ילדים)',
-    money: { kind: 'usd', amount: 7280 },
-    payerLabel: 'אומדן רמי · אבנר לפי הכלל · לא נקנה',
-    notes: 'מספר הראשים הוא של רמי (לא ספירה מחדש של 12 הנפשות). תינוקת בחינם לפי הכלל.',
+    money: { kind: 'usd', amount: USA_PARKS_ESTIMATE.fourDayUsd },
+    payerLabel: 'אומדן רמי · אבנר משלם לכולם · לא נקנה',
+    notes: 'מספר הראשים הוא של רמי. תינוקת בחינם. אין מחיר יחידה — לא מחלקים את האומדן לכרטיס-מבוגר.',
     source: 'רמי — אומדן',
   },
   {
@@ -356,39 +343,135 @@ export const USA_ESTIMATE_LINES: UsaBudgetLine[] = [
     section: 'estimate',
     category: 'activities',
     label: 'פארקים 5 ימים (7 מבוגרים + 3 ילדים)',
-    money: { kind: 'usd', amount: 7880 },
-    payerLabel: 'אומדן רמי · אבנר לפי הכלל · לא נקנה',
+    money: { kind: 'usd', amount: USA_PARKS_ESTIMATE.fiveDayUsd },
+    payerLabel: 'אומדן רמי · אבנר משלם לכולם · לא נקנה',
     notes: 'חלופה ל-4 ימים. לא נקנה.',
     source: 'רמי — אומדן',
   },
+]
+
+export interface UsaCoupleOwedLine {
+  id: string
+  label: string
+  formula: string
+  money: UsaMoney
+}
+
+export interface UsaCoupleSettlement {
+  id: 'ben-gal' | 'eden-libi' | 'agam-shoval'
+  label: string
+  adults: number
+  kidsAvnerCovers: string
+  oweAvner: UsaCoupleOwedLine[]
+  paySupplierNotAvner: string[]
+}
+
+const parksAdultFormula = (adults: number) =>
+  `${adults} מבוגרים × מחיר כרטיס. אבנר משלם לקבוצה; מחזירים רק מבוגרים. ילדים ותינוקת על אבנר. אין מחיר יחידה — לא מחלקים את אומדן רמי`
+
+const villaAdultFormula = (adults: number) =>
+  `חלק יחסי של ${adults} מבוגרים בלינת הווילה (אבנר מכסה נכדים + אוכל בית). הווילה לא הוזמנה`
+
+export const USA_COUPLE_SETTLEMENTS: UsaCoupleSettlement[] = [
   {
-    id: 'est-cruise-night-adult',
-    section: 'estimate',
-    category: 'accommodation',
-    label: 'לילת קרוז למבוגר (WhatsApp)',
-    money: { kind: 'usd', amount: 1000 },
-    payerLabel: 'אומדן שיחה · לא תעריף הזמנה',
-    notes: 'שיחה ב-WhatsApp על ~$1,000 ללילה למבוגר. האומדן הזה אינו יתרת 3753418/3753537.',
-    source: 'WhatsApp — אומדן בלבד',
+    id: 'ben-gal',
+    label: 'בן+גל',
+    adults: 2,
+    kidsAvnerCovers: 'עומר, ארי — טיסות X5G7DK וחלק קרוז ב-3753418 על אבנר',
+    oweAvner: [
+      {
+        id: 'bg-parks',
+        label: 'פארקים · 2 מבוגרים',
+        formula: parksAdultFormula(2),
+        money: { kind: 'tbd', hint: 'אין מחיר כרטיס' },
+      },
+      {
+        id: 'bg-villa',
+        label: 'חלק מבוגרים בווילה',
+        formula: villaAdultFormula(2),
+        money: { kind: 'tbd', hint: 'לא הוזמן' },
+      },
+      {
+        id: 'bg-cars',
+        label: 'רכבים',
+        formula: 'אבנר משלם על הרכב/ים לקבוצה. ב-WhatsApp עלה פיצול בן+עדן מול אבנר+אגם — בלי סכום',
+        money: { kind: 'tbd', hint: 'פיצול בלי סכום' },
+      },
+    ],
+    paySupplierNotAvner: [
+      `טיסות מבוגרים ≈ $${USA_ADULT_FLIGHT_USD} × 2 לאל על (X5OKQQ) — לא לאבנר, ולא אושר ששולם`,
+      'קרוז מבוגרים ב-3753418 — יתרה לספק; חלק הילדים על אבנר (פיצול התעריף בתוך $3,126.60 TBD)',
+      'Refreshment $146.24 + VOOM $87.96 — עלות בן עד שיוחלט אחרת, לא חוב לאבנר',
+    ],
   },
   {
-    id: 'est-cruise-night-child',
-    section: 'estimate',
-    category: 'accommodation',
-    label: 'לילת קרוז לילד (WhatsApp)',
-    money: { kind: 'usd', amount: 500 },
-    payerLabel: 'אומדן שיחה · לא תעריף הזמנה',
-    notes: 'שיחה ב-WhatsApp על ~$500 ללילה לילד. לא מחליף את יתרות הספק.',
-    source: 'WhatsApp — אומדן בלבד',
+    id: 'eden-libi',
+    label: 'עדן+ליבי',
+    adults: 2,
+    kidsAvnerCovers: 'לביא, לירי (תינוקת בחינם בפארקים) — טיסות X5G7DK וחלק קרוז ב-3753537 על אבנר',
+    oweAvner: [
+      {
+        id: 'el-parks',
+        label: 'פארקים · 2 מבוגרים',
+        formula: parksAdultFormula(2),
+        money: { kind: 'tbd', hint: 'אין מחיר כרטיס' },
+      },
+      {
+        id: 'el-villa',
+        label: 'חלק מבוגרים בווילה',
+        formula: villaAdultFormula(2),
+        money: { kind: 'tbd', hint: 'לא הוזמן' },
+      },
+      {
+        id: 'el-cars',
+        label: 'רכבים',
+        formula: 'אבנר משלם לקבוצה. פיצול בן+עדן מול אבנר+אגם הוזכר בלי סכום',
+        money: { kind: 'tbd', hint: 'פיצול בלי סכום' },
+      },
+    ],
+    paySupplierNotAvner: [
+      'טיסות מבוגרים — משק הבית לאל על (סכום לא ביד)',
+      'קרוז מבוגרים ב-3753537 — יתרה לספק; חלק הילדים על אבנר (פיצול התעריף בתוך $3,126.60 TBD)',
+    ],
+  },
+  {
+    id: 'agam-shoval',
+    label: 'אגם+שובל',
+    adults: 2,
+    kidsAvnerCovers: 'אין ילדים במשק הבית הזה בטיול',
+    oweAvner: [
+      {
+        id: 'as-parks',
+        label: 'פארקים · 2 מבוגרים',
+        formula: parksAdultFormula(2),
+        money: { kind: 'tbd', hint: 'אין מחיר כרטיס' },
+      },
+      {
+        id: 'as-villa',
+        label: 'חלק מבוגרים בווילה',
+        formula: villaAdultFormula(2),
+        money: { kind: 'tbd', hint: 'לא הוזמן' },
+      },
+      {
+        id: 'as-cars',
+        label: 'רכבים',
+        formula: 'אבנר משלם לקבוצה. צד אגם בפיצול האפשרי מול בן+עדן — בלי סכום',
+        money: { kind: 'tbd', hint: 'פיצול בלי סכום' },
+      },
+    ],
+    paySupplierNotAvner: [
+      'טיסות מבוגרים — משק הבית (סכום לא ביד)',
+      'קרוז מבוגרים — אין הזמנת RC על שמם בקבולות שביד (3753278 הוא תא אבנר+רחל). לא ממציאים תא',
+    ],
   },
 ]
 
-/** Person-to-person IOUs — empty on purpose. Tami chat had none. */
+/** Documented person-to-person paid transfers — empty. Tami chat had none. */
 export const USA_SETTLEMENT_LINES: UsaBudgetLine[] = []
 
 export const USA_SETTLEMENT_HONESTY = {
-  title: 'אין התחשבנות בין בני המשפחה עדיין',
-  body: 'סיכום Tami (WhatsApp): אין סכומי «כבר שולם» עם תאריך לטיול 2027, הוזכר «אשראי» מול אבנר בלי סכום, ואין IOU מפורש מאדם לאדם בשיחה. לא ממציאים העברות. כשיהיה הסכם עם סכום — כאן.',
+  title: 'אין IOU ששולם בין בני המשפחה',
+  body: 'סיכום Tami (WhatsApp): אין סכומי «כבר שולם» עם תאריך לטיול 2027, הוזכר «אשראי» מול אבנר בלי סכום, ואין העברה מפורשת מאדם לאדם בשיחה. לכן «מה להחזיר לאבנר» הוא נוסחה + TBD, לא חוב עם סכום.',
   source: 'Tami — סיכום WhatsApp',
 } as const
 
@@ -428,7 +511,8 @@ function lineToItem(line: UsaBudgetLine): BudgetItem {
 export function buildUsaSeedBudget(): Budget {
   return {
     currency: USA_BUDGET_CURRENCY,
-    totalBudget: USA_BUDGET_FRAME.withCruiseUsd,
+    // Not a «how much we have» envelope. The USA page answers paid / owe Avner / remaining.
+    totalBudget: 0,
     items: USA_SUPPLIER_LINES.map(lineToItem),
   }
 }
@@ -446,6 +530,8 @@ export function isStaleUsaBudget(trip: Pick<TripPlan, 'id' | 'budget'>): boolean
   const labels = items.map(i => i.label).join('\n')
   if (STALE_USA_BUDGET_LABEL.test(labels)) return true
   if (!items.some(i => /3753418/.test(i.label))) return true
+  // First PR shipped Rami's envelope as totalBudget — Ben rejected that hero.
+  if ((trip.budget?.totalBudget ?? 0) === USA_BUDGET_FRAME.withCruiseUsd) return true
   const allZero =
     (trip.budget?.totalBudget ?? 0) === 0 &&
     items.every(i => (i.planned ?? 0) === 0 && i.actual == null)
@@ -472,8 +558,7 @@ export function applyUsaBudgetRepair(trip: TripPlan, seedBudget = buildUsaSeedBu
     ...trip,
     budget: {
       currency: USA_BUDGET_CURRENCY,
-      totalBudget:
-        (trip.budget?.totalBudget ?? 0) > 0 ? trip.budget.totalBudget : seedBudget.totalBudget,
+      totalBudget: seedBudget.totalBudget,
       items: nextItems,
     },
     updatedAt: new Date().toISOString(),
@@ -490,6 +575,29 @@ export function usaSupplierRemainingUsd(lines = USA_SUPPLIER_LINES): number {
 
 export function usaPaidToSupplierUsd(lines = USA_SUPPLIER_LINES): number {
   return lines.reduce((s, l) => (l.paidToSupplier ? s + (usdAmount(l.money) ?? 0) : s), 0)
+}
+
+/** El Al adult fares we know but have not confirmed as paid. */
+export function usaUnconfirmedAdultFlightsUsd(): number {
+  return USA_ADULT_FLIGHT_USD * 2
+}
+
+export function usaOweAvnerHasAmount(): boolean {
+  return USA_COUPLE_SETTLEMENTS.some(c =>
+    c.oweAvner.some(l => l.money.kind === 'usd'),
+  )
+}
+
+/** Three hero answers for the USA money page — no whole-trip envelope. */
+export function usaMoneyHeadlines() {
+  return {
+    paidSoFarUsd: usaPaidToSupplierUsd(),
+    oweAvnerLabel: usaOweAvnerHasAmount() ? undefined : 'טרם ידוע',
+    remainingKnownUsd: usaSupplierRemainingUsd(),
+    unconfirmedAdultFlightsUsd: usaUnconfirmedAdultFlightsUsd(),
+    parksEstimateLowUsd: USA_PARKS_ESTIMATE.fourDayUsd,
+    parksEstimateHighUsd: USA_PARKS_ESTIMATE.fiveDayUsd,
+  }
 }
 
 export function formatUsd(amount: number): string {

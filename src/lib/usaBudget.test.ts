@@ -13,12 +13,16 @@ import {
   STALE_USA_BUDGET_LABEL,
   USA_BUDGET_FRAME,
   USA_BUDGET_SEED_ITEM_IDS,
+  USA_COUPLE_SETTLEMENTS,
   USA_ESTIMATE_LINES,
   USA_MEMBERS,
   USA_PAYMENT_RULES,
+  USA_SETTLEMENT_HONESTY,
   USA_SETTLEMENT_LINES,
   USA_SUPPLIER_LINES,
   USA_TRIP_ID,
+  usaMoneyHeadlines,
+  usaOweAvnerHasAmount,
   usaPaidToSupplierUsd,
   usaSupplierRemainingUsd,
 } from '../data/usaBudget.ts'
@@ -42,16 +46,33 @@ describe('USA Mar 2027 budget ledger', () => {
     assert.equal(usa.id, USA_TRIP_ID)
   })
 
-  it('seed JSON matches the typed module (not a $0 stub)', () => {
+  it('seed JSON matches the typed module and does not ship a whole-trip envelope', () => {
     const built = buildUsaSeedBudget()
     assert.deepEqual(usa.budget, built)
     assert.equal(usa.budget.currency, 'USD')
-    assert.equal(usa.budget.totalBudget, USA_BUDGET_FRAME.withCruiseUsd)
-    assert.equal(usa.budget.totalBudget > 0, true)
+    assert.equal(usa.budget.totalBudget, 0)
+    assert.notEqual(usa.budget.totalBudget, USA_BUDGET_FRAME.withCruiseUsd)
     assert.equal(STALE_USA_BUDGET_LABEL.test(usa.budget.items.map(i => i.label).join('\n')), false)
     for (const id of STALE_USA_BUDGET_ITEM_IDS) {
       assert.equal(usa.budget.items.some(i => i.id === id), false)
     }
+  })
+
+  it('answers the three money-page headlines without a $38k hero', () => {
+    const h = usaMoneyHeadlines()
+    assert.equal(h.paidSoFarUsd, 200 + 146.24 + 87.96)
+    assert.equal(h.oweAvnerLabel, 'טרם ידוע')
+    assert.equal(usaOweAvnerHasAmount(), false)
+    assert.equal(h.remainingKnownUsd, 3126.6 + 3126.6 + 1586.8)
+    assert.equal(h.unconfirmedAdultFlightsUsd, 1228 * 2)
+    assert.equal(h.parksEstimateLowUsd, 7280)
+    assert.equal(h.parksEstimateHighUsd, 7880)
+    const ui = readFileSync(new URL('../pages/Budget.tsx', import.meta.url), 'utf8')
+    assert.match(ui, /כמה עלה עד עכשיו/)
+    assert.match(ui, /מה צריך לשלם לאבנר פר זוג/)
+    assert.match(ui, /כמה נשאר לשלם \(צפוי\)/)
+    assert.equal(/מסגרת עם קרוז/.test(ui), false)
+    assert.equal(/USA_BUDGET_FRAME\.withCruiseUsd/.test(ui), false)
   })
 
   it('exposes RC remaining balances and does not treat them as family IOUs', () => {
@@ -108,20 +129,35 @@ describe('USA Mar 2027 budget ledger', () => {
     assert.ok(USA_PAYMENT_RULES.some(r => /TBD/.test(r.payer) && /ESTA/.test(r.body)))
   })
 
-  it('labels Rami / WhatsApp night rates as estimates, not seed expenses', () => {
-    assert.equal(USA_ESTIMATE_LINES.some(l => l.money.kind === 'usd' && l.money.amount === 38100), true)
-    assert.equal(USA_ESTIMATE_LINES.some(l => l.money.kind === 'usd' && l.money.amount === 32000), true)
+  it('keeps Rami parks figures as estimates and demotes the $32k/$38k envelope', () => {
+    assert.equal(USA_ESTIMATE_LINES.length, 2)
     assert.equal(USA_ESTIMATE_LINES.some(l => l.money.kind === 'usd' && l.money.amount === 7280), true)
     assert.equal(USA_ESTIMATE_LINES.some(l => l.money.kind === 'usd' && l.money.amount === 7880), true)
-    assert.equal(USA_ESTIMATE_LINES.some(l => l.label.includes('מבוגר') && l.money.kind === 'usd' && l.money.amount === 1000), true)
-    assert.equal(USA_ESTIMATE_LINES.some(l => l.label.includes('ילד') && l.money.kind === 'usd' && l.money.amount === 500), true)
+    assert.equal(USA_ESTIMATE_LINES.some(l => l.money.kind === 'usd' && l.money.amount === 38100), false)
+    assert.equal(USA_ESTIMATE_LINES.some(l => l.money.kind === 'usd' && l.money.amount === 32000), false)
+    assert.equal(USA_ESTIMATE_LINES.some(l => l.money.kind === 'usd' && l.money.amount === 1000), false)
+    assert.equal(USA_ESTIMATE_LINES.some(l => l.money.kind === 'usd' && l.money.amount === 500), false)
     for (const line of USA_ESTIMATE_LINES) {
       assert.equal(USA_BUDGET_SEED_ITEM_IDS.has(line.id), false, line.id)
     }
   })
 
+  it('shows per-couple Avner formulas without invented dollar amounts', () => {
+    assert.deepEqual(USA_COUPLE_SETTLEMENTS.map(c => c.label), ['בן+גל', 'עדן+ליבי', 'אגם+שובל'])
+    for (const couple of USA_COUPLE_SETTLEMENTS) {
+      assert.equal(couple.oweAvner.length > 0, true)
+      assert.equal(couple.oweAvner.every(l => l.money.kind === 'tbd'), true)
+      assert.ok(couple.oweAvner.some(l => /פארקים/.test(l.label)))
+    }
+    const ledger = readFileSync(new URL('../components/budget/UsaBudgetLedger.tsx', import.meta.url), 'utf8')
+    assert.match(ledger, /USA_COUPLE_SETTLEMENTS/)
+    assert.match(ledger, /כללי תשלום/)
+    assert.match(ledger, /USA_SETTLEMENT_HONESTY/)
+  })
+
   it('does not invent WhatsApp settlements', () => {
     assert.equal(USA_SETTLEMENT_LINES.length, 0)
+    assert.match(USA_SETTLEMENT_HONESTY.body, /אין העברה מפורשת מאדם לאדם/)
     assert.equal(usa.budget.items.some(i => /התחשבנות|חייב ל[א-ת]/.test(`${i.label} ${i.notes ?? ''}`)), false)
   })
 
@@ -150,9 +186,21 @@ describe('USA live budget repair', () => {
     assert.equal(isStaleUsaBudget(stale), true)
     const fixed = applyUsaBudgetRepair(stale)
     assert.equal(isStaleUsaBudget(fixed), false)
-    assert.equal(fixed.budget.totalBudget, 38100)
+    assert.equal(fixed.budget.totalBudget, 0)
     assert.ok(fixed.budget.items.some(i => /3753418/.test(i.label) && i.planned === 3126.6))
     assert.equal(fixed.budget.items.some(i => STALE_USA_BUDGET_ITEM_IDS.has(i.id)), false)
+  })
+
+  it('rewrites a live copy that still carries Rami’s $38,100 envelope as totalBudget', () => {
+    const envelope = stubUsa({
+      ...buildUsaSeedBudget(),
+      totalBudget: USA_BUDGET_FRAME.withCruiseUsd,
+    })
+    assert.equal(isStaleUsaBudget(envelope), true)
+    const fixed = applyUsaBudgetRepair(envelope)
+    assert.equal(fixed.budget.totalBudget, 0)
+    assert.equal(isStaleUsaBudget(fixed), false)
+    assert.ok(fixed.budget.items.some(i => /3753418/.test(i.label)))
   })
 
   it('keeps a user-added expense across repair', () => {
@@ -194,7 +242,7 @@ describe('USA live budget repair', () => {
       }],
     })
     const out = applyUsaBudgetRepair(stale)
-    assert.equal(out.budget.totalBudget, 38100)
+    assert.equal(out.budget.totalBudget, 0)
     assert.ok(out.budget.items.some(i => /3753418/.test(i.label)))
   })
 })
