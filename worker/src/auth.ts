@@ -16,6 +16,7 @@ interface Env {
 export interface AuthedCaller {
   kind: 'shared-secret' | 'supabase-user'
   userId?: string
+  /** Auth email claim — never user_metadata (user-editable). */
   email?: string
 }
 
@@ -27,6 +28,15 @@ export type AuthOutcome =
 
 /** 60s leeway: iPhone clocks vs Worker, and tokens that expire mid-request. */
 const EXP_SKEW_SEC = 60
+
+/** Auth email claim only — never user_metadata (user-editable). */
+export function emailFromJwtPayload(payload: Record<string, unknown>): string | undefined {
+  // Auth email claim only — never user_metadata (user-editable).
+  if (typeof payload.email === 'string' && payload.email.includes('@')) {
+    return payload.email.trim().toLowerCase()
+  }
+  return undefined
+}
 
 export async function authenticate(req: Request, env: Env): Promise<AuthOutcome> {
   const shared = req.headers.get('x-api-secret')
@@ -160,16 +170,6 @@ export function jwkForImport(jwk: JsonWebKey, alg?: string): JsonWebKey {
   return jwk
 }
 
-export function emailFromJwtPayload(payload: Record<string, unknown>): string | undefined {
-  if (typeof payload.email === 'string' && payload.email.trim()) return payload.email
-  const meta = payload.user_metadata
-  if (meta && typeof meta === 'object' && meta !== null) {
-    const nested = (meta as { email?: unknown }).email
-    if (typeof nested === 'string' && nested.trim()) return nested
-  }
-  return undefined
-}
-
 async function verifyViaAuthApi(
   token: string,
   env: Env,
@@ -186,10 +186,8 @@ async function verifyViaAuthApi(
     if (!res.ok) return null
     const user = (await res.json()) as { id?: unknown; email?: unknown }
     if (typeof user.id !== 'string') return null
-    return {
-      userId: user.id,
-      email: typeof user.email === 'string' ? user.email : undefined,
-    }
+    const email = typeof user.email === 'string' ? user.email.trim().toLowerCase() : undefined
+    return { userId: user.id, email }
   } catch {
     return null
   }

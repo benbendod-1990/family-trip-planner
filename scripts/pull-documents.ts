@@ -31,6 +31,7 @@ import { fetchTravelEmails, fetchAttachment, type GmailMessage } from '../src/se
 import { parseEmails, type ParsedEmail } from '../src/services/emailParser.ts'
 import type { TripPlan } from '../src/types/trip-plan.ts'
 import { classifyDocument } from '../src/lib/documentKind.ts'
+import { isSensitiveKind, REGULAR_DOC_BUCKET, SENSITIVE_DOC_BUCKET } from '../src/lib/sensitiveDocument.ts'
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
 
@@ -357,6 +358,8 @@ async function main() {
       seenHash.add(`${trip.id}|${sha256}`)
 
       const id = crypto.randomUUID()
+      const kind = classifyDocument(msg.subject, msg.from, att.filename)
+      const bucket = isSensitiveKind(kind) ? SENSITIVE_DOC_BUCKET : REGULAR_DOC_BUCKET
       const path = `${trip.id}/${id}-${safeName(att.filename)}`
       console.log(`  + ${att.filename} → ${trip.name}  [${how}]`)
       if (DRY_RUN) {
@@ -364,7 +367,7 @@ async function main() {
         continue
       }
 
-      const up = await fetch(`${SUPABASE_URL}/storage/v1/object/${BUCKET}/${path}`, {
+      const up = await fetch(`${SUPABASE_URL}/storage/v1/object/${bucket}/${path}`, {
         method: 'POST',
         headers: {
           apikey: SERVICE_KEY,
@@ -394,12 +397,13 @@ async function main() {
           filename: att.filename,
           mime_type: att.mimeType,
           size: bytes.length,
-          kind: classifyDocument(msg.subject, msg.from, att.filename),
+          kind,
           sha256,
           source_message_id: msg.id,
           source_subject: msg.subject,
           source_from: msg.from,
           added_at: new Date(msg.date).toISOString(),
+          storage_bucket: bucket,
         }),
       })
       added++

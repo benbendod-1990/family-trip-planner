@@ -1,17 +1,20 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { Stack, Typography, Button, EmptyState, Spinner, Badge, Card } from 'myk-library'
-import { FileText, BookOpen, Upload, Trash2, ExternalLink, Image as ImageIcon, MailSearch } from 'lucide-react'
+import { FileText, BookOpen, Upload, Trash2, ExternalLink, Image as ImageIcon, MailSearch, Lock } from 'lucide-react'
 import styled from 'styled-components'
 import { useTripStore } from '@/stores/tripStore'
 import { useAuth } from '@/lib/AuthContext'
 import { isFamilyCatalogEmail } from '@/lib/familyCatalog'
 import { useBreakpoint } from '@/hooks/useBreakpoint'
+import { useIsTripOwner } from '@/hooks/useIsTripOwner'
 import { fetchDocText } from '@/lib/tripDoc'
 import { documentUrl, deleteDocument, uploadDocument, classifyDocument } from '@/lib/tripDocuments'
 import { pullAllDocuments } from '@/lib/gmailSync'
-import { GmailAuthError } from '@/lib/gmailToken'
+import { GmailAuthError, GmailForbiddenError } from '@/lib/gmailToken'
 import { documentHref, isLinkOnlyDocument } from '@/lib/seedBookingDocuments'
+import { ensureSensitiveUnlocked, probeAuthenticator, WebAuthnUnavailableError, type UnlockCopy } from '@/lib/webauthnUnlock'
+import { hasPassportFile, isPendingPassport, isSensitiveKind } from '@/lib/sensitiveDocument'
 import TripDocCard from '@/components/dashboard/TripDocCard'
 import AuthReconnectBanner from '@/components/auth/AuthReconnectBanner'
 import type { TripDocument } from '@/types/trip-plan'
@@ -74,12 +77,28 @@ const DocText = styled.pre`
   overflow: auto;
 `
 
+const PhotoGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 12px;
+`
+
+const PhotoCard = styled(Card)`
+  padding: 10px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+`
+
 const KIND_LABEL: Record<TripDocument['kind'], string> = {
   flight: '✈️ טיסה',
   hotel: '🏨 לינה',
   car: '🚗 רכב',
   activity: '🎟️ כרטיסים',
   other: '📄 אחר',
+  passport: '🛂 דרכון',
+  photo: '📷 תמונה',
 }
 
 function prettySize(bytes: number): string {
@@ -89,12 +108,22 @@ function prettySize(bytes: number): string {
   return `${(bytes / 1024 / 1024).toFixed(1)} MB`
 }
 
+function kindForUpload(file: File, forced?: TripDocument['kind']): TripDocument['kind'] {
+  if (forced) return forced
+  const classified = classifyDocument('', '', file.name)
+  if (classified !== 'other') return classified
+  if (file.type.startsWith('image/')) return 'photo'
+  return 'other'
+}
+
 export default function TripDoc() {
   const { id } = useParams<{ id: string }>()
   const trip = useTripStore(s => s.trips.find(t => t.id === id))
+  const { isMobile } = useBreakpoint()
   const { user } = useAuth()
   const isAdmin = isFamilyCatalogEmail(user?.email)
-  const { isMobile } = useBreakpoint()
+  const canGmail = isAdmin
+  const { isOwner, loading: ownerLoading } = useIsTripOwner(id)
   const [gmailReconnect, setGmailReconnect] = useState(false)
 
   const [openDoc, setOpenDoc] = useState<TripDocument | null>(null)
@@ -102,6 +131,10 @@ export default function TripDoc() {
   const [docError, setDocError] = useState<string | null>(null)
   const [busyUpload, setBusyUpload] = useState(false)
   const fileInput = useRef<HTMLInputElement>(null)
+  const photoInput = useRef<HTMLInputElement>(null)
+  const passportInput = useRef<HTMLInputElement>(null)
+  const [passportSlot, setPassportSlot] = useState<TripDocument | null>(null)
+  const [unlockCopy, setUnlockCopy] = useState<UnlockCopy | null>(null)
 
   const [planText, setPlanText] = useState<string | null>(null)
   const [planBusy, setPlanBusy] = useState(false)
@@ -114,6 +147,13 @@ export default function TripDoc() {
     () => [...(trip?.documents ?? [])].sort((a, b) => b.addedAt.localeCompare(a.addedAt)),
     [trip?.documents],
   )
+  const passports = isOwner ? documents.filter(d => d.kind === 'passport') : []
+  const photos = documents.filter(d => d.kind === 'photo')
+  const bookings = documents.filter(d => d.kind !== 'passport' && d.kind !== 'photo')
+
+  useEffect(() => {
+    void probeAuthenticator().then(setUnlockCopy)
+  }, [])
 
   // Signed URLs are short-lived, so one is minted when a document is opened
   // rather than for the whole list up front.
@@ -126,42 +166,65 @@ export default function TripDoc() {
     return () => { cancelled = true }
   }, [openDoc])
 
-  // Clearing here rather than in the effect keeps the effect to its one async
-  // job — the lint rule against synchronous setState in effects is right that
-  // the reset belongs with the interaction that caused it.
   const showDoc = (doc: TripDocument | null) => {
     setOpenUrl(null)
     setDocError(null)
     setOpenDoc(doc)
   }
 
+  const requirePassportUnlock = async () => {
+    if (!isOwner) throw new Error('רק יוצרי הטיול יכולים לגשת לדרכונים')
+    if (!user?.id) throw new Error('צריך להתחבר כדי לפתוח דרכון')
+    try {
+      const copy = await ensureSensitiveUnlocked(user.id, user.email ?? 'user')
+      setUnlockCopy(copy)
+    } catch (e) {
+      if (e instanceof WebAuthnUnavailableError) {
+        setUnlockCopy(e.copy)
+      }
+      throw e
+    }
+  }
+
   if (!trip) return null
 
-  const onUpload = async (files: FileList | null) => {
+  const patchDocuments = (next: TripDocument[]) => {
+    useTripStore.setState(state => ({
+      trips: state.trips.map(t =>
+        t.id === trip.id
+          ? { ...t, documents: next, updatedAt: new Date().toISOString() }
+          : t,
+      ),
+    }))
+  }
+
+  const onUpload = async (files: FileList | null, forcedKind?: TripDocument['kind'], slot?: TripDocument | null) => {
     if (!files?.length || !trip) return
     setBusyUpload(true)
     setDocError(null)
     try {
+      if (forcedKind === 'passport' || slot?.kind === 'passport') {
+        if (!isOwner) throw new Error('רק יוצרי הטיול יכולים להעלות דרכונים')
+        await requirePassportUnlock()
+      }
       const added: TripDocument[] = []
       for (const file of Array.from(files)) {
         added.push(await uploadDocument(trip.id, {
-          filename: file.name,
+          id: slot?.id,
+          personId: slot?.personId,
+          filename: slot ? slot.filename : file.name,
           mimeType: file.type || 'application/octet-stream',
           blob: file,
-          kind: classifyDocument('', '', file.name),
+          kind: kindForUpload(file, forcedKind ?? slot?.kind),
         }))
       }
-      useTripStore.setState(state => ({
-        trips: state.trips.map(t =>
-          t.id === trip.id
-            ? { ...t, documents: [...(t.documents ?? []), ...added], updatedAt: new Date().toISOString() }
-            : t,
-        ),
-      }))
+      const withoutSlots = (trip.documents ?? []).filter(d => !added.some(a => a.id === d.id))
+      patchDocuments([...withoutSlots, ...added])
     } catch (e) {
       setDocError(e instanceof Error ? e.message : 'ההעלאה נכשלה')
     } finally {
       setBusyUpload(false)
+      setPassportSlot(null)
     }
   }
 
@@ -176,7 +239,7 @@ export default function TripDoc() {
     try {
       const r = await pullAllDocuments()
       if (r.documentsUnavailable) {
-        setDocError('אחסון המסמכים לא הוגדר — צריך להריץ את migration 0006 בפרויקט Supabase.')
+        setDocError('אחסון המסמכים לא הוגדר — צריך להריץ את migration 0016 בפרויקט Supabase.')
       } else if (r.added) {
         setPullNote(`✓ צורפו ${r.added} מסמכים לכל הטיולים (מתוך ${r.scanned} מיילים שנסרקו).`)
       } else {
@@ -186,6 +249,8 @@ export default function TripDoc() {
     } catch (e) {
       if (e instanceof GmailAuthError) {
         setGmailReconnect(true)
+        setDocError(e.message)
+      } else if (e instanceof GmailForbiddenError) {
         setDocError(e.message)
       } else {
         setDocError(e instanceof Error ? e.message : 'משיכת המסמכים נכשלה')
@@ -198,18 +263,33 @@ export default function TripDoc() {
   const onDelete = async (doc: TripDocument) => {
     if (!confirm(`למחוק את "${doc.filename}"?`)) return
     try {
+      if (isSensitiveKind(doc.kind) && hasPassportFile(doc)) {
+        if (!isOwner) throw new Error('רק יוצרי הטיול יכולים למחוק דרכונים')
+        await requirePassportUnlock()
+      }
       await deleteDocument(doc)
-    } catch {
+    } catch (e) {
+      if (e instanceof Error && /אימות|דרכון/.test(e.message)) {
+        setDocError(e.message)
+        return
+      }
       // Metadata is what the UI reads; drop it even if the object is already gone.
     }
     if (openDoc?.id === doc.id) showDoc(null)
-    useTripStore.setState(state => ({
-      trips: state.trips.map(t =>
-        t.id === trip.id
-          ? { ...t, documents: (t.documents ?? []).filter(d => d.id !== doc.id), updatedAt: new Date().toISOString() }
-          : t,
-      ),
-    }))
+    patchDocuments((trip.documents ?? []).filter(d => d.id !== doc.id))
+  }
+
+  const onOpenFile = async (doc: TripDocument) => {
+    try {
+      if (isPendingPassport(doc)) return
+      if (isSensitiveKind(doc.kind)) {
+        if (!isOwner) throw new Error('רק יוצרי הטיול יכולים לפתוח דרכונים')
+        await requirePassportUnlock()
+      }
+      showDoc(doc)
+    } catch (e) {
+      setDocError(e instanceof Error ? e.message : 'האימות נכשל')
+    }
   }
 
   const readPlan = async () => {
@@ -225,30 +305,180 @@ export default function TripDoc() {
     }
   }
 
+  const renderDocRow = (doc: TripDocument) => {
+    const href = documentHref(doc)
+    const linkOnly = isLinkOnlyDocument(doc)
+    const pendingPassport = isPendingPassport(doc)
+    return (
+      <DocRow key={doc.id} variant="outlined">
+        <Thumb>
+          {doc.kind === 'passport' ? <Lock size={18} /> : doc.mimeType.startsWith('image/') ? <ImageIcon size={18} /> : <FileText size={18} />}
+        </Thumb>
+        <Meta
+          onClick={() => {
+            if (pendingPassport) return
+            if (linkOnly && href) window.open(href, '_blank', 'noopener,noreferrer')
+            else void onOpenFile(doc)
+          }}
+          style={{ cursor: pendingPassport ? 'default' : 'pointer' }}
+        >
+          <Typography variant="body1" style={{ fontWeight: 500 }}>{doc.filename}</Typography>
+          <Typography variant="body2" style={{ color: '#8F7B5C' }}>
+            {KIND_LABEL[doc.kind]} · {pendingPassport ? 'ממתין להעלאה' : linkOnly ? 'קישור להזמנה' : prettySize(doc.size)}
+            {!linkOnly && !pendingPassport && doc.sourceSubject ? ` · ${doc.sourceSubject}` : ''}
+          </Typography>
+        </Meta>
+        {pendingPassport ? (
+          <Badge size="sm" variant="default">אין קובץ</Badge>
+        ) : linkOnly ? (
+          <Badge size="sm" variant="default">אין PDF עדיין</Badge>
+        ) : doc.sourceMessageId ? (
+          <Badge size="sm" variant="default">Gmail</Badge>
+        ) : doc.kind === 'passport' ? (
+          <Badge size="sm" variant="default">נעול</Badge>
+        ) : null}
+        {pendingPassport ? (
+          <Button
+            size="sm"
+            variant="ghost"
+            disabled={busyUpload}
+            onClick={() => {
+              setPassportSlot(doc)
+              passportInput.current?.click()
+            }}
+          >
+            העלה סריקה
+          </Button>
+        ) : linkOnly && href ? (
+          <a href={href} target="_blank" rel="noopener noreferrer">
+            <Button size="sm" variant="ghost">
+              <Stack direction="row" spacing="xs" align="center">
+                <ExternalLink size={13} /><span>פתח הזמנה</span>
+              </Stack>
+            </Button>
+          </a>
+        ) : (
+          <Button size="sm" variant="ghost" onClick={() => void onOpenFile(doc)}>
+            {doc.kind === 'passport' ? 'פתח עם אימות' : 'הצג'}
+          </Button>
+        )}
+        {!pendingPassport && (
+          <Button size="sm" variant="ghost" onClick={() => void onDelete(doc)} aria-label="מחק">
+            <Trash2 size={14} />
+          </Button>
+        )}
+      </DocRow>
+    )
+  }
+
   return (
     <PageWrapper $mobile={isMobile}>
       <Typography variant="h4" style={{ margin: 0 }}>📄 מסמכים</Typography>
 
+      <input
+        ref={fileInput}
+        type="file"
+        multiple
+        accept="application/pdf,image/*"
+        style={{ display: 'none' }}
+        onChange={e => void onUpload(e.target.files)}
+      />
+      <input
+        ref={photoInput}
+        type="file"
+        multiple
+        accept="image/*"
+        style={{ display: 'none' }}
+        onChange={e => void onUpload(e.target.files, 'photo')}
+      />
+      <input
+        ref={passportInput}
+        type="file"
+        accept="application/pdf,image/*"
+        style={{ display: 'none' }}
+        onChange={e => void onUpload(e.target.files, 'passport', passportSlot)}
+      />
+
       <Stack direction="column" spacing="sm">
         <Stack direction="row" align="center" justify="between">
           <Typography variant="body1" style={{ fontWeight: 600 }}>
-            מסמכי הנסיעה ({documents.length})
+            🛂 דרכונים {isOwner ? `(${passports.length})` : ''}
+          </Typography>
+        </Stack>
+        {!isOwner ? (
+          <Typography variant="body2" style={{ color: '#8F7B5C' }}>
+            {ownerLoading
+              ? 'בודקים הרשאות…'
+              : 'סריקות דרכון שמורות ליוצרי הטיול. תמונות ומסמכי נסיעה נשארים משותפים לכל החברים.'}
+          </Typography>
+        ) : (
+          <>
+            <Typography variant="body2" style={{ color: '#8F7B5C' }}>
+              {unlockCopy?.method === 'unavailable'
+                ? unlockCopy.body
+                : (unlockCopy?.body ?? 'לפני הצגת סריקת דרכון נבקש אימות מכשיר שנבדק בשרת. שמות השמורים מופיעים בלי הקובץ.')}
+            </Typography>
+            {passports.length === 0 ? (
+              <Typography variant="body2" style={{ color: '#8F7B5C' }}>אין משבצות דרכון בטיול הזה.</Typography>
+            ) : (
+              passports.map(renderDocRow)
+            )}
+          </>
+        )}
+      </Stack>
+
+      <Stack direction="column" spacing="sm">
+        <Stack direction="row" align="center" justify="between">
+          <Typography variant="body1" style={{ fontWeight: 600 }}>
+            📷 תמונות ({photos.length})
+          </Typography>
+          <Button
+            size="sm"
+            variant="ghost"
+            disabled={busyUpload}
+            onClick={() => photoInput.current?.click()}
+          >
+            <Stack direction="row" spacing="xs" align="center">
+              {busyUpload ? <Spinner size="sm" /> : <Upload size={14} />}
+              <span>העלה תמונה</span>
+            </Stack>
+          </Button>
+        </Stack>
+        <Typography variant="body2" style={{ color: '#8F7B5C' }}>
+          כל חבר בטיול יכול להעלות ולראות. מי שלא חבר בטיול — לא.
+        </Typography>
+        {photos.length === 0 ? (
+          <EmptyState
+            icon={<ImageIcon size={40} />}
+            title="אין תמונות עדיין"
+            description="העלו צילומים מהטיול. כולם בטיול רואים את אותה גלריה."
+          />
+        ) : (
+          <PhotoGrid>
+            {photos.map(doc => (
+              <PhotoCard key={doc.id} variant="outlined" onClick={() => void onOpenFile(doc)}>
+                <Thumb><ImageIcon size={18} /></Thumb>
+                <Typography variant="body2" style={{ fontWeight: 500 }}>{doc.filename}</Typography>
+              </PhotoCard>
+            ))}
+          </PhotoGrid>
+        )}
+      </Stack>
+
+      <Stack direction="column" spacing="sm">
+        <Stack direction="row" align="center" justify="between">
+          <Typography variant="body1" style={{ fontWeight: 600 }}>
+            מסמכי הנסיעה ({bookings.length})
           </Typography>
           <Stack direction="row" spacing="xs" align="center">
-            <input
-              ref={fileInput}
-              type="file"
-              multiple
-              accept="application/pdf,image/*"
-              style={{ display: 'none' }}
-              onChange={e => void onUpload(e.target.files)}
-            />
-            <Button size="sm" variant="ghost" disabled={pullBusy} onClick={() => void onPull()}>
-              <Stack direction="row" spacing="xs" align="center">
-                {pullBusy ? <Spinner size="sm" /> : <MailSearch size={14} />}
-                <span>{pullBusy ? 'שואב…' : 'שאב מ-Gmail'}</span>
-              </Stack>
-            </Button>
+            {canGmail && (
+              <Button size="sm" variant="ghost" disabled={pullBusy} onClick={() => void onPull()}>
+                <Stack direction="row" spacing="xs" align="center">
+                  {pullBusy ? <Spinner size="sm" /> : <MailSearch size={14} />}
+                  <span>{pullBusy ? 'שואב…' : 'שאב מ-Gmail'}</span>
+                </Stack>
+              </Button>
+            )}
             <Button
               size="sm"
               variant="ghost"
@@ -264,7 +494,10 @@ export default function TripDoc() {
         </Stack>
 
         <Typography variant="body2" style={{ color: '#8F7B5C' }}>
-          כרטיסי טיסה, שוברים ואישורי הזמנה. כדי לצרף קבצים מהמייל לחצו על «שאב מ-Gmail» — הסריקה רצה רק אז, שנתיים אחורה, לכל הטיולים. אין סריקה אוטומטית בפתיחת האפליקציה.
+          כרטיסי טיסה, שוברים ואישורי הזמנה.
+          {canGmail
+            ? ' כדי לצרף קבצים מהמייל לחצו על «שאב מ-Gmail» — הסריקה רצה רק אז, שנתיים אחורה, לכל הטיולים. אין סריקה אוטומטית בפתיחת האפליקציה.'
+            : ' משיכה מ-Gmail שמורה לבן ולגל. אפשר להעלות קובץ ידנית — כל חבר בטיול רואה אותו.'}
         </Typography>
 
         {pullNote && (
@@ -280,56 +513,19 @@ export default function TripDoc() {
           <Typography variant="body2" style={{ color: '#b91c1c' }}>{docError}</Typography>
         ) : null}
 
-        {documents.length === 0 ? (
+        {bookings.length === 0 ? (
           <EmptyState
             icon={<FileText size={40} />}
             title="אין עדיין מסמכים"
-            description='כרטיסי טיסה ושוברים יופיעו כאן. אפשר ללחוץ על «שאב מ-Gmail» אחרי התחברות, או להעלות קובץ ידנית.'
+            description={canGmail
+              ? 'כרטיסי טיסה ושוברים יופיעו כאן. אפשר ללחוץ על «שאב מ-Gmail» אחרי התחברות, או להעלות קובץ ידנית.'
+              : 'כרטיסי טיסה ושוברים יופיעו כאן. אפשר להעלות קובץ ידנית.'}
           />
         ) : (
-          documents.map(doc => {
-            const href = documentHref(doc)
-            const linkOnly = isLinkOnlyDocument(doc)
-            return (
-              <DocRow key={doc.id} variant="outlined">
-                <Thumb>
-                  {doc.mimeType.startsWith('image/') ? <ImageIcon size={18} /> : <FileText size={18} />}
-                </Thumb>
-                <Meta
-                  onClick={() => (linkOnly && href ? window.open(href, '_blank', 'noopener,noreferrer') : showDoc(doc))}
-                  style={{ cursor: 'pointer' }}
-                >
-                  <Typography variant="body1" style={{ fontWeight: 500 }}>{doc.filename}</Typography>
-                  <Typography variant="body2" style={{ color: '#8F7B5C' }}>
-                    {KIND_LABEL[doc.kind]} · {linkOnly ? 'קישור להזמנה' : prettySize(doc.size)}
-                    {!linkOnly && doc.sourceSubject ? ` · ${doc.sourceSubject}` : ''}
-                  </Typography>
-                </Meta>
-                {linkOnly ? (
-                  <Badge size="sm" variant="default">אין PDF עדיין</Badge>
-                ) : doc.sourceMessageId ? (
-                  <Badge size="sm" variant="default">Gmail</Badge>
-                ) : null}
-                {linkOnly && href ? (
-                  <a href={href} target="_blank" rel="noopener noreferrer">
-                    <Button size="sm" variant="ghost">
-                      <Stack direction="row" spacing="xs" align="center">
-                        <ExternalLink size={13} /><span>פתח הזמנה</span>
-                      </Stack>
-                    </Button>
-                  </a>
-                ) : (
-                  <Button size="sm" variant="ghost" onClick={() => showDoc(doc)}>הצג</Button>
-                )}
-                <Button size="sm" variant="ghost" onClick={() => void onDelete(doc)} aria-label="מחק">
-                  <Trash2 size={14} />
-                </Button>
-              </DocRow>
-            )
-          })
+          bookings.map(renderDocRow)
         )}
 
-        {openDoc && !isLinkOnlyDocument(openDoc) && (
+        {openDoc && !isLinkOnlyDocument(openDoc) && !isPendingPassport(openDoc) && (
           <Stack direction="column" spacing="xs">
             <Stack direction="row" align="center" justify="between">
               <Typography variant="body1" style={{ fontWeight: 600 }}>{openDoc.filename}</Typography>

@@ -376,6 +376,138 @@
       "sourceMessageId": "1a07f9480390adda",
       "sourceSubject": "הזמנה 3753537 · Utopia of the Seas 22.3.2027",
       "sourceFrom": "Royal Caribbean"
+    },
+    {
+      "id": "c38fc010-9096-45c9-b8df-191e36914501",
+      "path": "pending:passport",
+      "filename": "דרכון — בן",
+      "mimeType": "application/octet-stream",
+      "size": 0,
+      "kind": "passport",
+      "addedAt": "2026-09-07T00:00:00.000Z",
+      "storageBucket": "trip-sensitive-documents",
+      "personId": "bd45bc64-1a3f-41b0-8580-105f52d537fe"
+    },
+    {
+      "id": "c38fc010-9096-45c9-b8df-191e36914502",
+      "path": "pending:passport",
+      "filename": "דרכון — גל",
+      "mimeType": "application/octet-stream",
+      "size": 0,
+      "kind": "passport",
+      "addedAt": "2026-09-07T00:00:00.000Z",
+      "storageBucket": "trip-sensitive-documents",
+      "personId": "5ce1491a-ebe2-45e3-afac-e079b561c0d6"
+    },
+    {
+      "id": "c38fc010-9096-45c9-b8df-191e36914503",
+      "path": "pending:passport",
+      "filename": "דרכון — עומר",
+      "mimeType": "application/octet-stream",
+      "size": 0,
+      "kind": "passport",
+      "addedAt": "2026-09-07T00:00:00.000Z",
+      "storageBucket": "trip-sensitive-documents",
+      "personId": "4161c66a-0ec9-434a-a662-dc2fa2f9b80a"
+    },
+    {
+      "id": "c38fc010-9096-45c9-b8df-191e36914504",
+      "path": "pending:passport",
+      "filename": "דרכון — ארי",
+      "mimeType": "application/octet-stream",
+      "size": 0,
+      "kind": "passport",
+      "addedAt": "2026-09-07T00:00:00.000Z",
+      "storageBucket": "trip-sensitive-documents",
+      "personId": "9cd15660-b514-41e1-bf7f-86fa402c36c7"
+    },
+    {
+      "id": "c38fc010-9096-45c9-b8df-191e36914505",
+      "path": "pending:passport",
+      "filename": "דרכון — עדן",
+      "mimeType": "application/octet-stream",
+      "size": 0,
+      "kind": "passport",
+      "addedAt": "2026-09-07T00:00:00.000Z",
+      "storageBucket": "trip-sensitive-documents",
+      "personId": "115d3582-0f7b-4234-b03b-4da4a92256d1"
+    },
+    {
+      "id": "c38fc010-9096-45c9-b8df-191e36914506",
+      "path": "pending:passport",
+      "filename": "דרכון — ליבי",
+      "mimeType": "application/octet-stream",
+      "size": 0,
+      "kind": "passport",
+      "addedAt": "2026-09-07T00:00:00.000Z",
+      "storageBucket": "trip-sensitive-documents",
+      "personId": "a6fd600a-5a99-4833-9d9b-27fe256c334c"
+    },
+    {
+      "id": "c38fc010-9096-45c9-b8df-191e36914507",
+      "path": "pending:passport",
+      "filename": "דרכון — לביא",
+      "mimeType": "application/octet-stream",
+      "size": 0,
+      "kind": "passport",
+      "addedAt": "2026-09-07T00:00:00.000Z",
+      "storageBucket": "trip-sensitive-documents",
+      "personId": "d1c98c2a-5a1f-46b3-ba44-ca8434b82225"
+    },
+    {
+      "id": "c38fc010-9096-45c9-b8df-191e36914508",
+      "path": "pending:passport",
+      "filename": "דרכון — לירי",
+      "mimeType": "application/octet-stream",
+      "size": 0,
+      "kind": "passport",
+      "addedAt": "2026-09-07T00:00:00.000Z",
+      "storageBucket": "trip-sensitive-documents",
+      "personId": "790e86da-5a82-4017-a822-856c38508940"
+    },
+    {
+      "id": "c38fc010-9096-45c9-b8df-191e36914509",
+      "path": "pending:passport",
+      "filename": "דרכון — אבנר",
+      "mimeType": "application/octet-stream",
+      "size": 0,
+      "kind": "passport",
+      "addedAt": "2026-09-07T00:00:00.000Z",
+      "storageBucket": "trip-sensitive-documents",
+      "personId": "2f092632-d025-4f27-8e35-48deb44371f6"
+    },
+    {
+      "id": "c38fc010-9096-45c9-b8df-191e36914510",
+      "path": "pending:passport",
+      "filename": "דרכון — רחל",
+      "mimeType": "application/octet-stream",
+      "size": 0,
+      "kind": "passport",
+      "addedAt": "2026-09-07T00:00:00.000Z",
+      "storageBucket": "trip-sensitive-documents",
+      "personId": "62900ff4-f78e-441f-a5a3-7939f4fc6963"
+    },
+    {
+      "id": "c38fc010-9096-45c9-b8df-191e36914511",
+      "path": "pending:passport",
+      "filename": "דרכון — אגם",
+      "mimeType": "application/octet-stream",
+      "size": 0,
+      "kind": "passport",
+      "addedAt": "2026-09-07T00:00:00.000Z",
+      "storageBucket": "trip-sensitive-documents",
+      "personId": "af55139a-8427-47f8-b01c-8619514cde97"
+    },
+    {
+      "id": "c38fc010-9096-45c9-b8df-191e36914512",
+      "path": "pending:passport",
+      "filename": "דרכון — שובל",
+      "mimeType": "application/octet-stream",
+      "size": 0,
+      "kind": "passport",
+      "addedAt": "2026-09-07T00:00:00.000Z",
+      "storageBucket": "trip-sensitive-documents",
+      "personId": "3b3fb68c-d03f-402b-9408-fff076e48fef"
     }
   ],
   "days": [

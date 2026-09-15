@@ -13,7 +13,8 @@ import {
   resolveActiveTripId,
 } from '@/lib/authTripSync'
 import { syncFromGmail, type GmailSyncReport } from '@/lib/gmailSync'
-import { GmailAuthError } from '@/lib/gmailToken'
+import { GmailAuthError, GmailForbiddenError } from '@/lib/gmailToken'
+import { isFamilyCatalogEmail } from '@/lib/familyCatalog'
 import { getLastSync } from '@/lib/gmailSyncState'
 import type { TripPlan } from '@/types/trip-plan'
 
@@ -249,6 +250,8 @@ export default function CloudSyncButton() {
     } catch (e) {
       if (e instanceof GmailAuthError) {
         setToast(gmailReconnectToast())
+      } else if (e instanceof GmailForbiddenError) {
+        setToast({ kind: 'err', text: e.message })
       } else {
         const msg = e instanceof Error ? e.message : 'שגיאה'
         const isQuota = /\b429\b|quota|rate.?limit/i.test(msg)
@@ -278,12 +281,14 @@ export default function CloudSyncButton() {
             <span>סנכרן</span>
           </Stack>
         </Button>
-        <Button variant="ghost" onClick={syncGmail} disabled={busy} title={gmailTooltip}>
-          <Stack direction="row" spacing="xs" align="center">
-            {mode === 'gmail' ? <Loader2 size={16} className="spin" /> : <Mail size={16} />}
-            <span>Gmail</span>
-          </Stack>
-        </Button>
+        {isFamilyCatalogEmail(user?.email) && (
+          <Button variant="ghost" onClick={syncGmail} disabled={busy} title={gmailTooltip}>
+            <Stack direction="row" spacing="xs" align="center">
+              {mode === 'gmail' ? <Loader2 size={16} className="spin" /> : <Mail size={16} />}
+              <span>Gmail</span>
+            </Stack>
+          </Button>
+        )}
         <Button variant="ghost" onClick={signOut} title={`התנתק (${user?.email})`}>
           <span style={{ fontSize: 14 }}>🚪</span>
         </Button>

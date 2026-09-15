@@ -18,10 +18,15 @@ describe('Gmail broker error mapping', () => {
     )
   })
 
-  it('turns 412 missing refresh token into the same reconnect error', () => {
+  it('turns 403 family-catalog denial into GmailForbiddenError, not reconnect', () => {
     assert.throws(
-      () => throwForGmailBrokerStatus(412, '{"error":"no_refresh_token"}'),
-      (err: unknown) => err instanceof GmailAuthError,
+      () => throwForGmailBrokerStatus(403, '{"error":"forbidden"}'),
+      (err: unknown) => {
+        assert.equal((err as Error).name, 'GmailForbiddenError')
+        assert.match((err as Error).message, /בן וגל/)
+        assert.equal((err as Error).message.includes('Gmail token broker'), false)
+        return true
+      },
     )
   })
 

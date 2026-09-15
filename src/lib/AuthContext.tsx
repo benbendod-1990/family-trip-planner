@@ -51,7 +51,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const wireUp = async (userId: string) => {
       const [
         { persistGmailRefreshToken },
-        { listTrips, pushLocalToRemote, foldRemoteTrips, deleteCollapsedDuplicates, claimPendingInvites, claimTripShareLink },
+        { listTrips, pushLocalToRemote, foldRemoteTrips, deleteCollapsedDuplicates, claimPendingInvites, claimTripShareLink, listMyOwnedTripIds },
         { startTripAutoSync, suppressNextPush },
         { startTripRealtime },
         { ensureSeedBookingDocuments },
@@ -102,14 +102,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (pushable.length) {
           await pushLocalToRemote(pushable)
         }
-        const withSeedDocs = ensureSeedDocLinks(ensureSeedBookingDocuments(merged, FAMILY_SEED_TRIPS))
+        let passportTripIds = new Set<string>()
+        try {
+          passportTripIds = await listMyOwnedTripIds(userId)
+        } catch (e) {
+          console.warn('[auth] owner trip ids failed; hiding passports:', e)
+        }
+        const withSeedDocs = ensureSeedDocLinks(ensureSeedBookingDocuments(merged, FAMILY_SEED_TRIPS, { passportTripIds }))
         suppressNextPush()
         useTripStore.setState({
           trips: withSeedDocs,
           activeTripId: resolveActiveTripId(withSeedDocs, useTripStore.getState().activeTripId),
         })
         for (const t of withSeedDocs) {
-          const links = t.documents ?? []
+          const isOwner = passportTripIds.has(t.id)
+          const links = (t.documents ?? []).filter(d => isOwner || d.kind !== 'passport')
           if (links.length) void persistLinkDocuments(t.id, links)
         }
       } catch (e) {

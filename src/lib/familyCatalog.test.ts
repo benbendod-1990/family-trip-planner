@@ -39,7 +39,8 @@ describe('family catalog emails', () => {
     const page = readFileSync(new URL('../pages/TripDoc.tsx', import.meta.url), 'utf8')
     assert.match(page, /isFamilyCatalogEmail\(user\?\.email\)/)
     assert.match(page, /isAdmin && trip\.docUrl && !planText/)
-    assert.equal(page.includes('useIsTripOwner'), false)
+    // Passports stay trip-owner (share-link joiners must not see slots).
+    assert.match(page, /useIsTripOwner/)
     const home = readFileSync(new URL('../pages/Home.tsx', import.meta.url), 'utf8')
     assert.equal(home.includes('listTripMembers'), false)
     assert.equal(home.includes('useIsTripOwner'), false)

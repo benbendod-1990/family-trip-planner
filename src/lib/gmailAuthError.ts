@@ -1,6 +1,9 @@
 export const GMAIL_RECONNECT_MESSAGE =
   'החיבור ל-Gmail פג. התחבר מחדש עם Google כדי לחדש את גישת הקריאה למיילים.'
 
+export const GMAIL_ADMIN_ONLY_MESSAGE =
+  'רק בן וגל יכולים לשאוב מ-Gmail. שאר חברי הטיול רואים ומעלים מסמכים ותמונות, בלי גישה לתיבת הדואר.'
+
 /**
  * Thrown when there's no usable Gmail refresh token on file — either the user
  * never granted Gmail access, or Google revoked the token (apps in "Testing"
@@ -16,8 +19,19 @@ export class GmailAuthError extends Error {
   }
 }
 
+/** Worker rejected a non-admin Gmail token request. Not a reconnect. */
+export class GmailForbiddenError extends Error {
+  constructor(message: string = GMAIL_ADMIN_ONLY_MESSAGE) {
+    super(message)
+    this.name = 'GmailForbiddenError'
+  }
+}
+
 /** Maps Worker broker failures onto a reconnect error instead of raw JSON. */
 export function throwForGmailBrokerStatus(status: number, body: string): never {
+  if (status === 403) {
+    throw new GmailForbiddenError()
+  }
   if (status === 401 || status === 412) {
     throw new GmailAuthError(GMAIL_RECONNECT_MESSAGE)
   }

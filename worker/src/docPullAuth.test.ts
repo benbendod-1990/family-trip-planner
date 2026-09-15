@@ -4,11 +4,11 @@ import { callerMayPullTripDoc } from './docPullAuth.ts'
 import { emailFromJwtPayload } from './auth.ts'
 
 describe('emailFromJwtPayload', () => {
-  it('reads top-level email then user_metadata.email', () => {
+  it('reads the Auth email claim only, never user_metadata', () => {
     assert.equal(emailFromJwtPayload({ email: 'benbendod@gmail.com' }), 'benbendod@gmail.com')
     assert.equal(
       emailFromJwtPayload({ user_metadata: { email: 'shechter.gal@gmail.com' } }),
-      'shechter.gal@gmail.com',
+      undefined,
     )
     assert.equal(emailFromJwtPayload({ sub: 'user-1' }), undefined)
     assert.equal(emailFromJwtPayload({ email: '   ' }), undefined)

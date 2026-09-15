@@ -11,6 +11,15 @@ import { runItineraryParseGemini } from './itineraryGemini'
 import { runParseDocument, type ParseDocumentRequest } from './parseDocument'
 import { pullDocText, type DocPullRequest } from './tripDoc'
 import { storeRefreshToken, getAccessToken } from './gmail'
+import { assertFamilyCatalogGmail } from './gmailGate'
+import { signDocumentUrl } from './documents'
+import {
+  assertWebAuthn,
+  issueWebAuthnChallenge,
+  originIsAllowed,
+  registerWebAuthnCredential,
+  type WebAuthnAssertionBody,
+} from './webauthn'
 import { callerMayPullTripDoc } from './docPullAuth'
 
 export interface Env {
@@ -50,22 +59,71 @@ export default {
     const caller = auth.caller
 
     try {
-      // Gmail token broker. Requires a real user (not the shared-secret path).
+      // Gmail token broker. Requires a family-catalog admin (Ben / Gal).
+      // Invitees must not mint Gmail tokens even if they signed in with Google.
       if (url.pathname.startsWith('/api/gmail/')) {
-        if (caller.kind !== 'supabase-user' || !caller.userId) {
-          return json({ error: 'unauthorized', detail: 'user session required' }, 401, cors)
-        }
+        const gate = await assertFamilyCatalogGmail(env, caller)
+        if (!gate.ok) return json({ error: gate.error, detail: gate.detail }, gate.status, cors)
         if (url.pathname === '/api/gmail/store-refresh-token') {
           const body = (await req.json()) as { refresh_token?: unknown; scope?: unknown }
-          const r = await storeRefreshToken(env, caller.userId, body)
+          const r = await storeRefreshToken(env, caller.userId!, body)
           if ('error' in r) return json({ error: r.error, detail: r.detail }, r.status, cors)
           return json(r, 200, cors)
         }
         if (url.pathname === '/api/gmail/access-token') {
-          const r = await getAccessToken(env, caller.userId)
+          const r = await getAccessToken(env, caller.userId!)
           if ('error' in r) return json({ error: r.error, detail: r.detail }, r.status, cors)
           return json(r, 200, cors)
         }
+      }
+
+      if (url.pathname === '/api/documents/webauthn/challenge') {
+        if (caller.kind !== 'supabase-user' || !caller.userId) {
+          return json({ error: 'unauthorized', detail: 'user session required' }, 401, cors)
+        }
+        if (!originIsAllowed(origin, env.ALLOWED_ORIGIN)) {
+          return json({ error: 'unauthorized', detail: 'origin not allowed' }, 401, cors)
+        }
+        const body = (await req.json().catch(() => ({}))) as { purpose?: unknown }
+        const r = await issueWebAuthnChallenge(env, caller.userId, caller.email, origin, body.purpose)
+        if ('error' in r) return json({ error: r.error, detail: r.detail }, r.status, cors)
+        return json(r, 200, cors)
+      }
+
+      if (url.pathname === '/api/documents/webauthn/register') {
+        if (caller.kind !== 'supabase-user' || !caller.userId) {
+          return json({ error: 'unauthorized', detail: 'user session required' }, 401, cors)
+        }
+        if (!originIsAllowed(origin, env.ALLOWED_ORIGIN)) {
+          return json({ error: 'unauthorized', detail: 'origin not allowed' }, 401, cors)
+        }
+        const body = (await req.json()) as Parameters<typeof registerWebAuthnCredential>[3]
+        const r = await registerWebAuthnCredential(env, caller.userId, origin, body)
+        if ('error' in r) return json({ error: r.error, detail: r.detail }, r.status, cors)
+        return json(r, 200, cors)
+      }
+
+      if (url.pathname === '/api/documents/webauthn/assert') {
+        if (caller.kind !== 'supabase-user' || !caller.userId) {
+          return json({ error: 'unauthorized', detail: 'user session required' }, 401, cors)
+        }
+        if (!originIsAllowed(origin, env.ALLOWED_ORIGIN)) {
+          return json({ error: 'unauthorized', detail: 'origin not allowed' }, 401, cors)
+        }
+        const body = (await req.json()) as Parameters<typeof assertWebAuthn>[3]
+        const r = await assertWebAuthn(env, caller.userId, origin, body)
+        if ('error' in r) return json({ error: r.error, detail: r.detail }, r.status, cors)
+        return json(r, 200, cors)
+      }
+
+      if (url.pathname === '/api/documents/sign') {
+        const body = (await req.json()) as { documentId?: unknown; assertion?: WebAuthnAssertionBody }
+        const r = await signDocumentUrl(env, caller, body, {
+          origin,
+          allowedOrigin: env.ALLOWED_ORIGIN,
+        })
+        if ('error' in r) return json({ error: r.error, detail: r.detail }, r.status, cors)
+        return json(r, 200, cors)
       }
 
       // Trip Doc pull — a plain proxy for the Google Doc txt export (the

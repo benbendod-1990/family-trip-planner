@@ -351,7 +351,7 @@ describe('call-site regressions', () => {
     assert.ok(seeds.includes('FAMILY_SEED_TRIPS'))
     const auth = readFileSync(new URL('./AuthContext.tsx', import.meta.url), 'utf8')
     assert.ok(auth.includes('FAMILY_SEED_TRIPS'))
-    assert.ok(auth.includes('ensureSeedBookingDocuments(merged, FAMILY_SEED_TRIPS)'))
+    assert.ok(auth.includes('ensureSeedBookingDocuments(merged, FAMILY_SEED_TRIPS, { passportTripIds })'))
   })
 
   it('does not re-enable in-app AI product UI', () => {
