@@ -197,6 +197,17 @@
         padding: 16px 0 12px;
       }
 
+      .boot-card-chrome {
+        position: relative;
+        padding: 22px 18px 18px;
+        background: #FFFDF7;
+        border: 1px solid #EADCB5;
+        border-radius: 24px;
+        box-shadow:
+          0 1px 2px rgba(120, 90, 40, 0.06),
+          0 18px 40px rgba(80, 56, 20, 0.10);
+      }
+
       .boot-title {
         font-family: 'Frank Ruhl Libre', 'Heebo', serif;
         font-weight: 500;
@@ -212,8 +223,19 @@
         margin: 4px 0 0;
       }
 
+      .boot-hairline {
+        width: 48px;
+        height: 2px;
+        margin: 14px 0 12px;
+        border-radius: 999px;
+        background: #E2953A;
+        opacity: 0.7;
+      }
+
       html[data-deep] .boot-title,
-      html[data-deep] .boot-sub {
+      html[data-deep] .boot-sub,
+      html[data-deep] .boot-hairline,
+      html[data-deep] .boot-card-chrome {
         visibility: hidden;
       }
 
@@ -224,10 +246,28 @@
         margin-top: 12px;
       }
 
+      .boot-tools {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
+        margin-top: 0;
+      }
+
       .boot-pill {
         height: 44px;
         border-radius: 10px;
         flex: 1 1 calc(50% - 4px);
+      }
+
+      .boot-tools .boot-pill {
+        flex: none;
+        height: 72px;
+        border-radius: 16px;
+      }
+
+      .boot-cta .boot-pill {
+        height: 48px;
+        border-radius: 14px;
       }
 
       .boot-cards {
@@ -275,9 +315,10 @@
 
       @media (min-width: 768px) {
         #boot { padding: 0 24px; }
-        .boot-head { padding: 32px 0 24px; }
-        .boot-title { font-size: 34px; }
-        .boot-pill { flex: 0 0 132px; }
+        .boot-head { padding: 24px 0 20px; }
+        .boot-card-chrome { padding: 28px 24px 22px; }
+        .boot-title { font-size: 30px; }
+        .boot-tools .boot-pill { height: 48px; }
         .boot-cards { grid-template-columns: repeat(2, 1fr); }
       }
 
@@ -305,13 +346,19 @@
     <div id="boot" role="status" aria-label="טוען את מסע משפחתי">
       <div class="boot-inner">
         <div class="boot-head">
-          <h1 class="boot-title">✈️ הטיולים שלנו</h1>
-          <p class="boot-sub">תכנן את הטיול המשפחתי הבא שלך</p>
-          <div class="boot-row">
-            <div class="boot-pill"></div>
-            <div class="boot-pill"></div>
-            <div class="boot-pill"></div>
-            <div class="boot-pill"></div>
+          <div class="boot-card-chrome">
+            <h1 class="boot-title">הטיולים שלנו</h1>
+            <p class="boot-sub">תכנן את הטיול המשפחתי הבא שלך</p>
+            <div class="boot-hairline" aria-hidden="true"></div>
+            <div class="boot-row boot-tools">
+              <div class="boot-pill"></div>
+              <div class="boot-pill"></div>
+              <div class="boot-pill"></div>
+            </div>
+            <div class="boot-row boot-cta">
+              <div class="boot-pill"></div>
+              <div class="boot-pill"></div>
+            </div>
           </div>
         </div>
         <div class="boot-cards">

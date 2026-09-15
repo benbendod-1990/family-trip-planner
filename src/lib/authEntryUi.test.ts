@@ -93,6 +93,8 @@ describe('auth entry UI', () => {
     assert.equal(home.includes('LogIn'), false)
     assert.match(home, /showAdminUsers && \(/)
     assert.match(home, /משתמשים רשומים/)
+    assert.equal(home.includes('✈️ הטיולים שלנו'), false)
+    assert.match(home, /<HomeTitle>הטיולים שלנו<\/HomeTitle>/)
     assert.equal(app.includes('login-preview'), false)
     assert.equal(app.includes('LoginPreview'), false)
     assert.match(app, /path="\/login"/)

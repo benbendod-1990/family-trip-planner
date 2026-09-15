@@ -1,6 +1,6 @@
 import { lazy, Suspense, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Container, Grid, EmptyState, Button, Stack, Typography } from 'myk-library'
+import { Container, Grid, EmptyState, Stack } from 'myk-library'
 import { ThemeProvider } from 'styled-components'
 import { useTripStore } from '@/stores/tripStore'
 import { useAuth } from '@/lib/AuthContext'
@@ -14,7 +14,21 @@ import styled from 'styled-components'
 import { importTripFromFile } from '@/utils/export'
 import { generateId } from '@/utils/id'
 import { useBreakpoint } from '@/hooks/useBreakpoint'
-import { warmTheme, warmDisplayFont, warmPageBackground } from '@/theme/warmTheme'
+import { warmTheme } from '@/theme/warmTheme'
+import {
+  HomeAdminLink,
+  HomeCtaRow,
+  HomeHairline,
+  HomeHeaderCard,
+  HomePageBg,
+  HomePlaneMark,
+  HomePrimaryButton,
+  HomeSecondaryButton,
+  HomeSubtitle,
+  HomeSyncSlot,
+  HomeTitle,
+  HomeTitleRow,
+} from '@/components/home/HomeChrome'
 
 /*
  * Home is eager (it is the start_url), so anything it imports statically lands
@@ -28,51 +42,10 @@ import { warmTheme, warmDisplayFont, warmPageBackground } from '@/theme/warmThem
  */
 const CloudSyncButton = lazy(() => import('@/components/cloud/CloudSyncButton'))
 
-const PageBg = styled.div`
-  min-height: 100vh;
-  background: ${warmPageBackground};
-`
-
-/* Holds the button's footprint so the row doesn't reflow when it arrives. */
-const CloudSyncSlot = styled.div`
-  min-height: 44px;
-`
-
-const Header = styled.div<{ $mobile: boolean }>`
-  padding: ${({ $mobile }) => ($mobile ? '16px 0 12px' : '32px 0 24px')};
-  display: flex;
-  align-items: ${({ $mobile }) => ($mobile ? 'stretch' : 'center')};
-  justify-content: space-between;
-  flex-direction: ${({ $mobile }) => ($mobile ? 'column' : 'row')};
-  gap: ${({ $mobile }) => ($mobile ? '12px' : '0')};
-`
-
-const Title = styled.h1<{ $mobile: boolean }>`
-  font-family: ${warmDisplayFont};
-  font-weight: 500;
-  font-size: ${({ $mobile }) => ($mobile ? '26px' : '34px')};
-  margin: 0;
-  color: ${({ theme }) => theme.colors.gray[900]};
-`
-
-const ButtonRow = styled.div<{ $mobile: boolean }>`
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  & > * {
-    touch-action: manipulation;
-    min-height: 44px; /* Apple HIG touch target */
-  }
-  ${({ $mobile }) => $mobile && `
-    width: 100%;
-    & > * { flex: 1 1 calc(50% - 4px); }
-  `}
-`
-
 const GuestWall = styled.div`
   display: flex;
   justify-content: center;
-  padding: 24px 0 40px;
+  padding: 8px 0 40px;
 `
 
 export default function Home() {
@@ -98,41 +71,41 @@ export default function Home() {
 
   return (
     <ThemeProvider theme={warmTheme}>
-    <PageBg className="warm-shell">
+    <HomePageBg className="warm-shell">
     <Container size="xl" style={{ padding: `0 ${isMobile ? '12px' : '24px'}` }}>
-      <Header $mobile={isMobile}>
-        <Stack direction="column" spacing="xs">
-          <Title $mobile={isMobile}>✈️ הטיולים שלנו</Title>
-          <Typography variant="body2" style={{ color: '#8F7B5C' }}>
-            תכנן את הטיול המשפחתי הבא שלך
-          </Typography>
-          {showAdminUsers && (
-            <Button variant="ghost" size="sm" onClick={() => navigate('/admin/users')} title="מי נרשם לאפליקציה">
-              <Stack direction="row" spacing="xs" align="center">
-                <Users size={14} />
-                <span>משתמשים רשומים</span>
-              </Stack>
-            </Button>
-          )}
-        </Stack>
-        <ButtonRow $mobile={isMobile}>
-          <Suspense fallback={<CloudSyncSlot />}>
-            <CloudSyncButton />
-          </Suspense>
-          <Button variant="ghost" onClick={handleImport} title="ייבא טיול מ-JSON">
-            <Stack direction="row" spacing="xs" align="center">
-              <Upload size={16} />
-              <span>ייבא</span>
-            </Stack>
-          </Button>
-          <Button variant="primary" onClick={() => setShowCreate(true)}>
-            <Stack direction="row" spacing="xs" align="center">
-              <Plus size={16} />
-              <span>טיול חדש</span>
-            </Stack>
-          </Button>
-        </ButtonRow>
-      </Header>
+      <HomeHeaderCard>
+        <HomeTitleRow>
+          <HomePlaneMark />
+          <div>
+            <HomeTitle>הטיולים שלנו</HomeTitle>
+            <HomeSubtitle>תכנן את הטיול המשפחתי הבא שלך</HomeSubtitle>
+          </div>
+        </HomeTitleRow>
+        <HomeHairline />
+        {showAdminUsers && (
+          <HomeAdminLink
+            type="button"
+            onClick={() => navigate('/admin/users')}
+            title="מי נרשם לאפליקציה"
+          >
+            <Users size={15} strokeWidth={2} />
+            <span>משתמשים רשומים</span>
+          </HomeAdminLink>
+        )}
+        <Suspense fallback={<HomeSyncSlot tall={!!session && isMobile} />}>
+          <CloudSyncButton variant="home" />
+        </Suspense>
+        <HomeCtaRow>
+          <HomePrimaryButton type="button" onClick={() => setShowCreate(true)}>
+            <Plus size={18} strokeWidth={2} />
+            <span>טיול חדש</span>
+          </HomePrimaryButton>
+          <HomeSecondaryButton type="button" onClick={handleImport} title="ייבא טיול מ-JSON">
+            <Upload size={16} strokeWidth={2} />
+            <span>ייבא</span>
+          </HomeSecondaryButton>
+        </HomeCtaRow>
+      </HomeHeaderCard>
 
       {trips.length === 0 ? (
         isGuest ? (
@@ -171,7 +144,7 @@ export default function Home() {
         onCreated={id => navigate(`/trip/${id}/dashboard`)}
       />
     </Container>
-    </PageBg>
+    </HomePageBg>
     </ThemeProvider>
   )
 }
