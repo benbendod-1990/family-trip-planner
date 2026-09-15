@@ -4,11 +4,12 @@ import { Card } from 'myk-library'
 import { FileText, ExternalLink, RefreshCw, CheckCircle2, AlertTriangle } from 'lucide-react'
 import { useTripStore } from '@/stores/tripStore'
 import { checkDocSync, DocSyncError } from '@/lib/tripDoc'
+import { useAuth } from '@/lib/AuthContext'
+import { isFamilyCatalogEmail } from '@/lib/familyCatalog'
 import AuthReconnectBanner from '@/components/auth/AuthReconnectBanner'
 import type { DocDiffResult, DocIssue } from '@/lib/tripDocDiff'
 import type { TripPlan } from '@/types/trip-plan'
 import { formatDateShort } from '@/utils/date'
-import { useIsTripOwner } from '@/hooks/useIsTripOwner'
 
 interface Props {
   trip: TripPlan
@@ -172,7 +173,9 @@ function issueText(issue: DocIssue): string {
 export default function TripDocCard({ trip }: Props) {
   const setDocUrl = useTripStore(s => s.setDocUrl)
   const markDocChecked = useTripStore(s => s.markDocChecked)
-  const { isOwner, loading: ownerLoading } = useIsTripOwner(trip.id)
+  const { user } = useAuth()
+  // Product admin: family-catalog emails only — not every trip owner (Libi, invitees).
+  const isAdmin = isFamilyCatalogEmail(user?.email)
 
   const [busy, setBusy] = useState(false)
   const [result, setResult] = useState<DocDiffResult | null>(null)
@@ -180,7 +183,7 @@ export default function TripDocCard({ trip }: Props) {
   const [draftUrl, setDraftUrl] = useState('')
 
   const run = async () => {
-    if (!isOwner) return
+    if (!isAdmin) return
     setBusy(true)
     setError(null)
     setResult(null)
@@ -209,7 +212,7 @@ export default function TripDocCard({ trip }: Props) {
       </Header>
 
       {!trip.docUrl ? (
-        isOwner ? (
+        isAdmin ? (
           <>
             <IssueLine>
               המסמך הוא מקור האמת של הטיול. הדבק את הקישור כדי להשוות מולו.
@@ -232,19 +235,17 @@ export default function TripDocCard({ trip }: Props) {
               </SmallButton>
             </LinkForm>
           </>
-        ) : ownerLoading ? null : (
-          <IssueLine>רק יוצר הטיול יכול לקשר את מסמך התכנון.</IssueLine>
+        ) : (
+          <IssueLine>אין מסמך מקושר.</IssueLine>
         )
-      ) : isOwner ? (
+      ) : isAdmin ? (
         <Button onClick={run} disabled={busy}>
           {busy ? <Spin size={16} /> : <RefreshCw size={16} />}
           {busy ? 'קורא את המסמך…' : 'בדוק סנכרון מול המסמך'}
         </Button>
-      ) : ownerLoading ? null : (
-        <IssueLine>רק יוצר הטיול יכול לבדוק סנכרון מול המסמך. אפשר לפתוח את המסמך מהקישור למעלה.</IssueLine>
-      )}
+      ) : null}
 
-      {isOwner && error && (
+      {isAdmin && error && (
         error.reconnect
           ? (
             <AuthReconnectBanner
@@ -262,14 +263,14 @@ export default function TripDocCard({ trip }: Props) {
           )
       )}
 
-      {isOwner && result && result.inSync && (
+      {isAdmin && result && result.inSync && (
         <Banner $tone="ok">
           <CheckCircle2 size={16} style={{ flexShrink: 0, marginTop: 1 }} />
           <div>הלו״ז מסונכרן עם המסמך — כל {result.days.length} הימים תואמים.</div>
         </Banner>
       )}
 
-      {isOwner && result && !result.inSync && (
+      {isAdmin && result && !result.inSync && (
         <>
           <Banner $tone="warn">
             <AlertTriangle size={16} style={{ flexShrink: 0, marginTop: 1 }} />
@@ -297,7 +298,7 @@ export default function TripDocCard({ trip }: Props) {
         </>
       )}
 
-      {(result || trip.docLastPulledAt) && (
+      {isAdmin && (result || trip.docLastPulledAt) && (
         <Meta>
           נבדק לאחרונה:{' '}
           {new Date(result?.checkedAt ?? trip.docLastPulledAt!).toLocaleString('he-IL', {

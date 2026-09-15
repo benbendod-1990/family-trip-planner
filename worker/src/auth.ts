@@ -16,6 +16,7 @@ interface Env {
 export interface AuthedCaller {
   kind: 'shared-secret' | 'supabase-user'
   userId?: string
+  email?: string
 }
 
 export type AuthFailReason = 'missing_bearer' | 'expired_token' | 'invalid_token'
@@ -41,7 +42,10 @@ export async function authenticate(req: Request, env: Env): Promise<AuthOutcome>
   if (verified.ok) {
     const userId = typeof verified.payload.sub === 'string' ? verified.payload.sub : undefined
     if (!userId) return { ok: false, detail: 'invalid_token' }
-    return { ok: true, caller: { kind: 'supabase-user', userId } }
+    return {
+      ok: true,
+      caller: { kind: 'supabase-user', userId, email: emailFromJwtPayload(verified.payload) },
+    }
   }
 
   // Homemade JWKS verify failed. Ask Supabase Auth — it knows the project's
@@ -50,7 +54,7 @@ export async function authenticate(req: Request, env: Env): Promise<AuthOutcome>
   if (verified.detail !== 'expired_token') {
     const viaAuth = await verifyViaAuthApi(bearer, env)
     if (viaAuth) {
-      return { ok: true, caller: { kind: 'supabase-user', userId: viaAuth } }
+      return { ok: true, caller: { kind: 'supabase-user', userId: viaAuth.userId, email: viaAuth.email } }
     }
   }
 
@@ -156,7 +160,20 @@ export function jwkForImport(jwk: JsonWebKey, alg?: string): JsonWebKey {
   return jwk
 }
 
-async function verifyViaAuthApi(token: string, env: Env): Promise<string | null> {
+export function emailFromJwtPayload(payload: Record<string, unknown>): string | undefined {
+  if (typeof payload.email === 'string' && payload.email.trim()) return payload.email
+  const meta = payload.user_metadata
+  if (meta && typeof meta === 'object' && meta !== null) {
+    const nested = (meta as { email?: unknown }).email
+    if (typeof nested === 'string' && nested.trim()) return nested
+  }
+  return undefined
+}
+
+async function verifyViaAuthApi(
+  token: string,
+  env: Env,
+): Promise<{ userId: string; email?: string } | null> {
   const apiKey = env.SUPABASE_ANON_KEY || env.SUPABASE_SERVICE_ROLE_KEY
   if (!env.SUPABASE_URL || !apiKey) return null
   try {
@@ -167,8 +184,12 @@ async function verifyViaAuthApi(token: string, env: Env): Promise<string | null>
       },
     })
     if (!res.ok) return null
-    const user = (await res.json()) as { id?: unknown }
-    return typeof user.id === 'string' ? user.id : null
+    const user = (await res.json()) as { id?: unknown; email?: unknown }
+    if (typeof user.id !== 'string') return null
+    return {
+      userId: user.id,
+      email: typeof user.email === 'string' ? user.email : undefined,
+    }
   } catch {
     return null
   }

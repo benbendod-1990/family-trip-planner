@@ -1,7 +1,9 @@
 /**
- * Family catalog: these Google accounts see every cloud trip (co-owner on
- * all rows). Everyone else sees only trips they were invited to (RLS
- * membership). Visibility is enforced in Postgres, not by filtering here.
+ * Family catalog / product admins: Ben and Gal. These Google accounts see
+ * every cloud trip (co-owner on all rows) and the admin-only surfaces
+ * (registered users, document sync check). Everyone else sees only trips
+ * they were invited to (RLS membership). Visibility is enforced in
+ * Postgres, not by filtering here.
  */
 export const FAMILY_CATALOG_EMAILS = [
   'benbendod@gmail.com',
