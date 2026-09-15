@@ -8,7 +8,7 @@ import TripCard from '@/components/trip/TripCard'
 import TripFormModal from '@/components/trip/TripFormModal'
 import { AuthEntryCard } from '@/components/auth/AuthEntryScreen'
 import GoogleSignInButton from '@/components/auth/GoogleSignInButton'
-import { Plus, Upload, Users } from 'lucide-react'
+import { Plus, Upload, Users, LogIn } from 'lucide-react'
 import { isFamilyCatalogEmail } from '@/lib/familyCatalog'
 import styled from 'styled-components'
 import { importTripFromFile } from '@/utils/export'
@@ -106,13 +106,28 @@ export default function Home() {
           <Typography variant="body2" style={{ color: '#8F7B5C' }}>
             תכנן את הטיול המשפחתי הבא שלך
           </Typography>
-          {showAdminUsers && (
-            <Button variant="ghost" size="sm" onClick={() => navigate('/admin/users')} title="מי נרשם לאפליקציה">
-              <Stack direction="row" spacing="xs" align="center">
-                <Users size={14} />
-                <span>משתמשים רשומים</span>
-              </Stack>
-            </Button>
+          {session && (
+            <Stack direction="row" spacing="xs" style={{ flexWrap: 'wrap' }}>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => navigate('/login-preview')}
+                title="תצוגת מסך הכניסה"
+              >
+                <Stack direction="row" spacing="xs" align="center">
+                  <LogIn size={14} />
+                  <span>תצוגת מסך כניסה</span>
+                </Stack>
+              </Button>
+              {showAdminUsers && (
+                <Button variant="ghost" size="sm" onClick={() => navigate('/admin/users')} title="מי נרשם לאפליקציה">
+                  <Stack direction="row" spacing="xs" align="center">
+                    <Users size={14} />
+                    <span>משתמשים רשומים</span>
+                  </Stack>
+                </Button>
+              )}
+            </Stack>
           )}
         </Stack>
         <ButtonRow $mobile={isMobile}>
