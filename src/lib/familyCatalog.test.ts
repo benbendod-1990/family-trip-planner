@@ -33,4 +33,13 @@ describe('family catalog emails', () => {
     assert.match(sql, /not the trip owner/)
     assert.equal(sql.includes('hourly'), true)
   })
+
+  it('0015 admin roster reuses is_family_catalog_email — no third allowlist', () => {
+    const sql = readFileSync(new URL('../../supabase/migrations/0015_admin_list_registered_users.sql', import.meta.url), 'utf8')
+    assert.match(sql, /is_family_catalog_email/)
+    assert.match(sql, /benbendod@gmail.com/)
+    assert.match(sql, /shechter\.gal@gmail.com/)
+    assert.equal(sql.includes('Edenbendavid'), false)
+    assert.match(sql, /forbidden: family catalog only/)
+  })
 })
