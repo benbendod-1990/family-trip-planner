@@ -213,11 +213,15 @@ export function shareLinkFailureStatus(e: unknown): string {
   if (msg.includes('forbidden') || msg.includes('only the trip owner')) {
     return 'רק יוצר הטיול יכול לשתף לינק.'
   }
-  if (
-    msg.includes('42702') ||
-    /column reference ".+" is ambiguous/i.test(msg)
-  ) {
-    return 'שגיאת שיתוף בשרת (מיגרציה 0013). רעננו את האפליקציה ונסו שוב.'
+  const ambiguousCol = msg.match(/column reference "([^"]+)" is ambiguous/i)?.[1]
+  if (msg.includes('42702') || ambiguousCol) {
+    if (ambiguousCol === 'trip_id') {
+      return 'שגיאת שיתוף בשרת (מיגרציה 0014). רעננו את האפליקציה ונסו שוב.'
+    }
+    if (ambiguousCol === 'expires_at') {
+      return 'שגיאת שיתוף בשרת (מיגרציה 0013). רעננו את האפליקציה ונסו שוב.'
+    }
+    return 'שגיאת שיתוף בשרת. רעננו את האפליקציה ונסו שוב.'
   }
   if (
     msg.includes('0012') ||

@@ -93,14 +93,29 @@ describe('share-link Hebrew errors', () => {
       shareLinkFailureStatus(new Error('create_or_get_trip_share_link: forbidden')),
       /יוצר הטיול/,
     )
-    const ambiguous = shareLinkFailureStatus(
+    const expiresAtAmbiguous = shareLinkFailureStatus(
       new Error(
         'create_or_get_trip_share_link: column reference "expires_at" is ambiguous | It could refer to either a PL/pgSQL variable or a table column. | 42702',
       ),
     )
-    assert.match(ambiguous, /0013/)
-    assert.equal(ambiguous.includes('expires_at'), false)
-    assert.equal(ambiguous.includes('42702'), false)
+    assert.match(expiresAtAmbiguous, /0013/)
+    assert.equal(expiresAtAmbiguous.includes('expires_at'), false)
+    assert.equal(expiresAtAmbiguous.includes('42702'), false)
+    const tripIdAmbiguous = shareLinkFailureStatus(
+      new Error(
+        'claim_trip_share_link: column reference "trip_id" is ambiguous | It could refer to either a PL/pgSQL variable or a table column. | 42702',
+      ),
+    )
+    assert.match(tripIdAmbiguous, /0014/)
+    assert.equal(tripIdAmbiguous.includes('0013'), false)
+    assert.equal(tripIdAmbiguous.includes('trip_id'), false)
+    assert.equal(tripIdAmbiguous.includes('42702'), false)
+    const otherAmbiguous = shareLinkFailureStatus(
+      new Error('claim_trip_share_link: column reference "role" is ambiguous | 42702'),
+    )
+    assert.match(otherAmbiguous, /שגיאת שיתוף בשרת/)
+    assert.equal(otherAmbiguous.includes('0013'), false)
+    assert.equal(otherAmbiguous.includes('0014'), false)
     assert.match(
       shareLinkFailureStatus(new Error('share_trip_mismatch')),
       /טיול אחר/,
@@ -424,5 +439,87 @@ describe('0013 share-link RETURNS TABLE vs column names', () => {
     const page = readFileSync(new URL('../pages/Quickstart.tsx', import.meta.url), 'utf8')
     assert.match(page, /0013_fix_share_link_expires_at\.sql/)
     assert.match(page, /0012_trip_share_links\.sql/)
+  })
+})
+
+/**
+ * RETURNS TABLE (trip_id, …) makes `trip_id` a PL/pgSQL OUT variable.
+ * `ON CONFLICT (trip_id, user_id)` is then 42702. Name the PK constraint
+ * instead of listing columns.
+ */
+function hasAmbiguousOnConflictTripId(body: string): boolean {
+  const text = body.replace(/--[^\n]*/g, '').replace(/\/\*[\s\S]*?\*\//g, '')
+  return /on\s+conflict\s*\([^)]*\btrip_id\b/i.test(text)
+}
+
+const HISTORICAL_ON_CONFLICT_TRIP_ID = `
+  insert into public.trip_members (trip_id, user_id, role)
+  values (_link.trip_id, _uid, _role)
+  on conflict (trip_id, user_id) do update
+    set role = excluded.role;
+`
+
+const FIXED_ON_CONFLICT_CONSTRAINT = `
+  insert into public.trip_members (trip_id, user_id, role)
+  values (_link.trip_id, _uid, _role)
+  on conflict on constraint trip_members_pkey do update
+    set role = excluded.role;
+`
+
+describe('0014 claim_trip_share_link ON CONFLICT trip_id', () => {
+  it('scanner flags ON CONFLICT (trip_id, user_id) and accepts ON CONSTRAINT', () => {
+    assert.equal(hasAmbiguousOnConflictTripId(HISTORICAL_ON_CONFLICT_TRIP_ID), true)
+    assert.equal(
+      hasAmbiguousOnConflictTripId('on conflict ( user_id, trip_id ) do nothing'),
+      true,
+    )
+    assert.equal(hasAmbiguousOnConflictTripId(FIXED_ON_CONFLICT_CONSTRAINT), false)
+  })
+
+  it('0012/0013 claim bodies still carry the historical pattern the scanner catches', () => {
+    const sql = readFileSync(
+      new URL('../../supabase/migrations/0013_fix_share_link_expires_at.sql', import.meta.url),
+      'utf8',
+    )
+    assert.equal(hasAmbiguousOnConflictTripId(functionBody(sql, 'claim_trip_share_link')), true)
+  })
+
+  it('is copied to public/migrations and matches supabase/', () => {
+    const a = readFileSync(
+      new URL('../../supabase/migrations/0014_fix_claim_share_link_trip_id_ambiguous.sql', import.meta.url),
+      'utf8',
+    )
+    const b = readFileSync(
+      new URL('../../public/migrations/0014_fix_claim_share_link_trip_id_ambiguous.sql', import.meta.url),
+      'utf8',
+    )
+    assert.equal(a, b)
+  })
+
+  it('claim_trip_share_link uses ON CONSTRAINT trip_members_pkey, not (trip_id, …)', () => {
+    const sql = readFileSync(
+      new URL('../../supabase/migrations/0014_fix_claim_share_link_trip_id_ambiguous.sql', import.meta.url),
+      'utf8',
+    )
+    const body = functionBody(sql, 'claim_trip_share_link')
+    assert.equal(hasAmbiguousOnConflictTripId(body), false)
+    assert.match(body, /on conflict on constraint trip_members_pkey do update/)
+    assert.match(
+      sql,
+      /revoke all on function public\.claim_trip_share_link\(text\) from public, anon/,
+    )
+    assert.match(
+      sql,
+      /grant execute on function public\.claim_trip_share_link\(text\) to authenticated/,
+    )
+    assert.equal(/grant execute[\s\S]*to anon/i.test(sql), false)
+  })
+
+  it('Quickstart lists 0014 after 0013', () => {
+    const page = readFileSync(new URL('../pages/Quickstart.tsx', import.meta.url), 'utf8')
+    assert.match(page, /0014_fix_claim_share_link_trip_id_ambiguous\.sql/)
+    const i13 = page.indexOf('0013_fix_share_link_expires_at.sql')
+    const i14 = page.indexOf('0014_fix_claim_share_link_trip_id_ambiguous.sql')
+    assert.ok(i13 >= 0 && i14 > i13)
   })
 })
