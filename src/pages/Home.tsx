@@ -8,7 +8,8 @@ import TripCard from '@/components/trip/TripCard'
 import TripFormModal from '@/components/trip/TripFormModal'
 import { AuthEntryCard } from '@/components/auth/AuthEntryScreen'
 import GoogleSignInButton from '@/components/auth/GoogleSignInButton'
-import { Plus, Upload } from 'lucide-react'
+import { Plus, Upload, Users } from 'lucide-react'
+import { isFamilyCatalogEmail } from '@/lib/familyCatalog'
 import styled from 'styled-components'
 import { importTripFromFile } from '@/utils/export'
 import { generateId } from '@/utils/id'
@@ -77,7 +78,8 @@ const GuestWall = styled.div`
 export default function Home() {
   const navigate = useNavigate()
   const trips = useTripStore(s => s.trips)
-  const { session, loading: authLoading, signInWithGoogle } = useAuth()
+  const { session, user, loading: authLoading, signInWithGoogle } = useAuth()
+  const showAdminUsers = isFamilyCatalogEmail(user?.email)
   const [showCreate, setShowCreate] = useState(false)
   const { isMobile, isTablet } = useBreakpoint()
   const isGuest = !session && !authLoading
@@ -104,6 +106,14 @@ export default function Home() {
           <Typography variant="body2" style={{ color: '#8F7B5C' }}>
             תכנן את הטיול המשפחתי הבא שלך
           </Typography>
+          {showAdminUsers && (
+            <Button variant="ghost" size="sm" onClick={() => navigate('/admin/users')} title="מי נרשם לאפליקציה">
+              <Stack direction="row" spacing="xs" align="center">
+                <Users size={14} />
+                <span>משתמשים רשומים</span>
+              </Stack>
+            </Button>
+          )}
         </Stack>
         <ButtonRow $mobile={isMobile}>
           <Suspense fallback={<CloudSyncSlot />}>
