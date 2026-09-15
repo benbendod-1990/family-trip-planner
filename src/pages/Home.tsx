@@ -21,7 +21,6 @@ import {
   HomeHairline,
   HomeHeaderCard,
   HomePageBg,
-  HomePlaneMark,
   HomePrimaryButton,
   HomeSecondaryButton,
   HomeSubtitle,
@@ -29,6 +28,7 @@ import {
   HomeTitle,
   HomeTitleRow,
 } from '@/components/home/HomeChrome'
+import { HomeBrandMark } from '@/components/home/HomeBrandMark'
 
 /*
  * Home is eager (it is the start_url), so anything it imports statically lands
@@ -75,11 +75,9 @@ export default function Home() {
     <Container size="xl" style={{ padding: `0 ${isMobile ? '12px' : '24px'}` }}>
       <HomeHeaderCard>
         <HomeTitleRow>
-          <HomePlaneMark />
-          <div>
-            <HomeTitle>הטיולים שלנו</HomeTitle>
-            <HomeSubtitle>תכנן את הטיול המשפחתי הבא שלך</HomeSubtitle>
-          </div>
+          <HomeBrandMark />
+          <HomeTitle>הטיולים שלנו</HomeTitle>
+          <HomeSubtitle>תכנן את הטיול המשפחתי הבא שלך</HomeSubtitle>
         </HomeTitleRow>
         <HomeHairline />
         {showAdminUsers && (
@@ -114,6 +112,7 @@ export default function Home() {
               title="התחברו כדי לראות את הטיולים"
               subtitle="הטיולים המשפחתיים זמינים רק אחרי התחברות עם Google"
               footnote="כניסה עם חשבון Google. רק אימייל ופרופיל."
+              mark={null}
             >
               <GoogleSignInButton onClick={() => void signInWithGoogle()}>
                 התחברות עם Google

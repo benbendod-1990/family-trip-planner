@@ -29,18 +29,20 @@ describe('auth entry UI', () => {
     assert.equal(entry.includes('gmail: true'), false)
     assert.match(screen, /warmTheme/)
     assert.match(screen, /warmDisplayFont/)
-    assert.match(screen, /apple-touch-icon\.png/)
+    assert.match(screen, /BRAND_ICON_SRC/)
     assert.match(screen, /#FBF3DF|warmPageBackground/)
   })
 
   it('uses the real PWA brand PNG, not a generated mark', () => {
     const screen = src('../components/auth/AuthEntryScreen.tsx')
+    const brand = src('../lib/brandAssets.ts')
     const html = readFileSync(join(root, 'index.html'), 'utf8')
     const manifest = JSON.parse(readFileSync(join(root, 'public/manifest.json'), 'utf8')) as {
       name: string
       icons: Array<{ src: string }>
     }
-    assert.match(screen, /\/apple-touch-icon\.png/)
+    assert.match(screen, /BRAND_ICON_SRC/)
+    assert.match(brand, /\/apple-touch-icon\.png/)
     assert.equal(html.includes('href="/apple-touch-icon.png"'), true)
     assert.equal(manifest.icons.some((icon) => icon.src === '/apple-touch-icon.png'), true)
     assert.equal(manifest.name, 'המסע של משפחת בן דוד')
@@ -57,6 +59,8 @@ describe('auth entry UI', () => {
     assert.equal(home.includes('gmail: true'), false)
     assert.match(home, /אין טיולים עדיין/)
     assert.match(home, /צור טיול ראשון/)
+    assert.match(home, /mark=\{null\}/)
+    assert.equal(home.includes('login-preview'), false)
   })
 
   it('Join reuses the visual shell but keeps invite copy and claim flow', () => {
