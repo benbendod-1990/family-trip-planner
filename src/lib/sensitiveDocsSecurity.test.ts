@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
-import { readFileSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { isFamilyCatalogEmail } from './familyCatalog.ts'
 import { throwForGmailBrokerStatus, GmailForbiddenError, GMAIL_ADMIN_ONLY_MESSAGE } from './gmailAuthError.ts'
 
@@ -68,10 +68,10 @@ describe('Gmail pull is family-catalog admin only', () => {
   })
 })
 
-describe('migration 0015 passport storage', () => {
+describe('migration 0016 passport storage', () => {
   it('creates a private sensitive bucket with no SELECT and a path-redacting list RPC', () => {
     const sql = readFileSync(
-      new URL('../../supabase/migrations/0015_sensitive_documents.sql', import.meta.url),
+      new URL('../../supabase/migrations/0016_sensitive_documents.sql', import.meta.url),
       'utf8',
     )
     assert.match(sql, /trip-sensitive-documents/)
@@ -85,6 +85,12 @@ describe('migration 0015 passport storage', () => {
     assert.match(sql, /grant execute on function public.sensitive_document_locator\(uuid, uuid\) to service_role/)
     assert.equal(/create policy "trip members read sensitive documents"/i.test(sql), false)
     assert.match(sql, /kind <> 'passport' or storage_bucket = 'trip-sensitive-documents'/)
+  })
+
+  it('does not collide with live 0015 admin-users migration filename', () => {
+    const root = new URL('../../supabase/migrations/', import.meta.url)
+    assert.equal(existsSync(new URL('0015_sensitive_documents.sql', root)), false)
+    assert.equal(existsSync(new URL('0016_sensitive_documents.sql', root)), true)
   })
 
   it('client documentUrl never uses a 1-hour TTL and passports go through the Worker', () => {

@@ -1,7 +1,7 @@
 // Travel documents: the files behind TripPlan.documents.
 //
 // Regular files live in the private `trip-documents` bucket (migration 0006).
-// Passport scans live in `trip-sensitive-documents` (0015): members can upload
+// Passport scans live in `trip-sensitive-documents` (0016): members can upload
 // and delete, but there is no SELECT, so the browser cannot mint signed URLs.
 // The Worker issues a 2-minute URL after a session + membership check.
 
@@ -39,7 +39,7 @@ function humanize(message: string, raw: string): DocumentStoreError {
   if (/bucket not found/i.test(raw) || /does not exist/i.test(raw)) {
     return new DocumentStoreError(
       'אחסון המסמכים לא הוגדר עדיין',
-      'צריך להריץ את supabase/migrations/0015_sensitive_documents.sql בפרויקט Supabase.',
+      'צריך להריץ את supabase/migrations/0016_sensitive_documents.sql בפרויקט Supabase.',
     )
   }
   if (/row-level security|not authorized|403/i.test(raw)) {

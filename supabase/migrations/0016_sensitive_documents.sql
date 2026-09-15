@@ -11,8 +11,9 @@
 -- list_trip_documents() lets members see passport *slots* (filename, person)
 -- while redacting the storage path of any uploaded file.
 --
--- Idempotent — safe to re-run. The agent cannot apply this; paste into the
--- Supabase SQL editor.
+-- Idempotent — safe to re-run. Numbered 0016 because live 0015 is already
+-- the admin registered-users feature. The agent cannot apply this; paste into
+-- the Supabase SQL editor.
 
 -- ── Regular bucket: stay private, members still read boarding passes ────────
 insert into storage.buckets (id, name, public)

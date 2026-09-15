@@ -227,7 +227,7 @@ export default function TripDoc() {
     try {
       const r = await pullAllDocuments()
       if (r.documentsUnavailable) {
-        setDocError('אחסון המסמכים לא הוגדר — צריך להריץ את migration 0015 בפרויקט Supabase.')
+        setDocError('אחסון המסמכים לא הוגדר — צריך להריץ את migration 0016 בפרויקט Supabase.')
       } else if (r.added) {
         setPullNote(`✓ צורפו ${r.added} מסמכים לכל הטיולים (מתוך ${r.scanned} מיילים שנסרקו).`)
       } else {
