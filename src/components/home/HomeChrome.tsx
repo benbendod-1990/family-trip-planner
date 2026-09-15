@@ -1,6 +1,5 @@
 import type { ButtonHTMLAttributes, HTMLAttributes, ReactNode } from 'react'
 import styled, { css } from 'styled-components'
-import { Plane } from 'lucide-react'
 import { warmDisplayFont, warmPageBackground } from '@/theme/warmTheme'
 
 const PageBg = styled.div`
@@ -14,7 +13,8 @@ const PageBg = styled.div`
 const Card = styled.section`
   position: relative;
   margin: 16px 0 20px;
-  padding: 22px 18px 18px;
+  overflow: visible;
+  padding: 26px 18px 18px;
   background:
     linear-gradient(180deg, rgba(255, 253, 247, 0.92), rgba(255, 253, 247, 0.98)),
     ${({ theme }) => theme.colors.white};
@@ -33,7 +33,7 @@ const Card = styled.section`
 const Tape = styled.div`
   position: absolute;
   top: -10px;
-  inset-inline-start: 22px;
+  inset-inline-end: 26px;
   width: 72px;
   height: 22px;
   border-radius: 2px;
@@ -43,30 +43,25 @@ const Tape = styled.div`
     rgba(196, 92, 62, 0.32) 8px 10px
   );
   box-shadow: 0 2px 4px rgba(80, 56, 20, 0.12);
-  transform: rotate(-8deg);
+  transform: rotate(7deg);
   pointer-events: none;
 `
 
 const TitleRow = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 12px;
-`
-
-const Mark = styled.div`
   display: grid;
-  place-items: center;
-  flex-shrink: 0;
-  width: 48px;
-  height: 48px;
-  border-radius: 14px;
-  color: ${({ theme }) => theme.colors.primary[600]};
-  background: ${({ theme }) => theme.colors.primary[50]};
-  border: 1px solid ${({ theme }) => theme.colors.primary[100]};
-  box-shadow: 0 1px 0 rgba(255, 253, 247, 0.9) inset;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-areas:
+    'mark title'
+    'sub sub';
+  column-gap: 14px;
+  row-gap: 6px;
+  align-items: center;
 `
 
 const Title = styled.h1`
+  grid-area: title;
+  justify-self: start;
+  text-align: start;
   font-family: ${warmDisplayFont};
   font-weight: 500;
   font-size: clamp(24px, 6.4vw, 30px);
@@ -76,8 +71,9 @@ const Title = styled.h1`
 `
 
 const Subtitle = styled.p`
-  margin: 4px 0 0;
-  font-size: 14px;
+  grid-area: sub;
+  margin: 0;
+  font-size: 15px;
   line-height: 1.55;
   color: ${({ theme }) => theme.colors.gray[500]};
 `
@@ -269,14 +265,6 @@ export function HomeHeaderCard({ children }: { children: ReactNode }) {
       <Tape aria-hidden />
       {children}
     </Card>
-  )
-}
-
-export function HomePlaneMark() {
-  return (
-    <Mark aria-hidden>
-      <Plane size={22} strokeWidth={2} />
-    </Mark>
   )
 }
 

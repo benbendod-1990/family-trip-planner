@@ -11,16 +11,23 @@ function src(rel: string): string {
 }
 
 describe('signed-in Home chrome matches the cream login card', () => {
-  it('uses a slab title, plane SVG mark, and no airplane emoji in the heading', () => {
+  it('uses a slab title, the PWA brand photo, and no airplane emoji in the heading', () => {
     const home = src('../pages/Home.tsx')
     const chrome = src('../components/home/HomeChrome.tsx')
+    const brandMark = src('../components/home/HomeBrandMark.tsx')
+    const brand = src('../lib/brandAssets.ts')
     const html = readFileSync(join(root, 'index.html'), 'utf8')
     assert.match(chrome, /HomeHeaderCard/)
-    assert.match(chrome, /HomePlaneMark/)
     assert.match(chrome, /warmDisplayFont/)
     assert.match(chrome, /warmPageBackground/)
-    assert.match(chrome, /from 'lucide-react'/)
-    assert.match(chrome, /<Plane /)
+    assert.equal(chrome.includes("from 'lucide-react'"), false)
+    assert.equal(chrome.includes('HomePlaneMark'), false)
+    assert.equal(chrome.includes('<Plane '), false)
+    assert.match(brand, /\/apple-touch-icon\.png/)
+    assert.match(brand, /המסע של משפחת בן דוד/)
+    assert.match(brandMark, /BRAND_ICON_SRC/)
+    assert.match(brandMark, /data-home-brand="journal"/)
+    assert.match(home, /<HomeBrandMark/)
     assert.match(home, /<HomeTitle>הטיולים שלנו<\/HomeTitle>/)
     assert.equal(home.includes('✈️'), false)
     assert.equal(home.includes('🚪'), false)

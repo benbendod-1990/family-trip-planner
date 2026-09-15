@@ -1,10 +1,7 @@
 import type { ReactNode } from 'react'
 import styled, { ThemeProvider } from 'styled-components'
+import { BRAND_ICON_SRC, BRAND_NAME } from '@/lib/brandAssets'
 import { warmTheme, warmDisplayFont, warmPageBackground } from '@/theme/warmTheme'
-
-/** iPhone home-screen mark — 180px, lighter than icon-512, sharp at ~108 CSS px. */
-const AUTH_BRAND_ICON_SRC = '/apple-touch-icon.png'
-const AUTH_BRAND_NAME = 'המסע של משפחת בן דוד'
 
 const Page = styled.div`
   min-height: 100dvh;
@@ -139,10 +136,10 @@ function BrandMark() {
   return (
     <MarkWrap>
       <MarkImg
-        src={AUTH_BRAND_ICON_SRC}
+        src={BRAND_ICON_SRC}
         width={180}
         height={180}
-        alt={AUTH_BRAND_NAME}
+        alt={BRAND_NAME}
       />
     </MarkWrap>
   )
