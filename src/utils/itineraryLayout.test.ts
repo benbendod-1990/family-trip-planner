@@ -37,6 +37,13 @@ describe('Itinerary page does not use myk-library Grid', () => {
     assert.equal(/\{[^}]*\bGrid\b[^}]*\}\s*from 'myk-library'/.test(src), false)
     assert.equal(src.includes('itineraryDaysTemplate'), true)
   })
+
+  it('scrolls to ?day= from the scrapbook calendar strip', () => {
+    const src = readFileSync(new URL('../pages/Itinerary.tsx', import.meta.url), 'utf8')
+    assert.ok(src.includes('useSearchParams'))
+    assert.ok(src.includes('itinerary-day-'))
+    assert.ok(src.includes('scrollIntoView'))
+  })
 })
 
 describe('AppLayout keeps chrome while itinerary loads', () => {
