@@ -7,7 +7,7 @@ import type { TripPlan } from '../types/trip-plan.ts'
 import { extractTripMapPois } from './tripMapPois.ts'
 import { collectDayStops, layoutWindingRoad, layoutDayPoster } from './tripMapDayStops.ts'
 import { deriveTripSegments, flowPillsFromDays } from './tripMapSegments.ts'
-import { layoutOverviewMap, matchingRegionPack } from './tripMapGeo.ts'
+import { layoutOverviewMap, matchingRegionPack, directedHopsFromPoints } from './tripMapGeo.ts'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '../..')
 const HE = /[\u0590-\u05FF]/
@@ -52,10 +52,36 @@ describe('illustrated diary maps are trip-generic', () => {
     assert.ok(usaLayout.landD.includes('M'))
     assert.ok(usaLayout.routeD.includes('M'))
     assert.equal(usaLayout.placed.length, extractTripMapPois(usa).length)
+    assert.equal(usaLayout.hops.length, Math.max(0, usaLayout.placed.length - 1))
+    assert.equal(usaLayout.placed[0]?.seq, 1)
+    assert.equal(usaLayout.hops[0]?.fromId, usaLayout.placed[0]?.id)
+    assert.equal(usaLayout.hops[0]?.toId, usaLayout.placed[1]?.id)
+    assert.ok(usaLayout.hops.every(h => h.d.includes('Q')))
 
     const nlLayout = layoutOverviewMap(extractTripMapPois(holland))
     assert.equal(nlLayout.packId, 'netherlands')
     assert.ok(nlLayout.placed.some(p => /efteling|אפטלינג|kaatsheuvel|schiphol|סכיפהול/i.test(p.name)))
+  })
+
+  it('directed hops follow array order so a schedule edit changes 1→2→3', () => {
+    const hops = directedHopsFromPoints([
+      { id: 'a', x: 10, y: 10 },
+      { id: 'b', x: 80, y: 40 },
+      { id: 'c', x: 40, y: 90 },
+    ])
+    assert.equal(hops.length, 2)
+    assert.equal(hops[0].fromId, 'a')
+    assert.equal(hops[0].toId, 'b')
+    assert.equal(hops[0].fromSeq, 1)
+    assert.equal(hops[0].toSeq, 2)
+    assert.equal(hops[1].fromId, 'b')
+    assert.equal(hops[1].toId, 'c')
+    const reversed = directedHopsFromPoints([
+      { id: 'c', x: 40, y: 90 },
+      { id: 'a', x: 10, y: 10 },
+    ])
+    assert.equal(reversed[0].fromId, 'c')
+    assert.equal(reversed[0].toId, 'a')
   })
 
   it('Holland pins stay in the Low Countries and drop TLV', () => {
@@ -131,6 +157,15 @@ describe('map page wiring is generic and seed-safe', () => {
     assert.ok(page.includes('מפה מצוירת'))
   })
 
+  it('overview draws numbered arrows, not a crisscross dotted spline', () => {
+    const overview = readFileSync(join(root, 'src/components/map/IllustratedOverviewMap.tsx'), 'utf8')
+    assert.ok(overview.includes('overview-route-arrow'))
+    assert.ok(overview.includes('layout.hops'))
+    assert.ok(overview.includes('SeqBadge'))
+    assert.equal(overview.includes('strokeDasharray="2 11"'), false)
+    assert.ok(overview.includes('מסלול ממוספר לפי הלו״ז'))
+  })
+
   it('overview and day-road components do not import Leaflet tiles', () => {
     const overview = readFileSync(join(root, 'src/components/map/IllustratedOverviewMap.tsx'), 'utf8')
     const road = readFileSync(join(root, 'src/components/map/WindingDayRoad.tsx'), 'utf8')
@@ -138,5 +173,16 @@ describe('map page wiring is generic and seed-safe', () => {
     assert.equal(overview.includes('TileLayer'), false)
     assert.equal(road.includes('leaflet'), false)
     assert.ok(overview.includes('layoutOverviewMap'))
+  })
+
+  it('הלוח is a day strip that opens the itinerary לו״ז', () => {
+    const page = readFileSync(join(root, 'src/pages/Map.tsx'), 'utf8')
+    const cal = readFileSync(join(root, 'src/components/map/MiniTripCalendars.tsx'), 'utf8')
+    assert.ok(page.includes('הלוח'))
+    assert.ok(page.includes('/itinerary?day='))
+    assert.equal(page.includes('לוח שנה'), false)
+    assert.equal(cal.includes('eachDayOfInterval'), false)
+    assert.equal(cal.includes('startOfMonth'), false)
+    assert.ok(cal.includes('לחיצה על יום פותחת את הלו״ז'))
   })
 })

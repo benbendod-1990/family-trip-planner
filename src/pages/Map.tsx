@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import styled from 'styled-components'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { useTripStore } from '@/stores/tripStore'
@@ -188,6 +188,7 @@ const FooterBar = styled.div`
 
 export default function MapPage() {
   const { id } = useParams<{ id: string }>()
+  const navigate = useNavigate()
   const trip = useTripStore(s => s.trips.find(t => t.id === id))
   const { isMobile } = useBreakpoint()
   const { pois } = useTripMapPois(trip)
@@ -255,6 +256,11 @@ export default function MapPage() {
     }
   }
 
+  const openDaySchedule = (iso: string) => {
+    selectDate(iso)
+    if (id) navigate(`/trip/${id}/itinerary?day=${encodeURIComponent(iso)}`)
+  }
+
   return (
     <Page $mobile={isMobile}>
       <Paper>
@@ -294,14 +300,11 @@ export default function MapPage() {
 
       {days.length > 0 && (
         <div>
-          <SectionLabel>לוח שנה</SectionLabel>
+          <SectionLabel>הלוח</SectionLabel>
           <MiniTripCalendars
-            startDate={trip.startDate}
-            endDate={trip.endDate}
             days={days}
-            pois={pois}
             selectedDate={activeDay?.date ?? null}
-            onSelectDate={selectDate}
+            onSelectDate={openDaySchedule}
           />
         </div>
       )}
