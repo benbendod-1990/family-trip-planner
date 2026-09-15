@@ -47,6 +47,13 @@ export async function listTrips(): Promise<TripPlan[]> {
   return Promise.all((trips ?? []).map(t => hydrateTrip(t as Row)))
 }
 
+async function fetchDocumentRows(tripId: string): Promise<Row[]> {
+  const rpc = await supabase.rpc('list_trip_documents', { _trip_id: tripId })
+  if (!rpc.error) return (rpc.data ?? []) as Row[]
+  const fallback = await supabase.from('trip_documents').select('*').eq('trip_id', tripId)
+  return (fallback.data ?? []) as Row[]
+}
+
 async function hydrateTrip(t: Row): Promise<TripPlan> {
   const tripId = t.id as string
   const [days, events, budget, flights, acc, cars, fam, tasks, packing, docs] = await Promise.all([
@@ -59,10 +66,7 @@ async function hydrateTrip(t: Row): Promise<TripPlan> {
     supabase.from('family_members').select('*').eq('trip_id', tripId),
     supabase.from('tasks').select('*').eq('trip_id', tripId),
     supabase.from('packing_items').select('*').eq('trip_id', tripId),
-    // Documents live in their own table rather than inside the trip payload:
-    // save_trip() nukes-and-replaces its children, so a phone pushing a stale
-    // trip would wipe documents the Mac had just filed. See migration 0007.
-    supabase.from('trip_documents').select('*').eq('trip_id', tripId),
+    fetchDocumentRows(tripId),
   ])
 
   const eventRows = (events.data ?? []) as Row[]
@@ -98,7 +102,7 @@ async function hydrateTrip(t: Row): Promise<TripPlan> {
     flights: ((flights.data ?? []) as Row[]).map(x => fromDb(x) as unknown as Flight),
     carRentals: ((cars.data ?? []) as Row[]).map(x => fromDb(x) as unknown as CarRental),
     packingItems: ((packing.data ?? []) as Row[]).map(x => fromDb(x) as unknown as PackingItem),
-    documents: dropCoveredLinkDocuments(((docs.data ?? []) as Row[]).map(rowToDocument)),
+    documents: dropCoveredLinkDocuments(docs.map(rowToDocument)),
     coords: t.coords as TripPlan['coords'],
     createdAt: t.created_at as string,
     updatedAt: t.updated_at as string,

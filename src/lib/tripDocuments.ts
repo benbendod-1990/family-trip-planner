@@ -1,17 +1,24 @@
 // Travel documents: the files behind TripPlan.documents.
 //
-// Bytes live in the private `trip-documents` Storage bucket (see migration
-// 0006); the metadata rides inside the trip JSON so it reaches the other phone
-// over the sync path that already exists. Object keys are
-// `<tripId>/<documentId>-<filename>`, which is what the bucket's RLS policies
-// authorise against.
+// Regular files live in the private `trip-documents` bucket (migration 0006).
+// Passport scans live in `trip-sensitive-documents` (0015): members can upload
+// and delete, but there is no SELECT, so the browser cannot mint signed URLs.
+// The Worker issues a 2-minute URL after a session + membership check.
 
 import { supabase } from './supabase'
 import { generateId } from '@/utils/id'
 import type { TripDocument } from '@/types/trip-plan'
-import { documentHref, encodeLinkPath, isLinkOnlyDocument } from './seedBookingDocuments'
-
-const BUCKET = 'trip-documents'
+import { documentHref, encodeLinkPath, isLinkOnlyDocument, isPersistableSeedDocument } from './seedBookingDocuments'
+import { workerAuthHeaders } from './workerAuth'
+import {
+  REGULAR_DOC_BUCKET,
+  SENSITIVE_DOC_BUCKET,
+  capSignedUrlTtl,
+  isPendingPassport,
+  isSensitiveKind,
+  redactSensitiveDocument,
+  storageBucketFor,
+} from './sensitiveDocument'
 
 export class DocumentStoreError extends Error {
   hint?: string
@@ -29,10 +36,10 @@ function safeName(filename: string): string {
 }
 
 function humanize(message: string, raw: string): DocumentStoreError {
-  if (/bucket not found/i.test(raw)) {
+  if (/bucket not found/i.test(raw) || /does not exist/i.test(raw)) {
     return new DocumentStoreError(
       'אחסון המסמכים לא הוגדר עדיין',
-      'צריך להריץ את supabase/migrations/0006_trip_documents_storage.sql בפרויקט Supabase.',
+      'צריך להריץ את supabase/migrations/0015_sensitive_documents.sql בפרויקט Supabase.',
     )
   }
   if (/row-level security|not authorized|403/i.test(raw)) {
@@ -53,11 +60,33 @@ export interface NewDocument {
   sourceMessageId?: string
   sourceSubject?: string
   sourceFrom?: string
+  /** Reuse a seed passport slot id so the placeholder becomes the real file. */
+  id?: string
+  personId?: string
 }
 
 async function sha256Hex(blob: Blob): Promise<string> {
   const digest = await crypto.subtle.digest('SHA-256', await blob.arrayBuffer())
   return [...new Uint8Array(digest)].map(b => b.toString(16).padStart(2, '0')).join('')
+}
+
+function toInsertRow(tripId: string, record: TripDocument): Record<string, unknown> {
+  return {
+    id: record.id,
+    trip_id: tripId,
+    path: record.path,
+    filename: record.filename,
+    mime_type: record.mimeType,
+    size: record.size,
+    kind: record.kind,
+    sha256: record.sha256 ?? null,
+    source_message_id: record.sourceMessageId ?? null,
+    source_subject: record.sourceSubject ?? null,
+    source_from: record.sourceFrom ?? null,
+    added_at: record.addedAt,
+    storage_bucket: storageBucketFor(record),
+    person_id: record.personId ?? null,
+  }
 }
 
 /**
@@ -72,16 +101,17 @@ export async function uploadDocument(
   tripId: string,
   doc: NewDocument,
 ): Promise<TripDocument> {
-  const id = generateId()
+  const id = doc.id || generateId()
+  const bucket = storageBucketFor({ kind: doc.kind })
   const path = `${tripId}/${id}-${safeName(doc.filename)}`
   const sha256 = await sha256Hex(doc.blob)
 
   const { error } = await supabase.storage
-    .from(BUCKET)
+    .from(bucket)
     .upload(path, doc.blob, { contentType: doc.mimeType, upsert: false })
   if (error) throw humanize('העלאת המסמך נכשלה', error.message)
 
-  const record: TripDocument = {
+  const record: TripDocument = redactSensitiveDocument({
     id,
     path,
     filename: doc.filename,
@@ -93,27 +123,19 @@ export async function uploadDocument(
     sourceMessageId: doc.sourceMessageId,
     sourceSubject: doc.sourceSubject,
     sourceFrom: doc.sourceFrom,
-  }
-
-  const { error: rowError } = await supabase.from('trip_documents').insert({
-    id,
-    trip_id: tripId,
-    path,
-    filename: record.filename,
-    mime_type: record.mimeType,
-    size: record.size,
-    kind: record.kind,
-    sha256,
-    source_message_id: record.sourceMessageId ?? null,
-    source_subject: record.sourceSubject ?? null,
-    source_from: record.sourceFrom ?? null,
-    added_at: record.addedAt,
+    storageBucket: bucket === SENSITIVE_DOC_BUCKET ? SENSITIVE_DOC_BUCKET : REGULAR_DOC_BUCKET,
+    personId: doc.personId,
   })
+
+  const row = toInsertRow(tripId, { ...record, path })
+  const { error: rowError } = await supabase
+    .from('trip_documents')
+    .upsert(row, { onConflict: 'id' })
   if (rowError) {
     // 23505 = the dedup index fired: this trip already holds these exact bytes.
     // The object we just wrote is the redundant one, so take it back out.
     if (rowError.code === '23505') {
-      await supabase.storage.from(BUCKET).remove([path])
+      await supabase.storage.from(bucket).remove([path])
       throw new DocumentStoreError('המסמך הזה כבר קיים בטיול', doc.filename)
     }
     throw humanize('שמירת פרטי המסמך נכשלה', rowError.message)
@@ -124,6 +146,12 @@ export async function uploadDocument(
 
 /** Every document filed against a trip, newest first. */
 export async function listDocuments(tripId: string): Promise<TripDocument[]> {
+  const rpc = await supabase.rpc('list_trip_documents', { _trip_id: tripId })
+  if (!rpc.error) {
+    return ((rpc.data ?? []) as Record<string, unknown>[])
+      .map(rowToDocument)
+      .sort((a, b) => b.addedAt.localeCompare(a.addedAt))
+  }
   const { data, error } = await supabase
     .from('trip_documents')
     .select('*')
@@ -134,9 +162,10 @@ export async function listDocuments(tripId: string): Promise<TripDocument[]> {
 }
 
 export function rowToDocument(r: Record<string, unknown>): TripDocument {
-  const path = r.path as string
+  const path = (r.path as string) ?? ''
   const url = documentHref({ path }) ?? undefined
-  return {
+  const bucketRaw = r.storage_bucket as TripDocument['storageBucket'] | undefined
+  return redactSensitiveDocument({
     id: r.id as string,
     path,
     filename: r.filename as string,
@@ -149,22 +178,65 @@ export function rowToDocument(r: Record<string, unknown>): TripDocument {
     sourceSubject: (r.source_subject as string) ?? undefined,
     sourceFrom: (r.source_from as string) ?? undefined,
     url,
+    storageBucket: bucketRaw === SENSITIVE_DOC_BUCKET ? SENSITIVE_DOC_BUCKET : REGULAR_DOC_BUCKET,
+    personId: (r.person_id as string) ?? undefined,
+  })
+}
+
+const AI_BASE = import.meta.env.VITE_AI_BASE_URL ?? 'http://localhost:8787'
+
+async function signViaWorker(documentId: string): Promise<string> {
+  const res = await fetch(`${AI_BASE}/api/documents/sign`, {
+    method: 'POST',
+    headers: await workerAuthHeaders(),
+    body: JSON.stringify({ documentId }),
+  })
+  if (!res.ok) {
+    const t = await res.text().catch(() => '')
+    throw humanize('לא ניתן לפתוח את המסמך', `${res.status} ${t}`)
   }
+  const body = (await res.json()) as { signed_url?: string }
+  if (!body.signed_url) throw humanize('לא ניתן לפתוח את המסמך', 'no signed url')
+  return body.signed_url
 }
 
 /**
- * A short-lived URL for viewing a document. The bucket is private, so this is
- * the only way to render one — and the link expires, which is the point for
- * boarding passes and passport scans.
+ * A short-lived URL for viewing a document. Passports always go through the
+ * Worker (no client createSignedUrl). Regular files cap at 15 minutes — the
+ * old default of 1 hour was a shareable leak.
  */
-export async function documentUrl(doc: TripDocument | string, expiresInSec = 60 * 60): Promise<string> {
-  const asDoc = typeof doc === 'string' ? { path: doc, url: undefined } : doc
-  const href = documentHref(asDoc)
+export async function documentUrl(doc: TripDocument | string, expiresInSec?: number): Promise<string> {
+  if (typeof doc !== 'string') {
+    const href = documentHref(doc)
+    if (href) return href
+    if (isPendingPassport(doc)) {
+      throw new DocumentStoreError('עדיין אין קובץ דרכון — רק מקום שמור')
+    }
+    if (isSensitiveKind(doc.kind) || !doc.path) {
+      return signViaWorker(doc.id)
+    }
+    const ttl = capSignedUrlTtl(doc.kind, expiresInSec)
+    const bucket = storageBucketFor(doc)
+    const { data, error } = await supabase.storage
+      .from(bucket)
+      .createSignedUrl(doc.path, ttl)
+    if (error || !data?.signedUrl) {
+      // Sensitive-style buckets, or SELECT revoked: Worker is the other door.
+      try {
+        return await signViaWorker(doc.id)
+      } catch {
+        throw humanize('לא ניתן לפתוח את המסמך', error?.message ?? 'no signed url')
+      }
+    }
+    return data.signedUrl
+  }
+
+  const href = documentHref({ path: doc, url: undefined })
   if (href) return href
-  const path = typeof doc === 'string' ? doc : doc.path
+  const ttl = capSignedUrlTtl('other', expiresInSec)
   const { data, error } = await supabase.storage
-    .from(BUCKET)
-    .createSignedUrl(path, expiresInSec)
+    .from(REGULAR_DOC_BUCKET)
+    .createSignedUrl(doc, ttl)
   if (error || !data?.signedUrl) {
     throw humanize('לא ניתן לפתוח את המסמך', error?.message ?? 'no signed url')
   }
@@ -172,8 +244,10 @@ export async function documentUrl(doc: TripDocument | string, expiresInSec = 60 
 }
 
 export async function deleteDocument(doc: TripDocument): Promise<void> {
-  if (!isLinkOnlyDocument(doc) && doc.path) {
-    const { error } = await supabase.storage.from(BUCKET).remove([doc.path])
+  const pending = isPendingPassport(doc) || isLinkOnlyDocument(doc) || !doc.path
+  if (!pending) {
+    const bucket = storageBucketFor(doc)
+    const { error } = await supabase.storage.from(bucket).remove([doc.path])
     if (error) throw humanize('מחיקת המסמך נכשלה', error.message)
   }
   // The row is what the other phone reads, so it has to go too — otherwise the
@@ -183,15 +257,17 @@ export async function deleteDocument(doc: TripDocument): Promise<void> {
 }
 
 /**
- * Upsert link-only seed cards into trip_documents so the spouse's phone sees
- * them through the server-wins path. Failures are ignored — the cards still
- * live locally, and the trip may not be in Supabase yet.
+ * Upsert seed cards (booking links + empty passport slots) into trip_documents
+ * so the spouse's phone sees them through the server-wins path. Failures are
+ * ignored — the cards still live locally, and the trip may not be in Supabase yet.
  */
 export async function persistLinkDocuments(tripId: string, docs: TripDocument[]): Promise<void> {
-  const rows = docs.filter(isLinkOnlyDocument).map(doc => ({
+  const rows = docs.filter(isPersistableSeedDocument).map(doc => ({
     id: doc.id,
     trip_id: tripId,
-    path: doc.path.startsWith('external:') ? doc.path : encodeLinkPath(documentHref(doc) ?? doc.path),
+    path: isLinkOnlyDocument(doc)
+      ? (doc.path.startsWith('external:') ? doc.path : encodeLinkPath(documentHref(doc) ?? doc.path))
+      : doc.path,
     filename: doc.filename,
     mime_type: doc.mimeType,
     size: doc.size,
@@ -201,6 +277,8 @@ export async function persistLinkDocuments(tripId: string, docs: TripDocument[])
     source_subject: doc.sourceSubject ?? null,
     source_from: doc.sourceFrom ?? null,
     added_at: doc.addedAt,
+    storage_bucket: storageBucketFor(doc),
+    person_id: doc.personId ?? null,
   }))
   if (!rows.length) return
   const { error } = await supabase.from('trip_documents').upsert(rows, { onConflict: 'id' })

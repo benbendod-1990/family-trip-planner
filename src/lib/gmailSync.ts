@@ -27,6 +27,8 @@ import { uploadDocument, classifyDocument, deleteDocument } from './tripDocument
 import { findGmailPlaceholder } from './seedBookingDocuments'
 import { supabase } from './supabase'
 import { fetchGmailAccessToken } from './gmailToken'
+import { isFamilyCatalogEmail } from './familyCatalog'
+import { GMAIL_ADMIN_ONLY_MESSAGE } from './gmailAuthError'
 import { generateId } from '@/utils/id'
 import {
   createMergeSession, mergeByConfirmation, sameFlightDirection,
@@ -52,6 +54,9 @@ export interface GmailSyncReport {
 
 async function getGmailContext(): Promise<{ token: string; userId?: string }> {
   const { data: sess } = await supabase.auth.getSession()
+  if (!isFamilyCatalogEmail(sess.session?.user?.email)) {
+    throw new Error(GMAIL_ADMIN_ONLY_MESSAGE)
+  }
   const token = await fetchGmailAccessToken()
   return { token, userId: sess.session?.user?.id }
 }

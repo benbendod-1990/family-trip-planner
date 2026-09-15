@@ -43,7 +43,14 @@ export interface TripDocument {
   sourceFrom?: string
   /** Date of the source email, or of the upload. */
   addedAt: string
-  kind: 'flight' | 'hotel' | 'car' | 'activity' | 'other'
+  kind: 'flight' | 'hotel' | 'car' | 'activity' | 'other' | 'passport' | 'photo'
+  /**
+   * Storage bucket. Passports use `trip-sensitive-documents` (no client SELECT).
+   * Omitted on older rows — inferred from kind.
+   */
+  storageBucket?: 'trip-documents' | 'trip-sensitive-documents'
+  /** Family-member id for a passport slot. */
+  personId?: string
 }
 
 export interface TripPlan {

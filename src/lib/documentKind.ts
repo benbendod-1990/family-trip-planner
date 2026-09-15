@@ -14,6 +14,7 @@ export function classifyDocument(
   filename: string,
 ): TripDocument['kind'] {
   const hay = `${subject} ${from} ${filename}`.toLowerCase()
+  if (/passport|passeport|דרכון/.test(hay)) return 'passport'
   if (/flight|airline|airways|e-?ticket|boarding|pnr|aegean|skyexpress|easyjet|elal|el.al|טיסה|כרטיס/.test(hay)) return 'flight'
   // Venue operators bill under a parent company the guest never sees — Beekse
   // Bergen's confirmations come from libemafunfactory.nl — so the operator
@@ -21,5 +22,6 @@ export function classifyDocument(
   if (/hotel|resort|booking\.com|airbnb|guesthouse|beeksebergen|beekse bergen|libema|bungalow|camping|stay|lodging|cruise|royal.?caribbean|utopia|מלון|לינה|אירוח|קרוז/.test(hay)) return 'hotel'
   if (/car|rental|hertz|avis|europcar|sixt|budget|רכב|השכרת/.test(hay)) return 'car'
   if (/ticket|efteling|toverland|museum|tour|getyourguide|tiqets|כרטיסים|כניסה/.test(hay)) return 'activity'
+  if (/\.(png|jpe?g|heic|webp)$/i.test(filename)) return 'photo'
   return 'other'
 }

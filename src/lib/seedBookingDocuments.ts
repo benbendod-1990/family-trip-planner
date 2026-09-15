@@ -12,6 +12,7 @@
 import type { TripDocument, TripPlan } from '@/types/trip-plan'
 
 export const LINK_DOC_PREFIX = 'external:'
+export const PENDING_PASSPORT_PREFIX = 'pending:passport'
 
 /** Combined 3-card USA placeholders from the first seed pass — replaced by Dorit's Gmail ids. */
 export const STALE_USA_SEED_DOC_IDS = new Set([
@@ -22,6 +23,16 @@ export const STALE_USA_SEED_DOC_IDS = new Set([
 
 export function isLinkOnlyDocument(doc: Pick<TripDocument, 'path' | 'url'>): boolean {
   return Boolean(doc.url) || (doc.path?.startsWith(LINK_DOC_PREFIX) ?? false)
+}
+
+export function isPersistableSeedDocument(doc: TripDocument): boolean {
+  return isLinkOnlyDocument(doc) || isSeedPassportSlot(doc)
+}
+
+function isSeedPassportSlot(doc: TripDocument): boolean {
+  return doc.kind === 'passport' && (
+    doc.path === PENDING_PASSPORT_PREFIX || !doc.path || doc.size === 0
+  )
 }
 
 export function documentHref(doc: Pick<TripDocument, 'path' | 'url'>): string | null {
@@ -97,16 +108,20 @@ export function findGmailPlaceholder(
 export function ensureSeedBookingDocuments(trips: TripPlan[], seeds: TripPlan[]): TripPlan[] {
   return trips.map(t => {
     const seed = seeds.find(s => s.id === t.id)
-    const seedDocs = (seed?.documents ?? []).filter(isLinkOnlyDocument)
+    const seedDocs = (seed?.documents ?? []).filter(isPersistableSeedDocument)
     if (!seedDocs.length && !(t.documents ?? []).some(d => STALE_USA_SEED_DOC_IDS.has(d.id))) {
       return t
     }
     const kept = (t.documents ?? []).filter(d => !STALE_USA_SEED_DOC_IDS.has(d.id))
     const haveId = new Set(kept.map(d => d.id))
     const haveGmail = new Set(kept.map(d => d.sourceMessageId).filter(Boolean) as string[])
+    const havePassportPerson = new Set(
+      kept.filter(d => d.kind === 'passport' && !isSeedPassportSlot(d)).map(d => d.personId).filter(Boolean) as string[],
+    )
     const missing = seedDocs.filter(d => {
       if (haveId.has(d.id)) return false
       if (d.sourceMessageId && haveGmail.has(d.sourceMessageId)) return false
+      if (d.kind === 'passport' && d.personId && havePassportPerson.has(d.personId)) return false
       return true
     })
     const merged = dropCoveredLinkDocuments([...kept, ...missing])

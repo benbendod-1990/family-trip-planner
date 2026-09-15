@@ -44,7 +44,7 @@ function fileDoc(id: string, filename: string): TripDocument {
 
 describe('USA seed booking documents', () => {
   it('ships five Gmail placeholders for the known El Al PNRs and Utopia bookings', () => {
-    const docs = usa.documents ?? []
+    const docs = (usa.documents ?? []).filter(d => d.kind !== 'passport')
     assert.equal(docs.length, 5)
     assert.ok(docs.every(isLinkOnlyDocument))
     assert.ok(docs.every(d => d.size === 0 && d.mimeType === 'text/uri-list'))
@@ -74,7 +74,12 @@ describe('USA seed booking documents', () => {
   it('does not invent PDF bytes', () => {
     for (const d of usa.documents ?? []) {
       assert.equal(d.mimeType.startsWith('application/pdf'), false)
-      assert.equal((d.path ?? '').startsWith('external:https://'), true)
+      if (d.kind === 'passport') {
+        assert.equal(d.path, 'pending:passport')
+        assert.equal(d.size, 0)
+      } else {
+        assert.equal((d.path ?? '').startsWith('external:https://'), true)
+      }
     }
   })
 })
@@ -117,7 +122,7 @@ describe('ensureSeedBookingDocuments', () => {
   it('injects missing USA booking cards onto a live trip that has none', () => {
     const live: TripPlan = { ...usa, documents: [] }
     const out = ensureSeedBookingDocuments([live], [usa])
-    assert.equal((out[0]?.documents ?? []).length, 5)
+    assert.equal((out[0]?.documents ?? []).filter(d => d.kind !== 'passport').length, 5)
     assert.ok((out[0]?.documents ?? []).some(d => d.filename.includes('X5OKQQ')))
   })
 
@@ -129,7 +134,7 @@ describe('ensureSeedBookingDocuments', () => {
     const out = ensureSeedBookingDocuments([live], [usa])
     const docs = out[0]?.documents ?? []
     assert.equal(docs.some(d => STALE_USA_SEED_DOC_IDS.has(d.id)), false)
-    assert.equal(docs.length, 5)
+    assert.equal(docs.filter(d => d.kind !== 'passport').length, 5)
     assert.ok(docs.some(d => d.sourceMessageId === '1a068f623c9fe07b'))
   })
 
@@ -176,7 +181,7 @@ describe('dropCoveredLinkDocuments', () => {
     assert.equal(out.some(d => d.sourceMessageId === '1a068f62222c52b9' && isLinkOnlyDocument(d)), false)
     assert.equal(out.some(d => d.sourceMessageId === '1a075a7c145b4ea4'), true)
     assert.equal(out.some(d => d.sourceMessageId === '1a07f94b110c890e'), true)
-    assert.equal(out.length, 5)
+    assert.equal(out.length, 17)
   })
 })
 

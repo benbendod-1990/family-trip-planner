@@ -9,12 +9,20 @@ import { supabase } from './supabase'
 import { workerAuthHeaders } from './workerAuth'
 import {
   GMAIL_RECONNECT_MESSAGE,
+  GMAIL_ADMIN_ONLY_MESSAGE,
   GmailAuthError,
+  GmailForbiddenError,
   throwForGmailBrokerStatus,
 } from './gmailAuthError'
 import { GMAIL_READONLY_SCOPE } from './googleOAuth'
 
-export { GMAIL_RECONNECT_MESSAGE, GmailAuthError, throwForGmailBrokerStatus }
+export {
+  GMAIL_RECONNECT_MESSAGE,
+  GMAIL_ADMIN_ONLY_MESSAGE,
+  GmailAuthError,
+  GmailForbiddenError,
+  throwForGmailBrokerStatus,
+}
 
 const AI_BASE = import.meta.env.VITE_AI_BASE_URL ?? 'http://localhost:8787'
 

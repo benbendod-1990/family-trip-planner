@@ -3,14 +3,19 @@ import { Button, Stack } from 'myk-library'
 import { Mail, Loader2 } from 'lucide-react'
 import { useAuth } from '@/lib/AuthContext'
 import { syncFromGmail, type GmailSyncReport } from '@/lib/gmailSync'
-import { GmailAuthError } from '@/lib/gmailToken'
+import { GmailAuthError, GmailForbiddenError } from '@/lib/gmailToken'
+import { isFamilyCatalogEmail } from '@/lib/familyCatalog'
 
 // Inline trigger for Gmail sync used inside trip pages (Travel, Itinerary).
 // Uses the same Supabase-token flow as the topbar CloudSyncButton — no
 // separate Google OAuth client ID, no popup, no extra env var.
+// Hidden unless the signed-in email is a family-catalog admin; the Worker
+// also 403s non-admins so hiding the button is not the security boundary.
 export default function GmailSyncInlineButton() {
-  const { session, signInWithGoogle } = useAuth()
+  const { session, user, signInWithGoogle } = useAuth()
   const [busy, setBusy] = useState(false)
+
+  if (!isFamilyCatalogEmail(user?.email)) return null
 
   const run = async () => {
     if (!session) {
@@ -35,6 +40,8 @@ export default function GmailSyncInlineButton() {
       if (e instanceof GmailAuthError) {
         const reconnect = confirm(`${e.message}\n\nלחבר מחדש עם Google עכשיו?`)
         if (reconnect) void signInWithGoogle({ gmail: true })
+      } else if (e instanceof GmailForbiddenError) {
+        alert(e.message)
       } else {
         const msg = e instanceof Error ? e.message : 'שגיאה'
         const quota = /\b429\b|quota|rate.?limit/i.test(msg)
