@@ -237,6 +237,7 @@ const SecondaryBtn = styled.button`
 const ConnectBtn = styled.button`
   ${ctaBase}
   width: 100%;
+  max-width: 360px;
   border: 1px solid ${({ theme }) => theme.colors.gray[200]};
   background: ${({ theme }) => theme.colors.white};
   color: ${({ theme }) => theme.colors.gray[900]};
