@@ -34,7 +34,7 @@ export default function GmailSyncInlineButton() {
     } catch (e) {
       if (e instanceof GmailAuthError) {
         const reconnect = confirm(`${e.message}\n\nלחבר מחדש עם Google עכשיו?`)
-        if (reconnect) void signInWithGoogle()
+        if (reconnect) void signInWithGoogle({ gmail: true })
       } else {
         const msg = e instanceof Error ? e.message : 'שגיאה'
         const quota = /\b429\b|quota|rate.?limit/i.test(msg)

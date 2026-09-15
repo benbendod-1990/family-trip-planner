@@ -1,5 +1,6 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
+import { readFileSync } from 'node:fs'
 import { GmailAuthError, throwForGmailBrokerStatus } from './gmailAuthError.ts'
 
 describe('Gmail broker error mapping', () => {
@@ -22,6 +23,12 @@ describe('Gmail broker error mapping', () => {
       () => throwForGmailBrokerStatus(412, '{"error":"no_refresh_token"}'),
       (err: unknown) => err instanceof GmailAuthError,
     )
+  })
+
+  it('persists the Gmail readonly scope, not a login-time hardcoded string', () => {
+    const text = readFileSync(new URL('./gmailToken.ts', import.meta.url), 'utf8')
+    assert.match(text, /GMAIL_READONLY_SCOPE/)
+    assert.equal(text.includes("'https://www.googleapis.com/auth/gmail.readonly'"), false)
   })
 
   it('keeps non-auth broker failures as generic errors', () => {

@@ -6,6 +6,7 @@ import {
   localTripsSafeToAutoPush,
   resolveActiveTripId,
 } from '@/lib/authTripSync'
+import type { GoogleSignInOpts } from '@/lib/googleOAuth'
 
 /*
  * Everything Supabase-shaped below is imported dynamically, on purpose.
@@ -28,7 +29,7 @@ interface AuthContextValue {
   session: Session | null
   user: User | null
   loading: boolean
-  signInWithGoogle: (opts?: { redirectPath?: string }) => Promise<void>
+  signInWithGoogle: (opts?: GoogleSignInOpts) => Promise<void>
   signOut: () => Promise<void>
 }
 
@@ -68,8 +69,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         import('@/data/familySeeds'),
       ])
       await switchTripStoreAccount(userId)
-      // Fire-and-forget: capture Google's refresh_token now, while Supabase
-      // still has it in the session. After the first JWT refresh it's gone.
+      // Fire-and-forget: capture Google's refresh_token only after a Gmail
+      // connect (identity login no longer requests access_type=offline, so
+      // this no-ops for join/login). After the first JWT refresh it's gone.
       void persistGmailRefreshToken()
       try {
         try {
@@ -163,23 +165,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  const signInWithGoogle = async (opts?: { redirectPath?: string }) => {
+  const signInWithGoogle = async (opts?: GoogleSignInOpts) => {
     const supabase = await loadSupabase()
-    const { oauthRedirectUrl } = await import('./tripShareLink')
+    const [{ oauthRedirectUrl }, { googleOAuthOptions }] = await Promise.all([
+      import('./tripShareLink'),
+      import('./googleOAuth'),
+    ])
+    const oauth = googleOAuthOptions(opts)
     await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
         redirectTo: oauthRedirectUrl(opts?.redirectPath),
-        // gmail.readonly so the "סנכרן Gmail" button can read booking
-        // confirmations. Without this the provider_token has no Gmail access.
-        scopes: 'email profile https://www.googleapis.com/auth/gmail.readonly',
-        // access_type=offline + prompt=consent are required for Google to
-        // return a refresh_token. Without them we'd be stuck with a 1h
-        // access_token and no way to refresh it server-side.
-        queryParams: {
-          access_type: 'offline',
-          prompt: 'consent',
-        },
+        scopes: oauth.scopes,
+        ...(oauth.queryParams ? { queryParams: oauth.queryParams } : {}),
       },
     })
   }
