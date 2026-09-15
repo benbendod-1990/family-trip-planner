@@ -70,18 +70,16 @@ function GoogleG() {
 interface Props {
   onClick: () => void
   disabled?: boolean
-  title?: string
   children?: string
 }
 
 export default function GoogleSignInButton({
   onClick,
   disabled,
-  title,
   children = 'התחברות עם Google',
 }: Props) {
   return (
-    <Btn type="button" onClick={onClick} disabled={disabled} title={title}>
+    <Btn type="button" onClick={onClick} disabled={disabled}>
       <Glyph>
         <GoogleG />
       </Glyph>
