@@ -9,8 +9,9 @@
 // Endpoints (both authenticated via Supabase JWT):
 //   POST /api/gmail/store-refresh-token
 //     body: { refresh_token: string, scope?: string }
-//     called once right after sign-in (when Supabase still has the
-//     provider_refresh_token in the session).
+//     called after Gmail connect (when Supabase still has the
+//     provider_refresh_token in the session). Identity login does not
+//     request this token.
 //
 //   POST /api/gmail/access-token
 //     returns: { access_token, expires_at }

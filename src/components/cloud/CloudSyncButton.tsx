@@ -116,14 +116,15 @@ export default function CloudSyncButton() {
   }, [toast])
 
   // Friendly "reconnect Gmail" prompt shown when the Gmail token expired/was
-  // revoked. Re-running the Google OAuth (access_type=offline + prompt=consent)
-  // mints and stores a fresh refresh token, so sync works again.
+  // revoked, or when this account has never granted gmail.readonly. Incremental
+  // OAuth (access_type=offline + prompt=consent) mints and stores a refresh
+  // token without putting that restricted scope on every login.
   const gmailReconnectToast = (): ToastState => ({
     kind: 'info',
     text: '🔌 החיבור ל-Gmail פג. צריך להתחבר מחדש כדי לחדש את הסנכרון.',
     action: {
       label: 'חבר מחדש את Gmail',
-      onClick: () => { void signInWithGoogle() },
+      onClick: () => { void signInWithGoogle({ gmail: true }) },
     },
   })
 

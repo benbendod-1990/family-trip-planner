@@ -177,7 +177,7 @@ export default function Quickstart() {
             כדי שכפתור "Gmail" בעמוד הבית יעבוד, ב-Google Cloud Console:
             <br />1. פתח OAuth Consent Screen → Scopes
             <br />2. הוסף <code>https://www.googleapis.com/auth/gmail.readonly</code>
-            <br />3. שמור. אחר כך — צא מהאפליקציה והיכנס מחדש.
+            <br />3. שמור. אחר כך לחצו "Gmail" / "חבר מחדש את Gmail" — לא כניסה רגילה. כניסה לטיול מבקשת רק זהות, בלי הרשאת מייל.
           </Typography>
           <div style={{ marginTop: 8 }}>
             <LinkButton href={URLS.googleCloud} icon={<Mail size={14} />}>Google Cloud Console</LinkButton>

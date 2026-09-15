@@ -2,7 +2,7 @@
 //
 // Why: Supabase only exposes provider_token for ~1h after sign-in and then
 // drops it on JWT refresh. So we stash Google's refresh_token in
-// gmail_credentials (via the Worker, once at sign-in) and ask the Worker
+// gmail_credentials (via the Worker, after Gmail connect) and ask the Worker
 // for a fresh access_token on demand.
 
 import { supabase } from './supabase'
@@ -12,16 +12,15 @@ import {
   GmailAuthError,
   throwForGmailBrokerStatus,
 } from './gmailAuthError'
+import { GMAIL_READONLY_SCOPE } from './googleOAuth'
 
 export { GMAIL_RECONNECT_MESSAGE, GmailAuthError, throwForGmailBrokerStatus }
 
 const AI_BASE = import.meta.env.VITE_AI_BASE_URL ?? 'http://localhost:8787'
 
-// Called once right after sign-in, when Supabase still has the
-// provider_refresh_token in the session. Silently no-ops if there's
-// nothing to store (e.g. user signed in via a flow that didn't return
-// a refresh token — happens when access_type=offline + prompt=consent
-// were not requested).
+// Called after auth wire-up. Identity login no longer requests
+// access_type=offline, so this no-ops unless the user just completed
+// Gmail connect (gmail: true → offline + consent → refresh_token).
 export async function persistGmailRefreshToken(): Promise<void> {
   const { data } = await supabase.auth.getSession()
   const refresh = data.session?.provider_refresh_token
@@ -32,7 +31,7 @@ export async function persistGmailRefreshToken(): Promise<void> {
       headers: await workerAuthHeaders(),
       body: JSON.stringify({
         refresh_token: refresh,
-        scope: 'https://www.googleapis.com/auth/gmail.readonly',
+        scope: GMAIL_READONLY_SCOPE,
       }),
     })
     if (!res.ok) {

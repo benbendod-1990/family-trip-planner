@@ -2,9 +2,10 @@
 //
 // Flow:
 //   1. Get a Gmail access token from the Worker's token broker. The Worker
-//      holds Google's refresh_token (stored at sign-in) and mints/refreshes
-//      access tokens via Google's OAuth endpoint. We never depend on
-//      Supabase's provider_token (which expires after ~1h and isn't refreshed).
+//      holds Google's refresh_token (stored when the user opts into Gmail
+//      connect — not on every identity login) and mints/refreshes access
+//      tokens via Google's OAuth endpoint. We never depend on Supabase's
+//      provider_token (which expires after ~1h and isn't refreshed).
 //   2. Fetch recent travel emails via the existing fetchTravelEmails().
 //   3. Parse each into structured Flight/Accommodation/CarRental.
 //   4. Match each parsed item to a trip by *date inside the booking* (NOT
