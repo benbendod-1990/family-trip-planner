@@ -38,6 +38,9 @@ function humanize(err: unknown): DocSyncError {
       'צריך קישור בצורה https://docs.google.com/document/d/...',
     )
   }
+  if (raw.includes('forbidden') || raw.includes('family catalog')) {
+    return new DocSyncError('אין גישה')
+  }
   if (raw.startsWith('AI 401') || raw.includes('unauthorized') || raw.includes('missing_bearer') || raw.includes('expired_token') || raw.includes('invalid_token')) {
     return new DocSyncError(
       'צריך להתחבר מחדש כדי לבדוק סנכרון',

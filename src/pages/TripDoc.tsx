@@ -4,6 +4,8 @@ import { Stack, Typography, Button, EmptyState, Spinner, Badge, Card } from 'myk
 import { FileText, BookOpen, Upload, Trash2, ExternalLink, Image as ImageIcon, MailSearch } from 'lucide-react'
 import styled from 'styled-components'
 import { useTripStore } from '@/stores/tripStore'
+import { useAuth } from '@/lib/AuthContext'
+import { isFamilyCatalogEmail } from '@/lib/familyCatalog'
 import { useBreakpoint } from '@/hooks/useBreakpoint'
 import { fetchDocText } from '@/lib/tripDoc'
 import { documentUrl, deleteDocument, uploadDocument, classifyDocument } from '@/lib/tripDocuments'
@@ -90,6 +92,8 @@ function prettySize(bytes: number): string {
 export default function TripDoc() {
   const { id } = useParams<{ id: string }>()
   const trip = useTripStore(s => s.trips.find(t => t.id === id))
+  const { user } = useAuth()
+  const isAdmin = isFamilyCatalogEmail(user?.email)
   const { isMobile } = useBreakpoint()
   const [gmailReconnect, setGmailReconnect] = useState(false)
 
@@ -209,7 +213,7 @@ export default function TripDoc() {
   }
 
   const readPlan = async () => {
-    if (!trip.docUrl) return
+    if (!isAdmin || !trip.docUrl) return
     setPlanBusy(true)
     setPlanError(null)
     try {
@@ -358,7 +362,7 @@ export default function TripDoc() {
       <Stack direction="column" spacing="sm">
         <Typography variant="body1" style={{ fontWeight: 600 }}>מסמך התכנון</Typography>
         <TripDocCard trip={trip} />
-        {trip.docUrl && !planText && (
+        {isAdmin && trip.docUrl && !planText && (
           <Button onClick={readPlan} disabled={planBusy} variant="ghost">
             <Stack direction="row" spacing="xs" align="center" justify="center">
               {planBusy ? <Spinner size="sm" /> : <BookOpen size={16} />}
