@@ -214,10 +214,23 @@ export function shareLinkFailureStatus(e: unknown): string {
     return 'רק יוצר הטיול יכול לשתף לינק.'
   }
   if (
+    /column reference "trip_id" is ambiguous/i.test(msg) ||
+    (msg.includes('claim_trip_share_link') &&
+      (msg.includes('42702') || /column reference ".+" is ambiguous/i.test(msg)))
+  ) {
+    return 'שגיאת הצטרפות לטיול בשרת (מיגרציה 0014). רעננו את האפליקציה ונסו שוב.'
+  }
+  if (
+    /column reference "expires_at" is ambiguous/i.test(msg) ||
+    (msg.includes('expires_at') && msg.includes('42702'))
+  ) {
+    return 'שגיאת שיתוף בשרת (מיגרציה 0013). רעננו את האפליקציה ונסו שוב.'
+  }
+  if (
     msg.includes('42702') ||
     /column reference ".+" is ambiguous/i.test(msg)
   ) {
-    return 'שגיאת שיתוף בשרת (מיגרציה 0013). רעננו את האפליקציה ונסו שוב.'
+    return 'שגיאת שיתוף בשרת. רעננו את האפליקציה ונסו שוב.'
   }
   if (
     msg.includes('0012') ||
