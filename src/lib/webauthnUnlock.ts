@@ -1,11 +1,8 @@
 // Device unlock before showing passport bytes.
 //
-// This is a *client* gate. The Worker still requires a trip-member JWT before
-// it mints a signed URL — Face ID is extra friction on a borrowed/stolen
-// unlocked phone, not the authorization boundary.
-//
-// Honest copy: we never claim Face ID ran if the device only has a passkey /
-// device PIN, and we never skip the prompt by pretending it succeeded.
+// Client Face ID is UX friction. Authorization is the Worker: it issues the
+// challenge, stores the public key, and verifies the assertion before minting
+// a signed URL. A local session only skips a second prompt in this tab.
 
 export const UNLOCK_TTL_MS = 10 * 60 * 1000
 
@@ -24,6 +21,22 @@ export interface UnlockRecord {
   until: number
 }
 
+export class WebAuthnRequiredError extends Error {
+  constructor(message = 'נדרש אימות מכשיר כדי לפתוח דרכון') {
+    super(message)
+    this.name = 'WebAuthnRequiredError'
+  }
+}
+
+export class WebAuthnUnavailableError extends Error {
+  readonly copy: UnlockCopy
+  constructor(copy: UnlockCopy) {
+    super(copy.body)
+    this.name = 'WebAuthnUnavailableError'
+    this.copy = copy
+  }
+}
+
 const SESSION_KEY = 'ftp-sensitive-unlock'
 const CRED_KEY_PREFIX = 'ftp-webauthn-cred:'
 
@@ -35,20 +48,20 @@ export function authenticatorCopy(probe: {
     return {
       method: 'unavailable',
       title: 'אימות המכשיר לא זמין',
-      body: 'הדפדפן הזה לא תומך ב-WebAuthn. לא נציג את קובץ הדרכון בלי אימות מכשיר.',
+      body: 'הדפדפן הזה לא תומך ב-WebAuthn. לא נציג את קובץ הדרכון בלי אימות מכשיר שנבדק בשרת.',
     }
   }
   if (probe.platformUv) {
     return {
       method: 'platform-biometric',
       title: 'אימות ביומטרי',
-      body: 'לפני הצגת הדרכון נבקש Face ID, Touch ID או Windows Hello — לפי מה שהמכשיר באמת תומך.',
+      body: 'לפני הצגת הדרכון נבקש Face ID, Touch ID או Windows Hello — לפי מה שהמכשיר באמת תומך. השרת בודק את החתימה, לא רק המסך הזה.',
     }
   }
   return {
     method: 'device-credential',
     title: 'סיסמת המכשיר / מפתח גישה',
-    body: 'אין חיישן ביומטרי זמין בדפדפן הזה. נשתמש בסיסמת המכשיר או במפתח גישה. זה לא Face ID.',
+    body: 'אין חיישן ביומטרי זמין בדפדפן הזה. נשתמש בסיסמת המכשיר או במפתח גישה. זה לא Face ID. השרת עדיין חייב לאשר את האימות.',
   }
 }
 
@@ -115,34 +128,116 @@ export function clearUnlock(): void {
   try { sessionStorage.removeItem(SESSION_KEY) } catch { /* private mode */ }
 }
 
-function randomChallenge(): Uint8Array<ArrayBuffer> {
-  const bytes = new Uint8Array(32)
-  crypto.getRandomValues(bytes)
-  return bytes
+interface ChallengeResponse {
+  challenge: string
+  rpId: string
+  rpName: string
+  purpose: 'register' | 'assert'
+  timeout: number
+  user: { id: string; name: string; displayName: string }
+  allowCredentials: Array<{ type: 'public-key'; id: string; transports?: AuthenticatorTransport[] }>
 }
 
-function userHandle(userId: string): Uint8Array<ArrayBuffer> {
-  const src = new TextEncoder().encode(userId)
-  const out = new Uint8Array(Math.min(src.length, 64))
-  out.set(src.subarray(0, out.length))
+export interface SerializedAssertion {
+  id: string
+  rawId: string
+  type: 'public-key'
+  response: {
+    clientDataJSON: string
+    authenticatorData?: string
+    signature?: string
+    attestationObject?: string
+    userHandle?: string
+  }
+}
+
+async function fetchChallenge(purpose?: 'register' | 'assert'): Promise<ChallengeResponse> {
+  const { workerAuthHeaders } = await import('./workerAuth')
+  const aiBase = (import.meta as { env?: { VITE_AI_BASE_URL?: string } }).env?.VITE_AI_BASE_URL ?? 'http://localhost:8787'
+  const res = await fetch(`${aiBase}/api/documents/webauthn/challenge`, {
+    method: 'POST',
+    headers: await workerAuthHeaders(),
+    body: JSON.stringify(purpose ? { purpose } : {}),
+  })
+  if (!res.ok) {
+    const t = await res.text().catch(() => '')
+    throw new Error(t.slice(0, 180) || 'לא ניתן להתחיל אימות מכשיר')
+  }
+  return (await res.json()) as ChallengeResponse
+}
+
+async function postCredential(path: 'register' | 'assert', cred: PublicKeyCredential): Promise<void> {
+  const { workerAuthHeaders } = await import('./workerAuth')
+  const aiBase = (import.meta as { env?: { VITE_AI_BASE_URL?: string } }).env?.VITE_AI_BASE_URL ?? 'http://localhost:8787'
+  const res = await fetch(`${aiBase}/api/documents/webauthn/${path}`, {
+    method: 'POST',
+    headers: await workerAuthHeaders(),
+    body: JSON.stringify(serializeCredential(cred)),
+  })
+  if (!res.ok) {
+    const t = await res.text().catch(() => '')
+    throw new Error(t.slice(0, 180) || 'השרת דחה את אימות המכשיר')
+  }
+}
+
+function serializeCredential(cred: PublicKeyCredential): SerializedAssertion {
+  const response = cred.response
+  const out: SerializedAssertion = {
+    id: cred.id,
+    rawId: bytesToBase64Url(new Uint8Array(cred.rawId)),
+    type: 'public-key',
+    response: {
+      clientDataJSON: bytesToBase64Url(new Uint8Array(response.clientDataJSON)),
+    },
+  }
+  if (response instanceof AuthenticatorAttestationResponse) {
+    out.response.attestationObject = bytesToBase64Url(new Uint8Array(response.attestationObject))
+  }
+  if (response instanceof AuthenticatorAssertionResponse) {
+    out.response.authenticatorData = bytesToBase64Url(new Uint8Array(response.authenticatorData))
+    out.response.signature = bytesToBase64Url(new Uint8Array(response.signature))
+    if (response.userHandle) {
+      out.response.userHandle = bytesToBase64Url(new Uint8Array(response.userHandle))
+    }
+  }
   return out
 }
 
-async function createPlatformCredential(userId: string, userName: string, platform: boolean): Promise<void> {
+function allowList(ids: Array<{ id: string; transports?: AuthenticatorTransport[] }>, local?: Uint8Array<ArrayBuffer> | null) {
+  const fromServer = ids.map(c => ({
+    type: 'public-key' as const,
+    id: base64UrlToBytes(c.id),
+    transports: (c.transports ?? ['internal']) as AuthenticatorTransport[],
+  }))
+  if (local && !fromServer.some(c => bytesEq(new Uint8Array(c.id), local))) {
+    fromServer.push({ type: 'public-key', id: local, transports: ['internal'] })
+  }
+  return fromServer
+}
+
+function bytesEq(a: Uint8Array, b: Uint8Array): boolean {
+  if (a.length !== b.length) return false
+  let diff = 0
+  for (let i = 0; i < a.length; i++) diff |= a[i]! ^ b[i]!
+  return diff === 0
+}
+
+async function createPlatformCredential(challenge: ChallengeResponse, platform: boolean): Promise<PublicKeyCredential> {
+  const userId = base64UrlToBytes(challenge.user.id)
   const cred = await navigator.credentials.create({
     publicKey: {
-      challenge: randomChallenge(),
-      rp: { name: 'Family Trip Planner', id: window.location.hostname },
+      challenge: base64UrlToBytes(challenge.challenge),
+      rp: { name: challenge.rpName, id: challenge.rpId },
       user: {
-        id: userHandle(userId),
-        name: userName,
-        displayName: userName,
+        id: userId,
+        name: challenge.user.name,
+        displayName: challenge.user.displayName,
       },
       pubKeyCredParams: [
         { type: 'public-key', alg: -7 },
         { type: 'public-key', alg: -257 },
       ],
-      timeout: 60_000,
+      timeout: challenge.timeout,
       authenticatorSelection: {
         ...(platform ? { authenticatorAttachment: 'platform' as const } : {}),
         userVerification: 'required',
@@ -154,46 +249,69 @@ async function createPlatformCredential(userId: string, userName: string, platfo
   if (!cred || !(cred instanceof PublicKeyCredential)) {
     throw new Error('האימות בוטל או נכשל')
   }
-  saveCredId(userId, cred.rawId)
+  return cred
 }
 
-async function assertExistingCredential(userId: string): Promise<void> {
-  const allow = loadCredId(userId)
+async function assertExistingCredential(challenge: ChallengeResponse, userId: string): Promise<PublicKeyCredential> {
+  const allow = allowList(challenge.allowCredentials, loadCredId(userId))
   const cred = await navigator.credentials.get({
     publicKey: {
-      challenge: randomChallenge(),
-      timeout: 60_000,
+      challenge: base64UrlToBytes(challenge.challenge),
+      timeout: challenge.timeout,
       userVerification: 'required',
-      rpId: window.location.hostname,
-      allowCredentials: allow
-        ? [{ type: 'public-key', id: allow, transports: ['internal'] }]
-        : undefined,
+      rpId: challenge.rpId,
+      allowCredentials: allow.length ? allow : undefined,
     },
   })
-  if (!cred) throw new Error('האימות בוטל או נכשל')
+  if (!cred || !(cred instanceof PublicKeyCredential)) {
+    throw new Error('האימות בוטל או נכשל')
+  }
+  return cred
+}
+
+function mapUnlockError(e: unknown): never {
+  const msg = e instanceof Error ? e.message : 'האימות בוטל או נכשל'
+  if (e instanceof WebAuthnUnavailableError) throw e
+  if (/not allowed|abort|cancel|denied/i.test(msg) || msg === 'האימות בוטל או נכשל') {
+    throw new Error('האימות בוטל. הדרכון נשאר נעול.')
+  }
+  throw new Error(msg.slice(0, 180))
 }
 
 /**
- * Prompt for platform biometric or device credential. Throws on cancel /
- * unavailable — callers must not open the file.
+ * Prompt for platform biometric or device credential, then register/assert
+ * the public key with the Worker. Throws on cancel / unavailable.
  */
-export async function unlockWithWebAuthn(userId: string, userName: string): Promise<UnlockCopy> {
+export async function unlockWithWebAuthn(userId: string, _userName: string): Promise<UnlockCopy> {
   const copy = await probeAuthenticator()
   if (copy.method === 'unavailable') {
-    throw new Error(copy.body)
+    throw new WebAuthnUnavailableError(copy)
   }
   try {
-    if (!loadCredId(userId)) {
-      await createPlatformCredential(userId, userName, copy.method === 'platform-biometric')
+    let challenge = await fetchChallenge()
+    if (challenge.purpose === 'register' || (!loadCredId(userId) && challenge.allowCredentials.length === 0)) {
+      if (challenge.purpose !== 'register') {
+        challenge = await fetchChallenge('register')
+      }
+      const cred = await createPlatformCredential(challenge, copy.method === 'platform-biometric')
+      await postCredential('register', cred)
+      saveCredId(userId, cred.rawId)
     } else {
-      await assertExistingCredential(userId)
+      try {
+        const cred = await assertExistingCredential(challenge, userId)
+        await postCredential('assert', cred)
+        saveCredId(userId, cred.rawId)
+      } catch (e) {
+        // New iPhone / lost local cred id: register a fresh authenticator.
+        if (/בוטל/.test(e instanceof Error ? e.message : '')) throw e
+        const registerChallenge = await fetchChallenge('register')
+        const cred = await createPlatformCredential(registerChallenge, copy.method === 'platform-biometric')
+        await postCredential('register', cred)
+        saveCredId(userId, cred.rawId)
+      }
     }
   } catch (e) {
-    const msg = e instanceof Error ? e.message : 'האימות בוטל או נכשל'
-    if (/not allowed|abort|cancel|denied/i.test(msg) || msg === 'האימות בוטל או נכשל') {
-      throw new Error('האימות בוטל. הדרכון נשאר נעול.')
-    }
-    throw new Error(msg.slice(0, 180))
+    mapUnlockError(e)
   }
   writeSession(makeUnlockRecord(userId))
   return copy
@@ -201,6 +319,7 @@ export async function unlockWithWebAuthn(userId: string, userName: string): Prom
 
 export async function ensureSensitiveUnlocked(userId: string, userName: string): Promise<UnlockCopy> {
   const copy = await probeAuthenticator()
+  if (copy.method === 'unavailable') throw new WebAuthnUnavailableError(copy)
   if (readUnlock(userId)) return copy
   return unlockWithWebAuthn(userId, userName)
 }

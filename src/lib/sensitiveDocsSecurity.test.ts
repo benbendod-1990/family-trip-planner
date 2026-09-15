@@ -69,7 +69,7 @@ describe('Gmail pull is family-catalog admin only', () => {
 })
 
 describe('migration 0016 passport storage', () => {
-  it('creates a private sensitive bucket with no SELECT and a path-redacting list RPC', () => {
+  it('creates a private sensitive bucket with no SELECT and owner-only passport RLS', () => {
     const sql = readFileSync(
       new URL('../../supabase/migrations/0016_sensitive_documents.sql', import.meta.url),
       'utf8',
@@ -80,11 +80,23 @@ describe('migration 0016 passport storage', () => {
     assert.match(sql, /photo/)
     assert.match(sql, /list_trip_documents/)
     assert.match(sql, /sensitive_document_locator/)
-    assert.match(sql, /Deliberately no SELECT policy/)
+    assert.match(sql, /Deliberately no SELECT policy on either bucket/)
+    assert.match(sql, /drop policy if exists "trip members read documents"/)
     assert.match(sql, /revoke all on function public.sensitive_document_locator/)
     assert.match(sql, /grant execute on function public.sensitive_document_locator\(uuid, uuid\) to service_role/)
+    assert.equal(/create policy "trip members read documents"/i.test(sql), false)
     assert.equal(/create policy "trip members read sensitive documents"/i.test(sql), false)
+    assert.equal(/create policy "trip members upload sensitive documents"/i.test(sql), false)
+    assert.match(sql, /trip owners upload sensitive documents/)
+    assert.match(sql, /kind <> 'passport' or public.is_trip_owner/)
+    assert.match(sql, /or m.role = 'owner'/)
     assert.match(sql, /kind <> 'passport' or storage_bucket = 'trip-sensitive-documents'/)
+    assert.match(sql, /webauthn_credentials/)
+    assert.match(sql, /webauthn_challenges/)
+    assert.match(sql, /webauthn_unlocks/)
+    assert.match(sql, /consume_webauthn_challenge/)
+    assert.match(sql, /has_webauthn_unlock/)
+    assert.match(sql, /revoke all on table public.webauthn_credentials/)
   })
 
   it('does not collide with live 0015 admin-users migration filename', () => {
@@ -93,12 +105,37 @@ describe('migration 0016 passport storage', () => {
     assert.equal(existsSync(new URL('0016_sensitive_documents.sql', root)), true)
   })
 
-  it('client documentUrl never uses a 1-hour TTL and passports go through the Worker', () => {
+  it('client documentUrl never calls createSignedUrl; all signing goes through the Worker', () => {
     const docs = read('lib/tripDocuments.ts')
+    assert.equal(docs.includes('.createSignedUrl'), false)
+    assert.equal(/createSignedUrl\s*\(/.test(docs), false)
     assert.equal(docs.includes('60 * 60'), false)
     assert.match(docs, /signViaWorker/)
     assert.match(docs, /\/api\/documents\/sign/)
     assert.match(docs, /list_trip_documents/)
     assert.match(docs, /redactSensitiveDocument/)
+    assert.match(docs, /WebAuthnRequiredError/)
+  })
+
+  it('Worker verifies WebAuthn before minting a passport URL', () => {
+    const worker = readFileSync(new URL('../../worker/src/index.ts', import.meta.url), 'utf8')
+    const documents = readFileSync(new URL('../../worker/src/documents.ts', import.meta.url), 'utf8')
+    const webauthn = readFileSync(new URL('../../worker/src/webauthn.ts', import.meta.url), 'utf8')
+    assert.match(worker, /\/api\/documents\/sign/)
+    assert.match(worker, /\/api\/documents\/webauthn\/challenge/)
+    assert.match(worker, /\/api\/documents\/webauthn\/register/)
+    assert.match(worker, /\/api\/documents\/webauthn\/assert/)
+    assert.match(documents, /requirePassportWebAuthn/)
+    assert.match(documents, /assertWebAuthn/)
+    assert.match(webauthn, /verifyAssertionSignature/)
+    assert.match(webauthn, /user verification required/)
+  })
+
+  it('Documents UI hides passport slots from non-owners', () => {
+    const page = read('pages/TripDoc.tsx')
+    assert.match(page, /useIsTripOwner/)
+    assert.match(page, /רק יוצרי הטיול יכולים לגשת לדרכונים/)
+    assert.match(page, /סריקות דרכון שמורות ליוצרי הטיול/)
+    assert.match(page, /isOwner \? documents.filter/)
   })
 })

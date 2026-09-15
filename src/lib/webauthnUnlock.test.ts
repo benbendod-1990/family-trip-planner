@@ -13,6 +13,7 @@ describe('WebAuthn unlock copy', () => {
     assert.equal(copy.method, 'unavailable')
     assert.equal(/Face ID/.test(copy.body), false)
     assert.match(copy.body, /לא נציג את קובץ הדרכון/)
+    assert.match(copy.body, /בלי אימות מכשיר/)
   })
 
   it('names platform biometrics only when UVPA is true', () => {

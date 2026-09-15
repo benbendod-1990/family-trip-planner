@@ -13,6 +13,13 @@ import { pullDocText, type DocPullRequest } from './tripDoc'
 import { storeRefreshToken, getAccessToken } from './gmail'
 import { assertFamilyCatalogGmail } from './gmailGate'
 import { signDocumentUrl } from './documents'
+import {
+  assertWebAuthn,
+  issueWebAuthnChallenge,
+  originIsAllowed,
+  registerWebAuthnCredential,
+  type WebAuthnAssertionBody,
+} from './webauthn'
 
 export interface Env {
   ANTHROPIC_API_KEY: string
@@ -69,9 +76,51 @@ export default {
         }
       }
 
+      if (url.pathname === '/api/documents/webauthn/challenge') {
+        if (caller.kind !== 'supabase-user' || !caller.userId) {
+          return json({ error: 'unauthorized', detail: 'user session required' }, 401, cors)
+        }
+        if (!originIsAllowed(origin, env.ALLOWED_ORIGIN)) {
+          return json({ error: 'unauthorized', detail: 'origin not allowed' }, 401, cors)
+        }
+        const body = (await req.json().catch(() => ({}))) as { purpose?: unknown }
+        const r = await issueWebAuthnChallenge(env, caller.userId, caller.email, origin, body.purpose)
+        if ('error' in r) return json({ error: r.error, detail: r.detail }, r.status, cors)
+        return json(r, 200, cors)
+      }
+
+      if (url.pathname === '/api/documents/webauthn/register') {
+        if (caller.kind !== 'supabase-user' || !caller.userId) {
+          return json({ error: 'unauthorized', detail: 'user session required' }, 401, cors)
+        }
+        if (!originIsAllowed(origin, env.ALLOWED_ORIGIN)) {
+          return json({ error: 'unauthorized', detail: 'origin not allowed' }, 401, cors)
+        }
+        const body = (await req.json()) as Parameters<typeof registerWebAuthnCredential>[3]
+        const r = await registerWebAuthnCredential(env, caller.userId, origin, body)
+        if ('error' in r) return json({ error: r.error, detail: r.detail }, r.status, cors)
+        return json(r, 200, cors)
+      }
+
+      if (url.pathname === '/api/documents/webauthn/assert') {
+        if (caller.kind !== 'supabase-user' || !caller.userId) {
+          return json({ error: 'unauthorized', detail: 'user session required' }, 401, cors)
+        }
+        if (!originIsAllowed(origin, env.ALLOWED_ORIGIN)) {
+          return json({ error: 'unauthorized', detail: 'origin not allowed' }, 401, cors)
+        }
+        const body = (await req.json()) as Parameters<typeof assertWebAuthn>[3]
+        const r = await assertWebAuthn(env, caller.userId, origin, body)
+        if ('error' in r) return json({ error: r.error, detail: r.detail }, r.status, cors)
+        return json(r, 200, cors)
+      }
+
       if (url.pathname === '/api/documents/sign') {
-        const body = (await req.json()) as { documentId?: unknown }
-        const r = await signDocumentUrl(env, caller, body)
+        const body = (await req.json()) as { documentId?: unknown; assertion?: WebAuthnAssertionBody }
+        const r = await signDocumentUrl(env, caller, body, {
+          origin,
+          allowedOrigin: env.ALLOWED_ORIGIN,
+        })
         if ('error' in r) return json({ error: r.error, detail: r.detail }, r.status, cors)
         return json(r, 200, cors)
       }

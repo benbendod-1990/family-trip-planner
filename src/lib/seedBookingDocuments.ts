@@ -105,14 +105,30 @@ export function findGmailPlaceholder(
 }
 
 /** Fill in any canonical seed booking cards the live trip is still missing. */
-export function ensureSeedBookingDocuments(trips: TripPlan[], seeds: TripPlan[]): TripPlan[] {
+export function ensureSeedBookingDocuments(
+  trips: TripPlan[],
+  seeds: TripPlan[],
+  opts?: { passportTripIds?: ReadonlySet<string> },
+): TripPlan[] {
   return trips.map(t => {
     const seed = seeds.find(s => s.id === t.id)
-    const seedDocs = (seed?.documents ?? []).filter(isPersistableSeedDocument)
+    const includePassports = !opts?.passportTripIds || opts.passportTripIds.has(t.id)
+    const seedDocs = (seed?.documents ?? []).filter(d => {
+      if (!isPersistableSeedDocument(d)) return false
+      if (d.kind === 'passport' && !includePassports) return false
+      return true
+    })
     if (!seedDocs.length && !(t.documents ?? []).some(d => STALE_USA_SEED_DOC_IDS.has(d.id))) {
-      return t
+      if (includePassports) return t
+      const stripped = (t.documents ?? []).filter(d => d.kind !== 'passport')
+      if (stripped.length === (t.documents ?? []).length) return t
+      return { ...t, documents: stripped }
     }
-    const kept = (t.documents ?? []).filter(d => !STALE_USA_SEED_DOC_IDS.has(d.id))
+    const kept = (t.documents ?? []).filter(d => {
+      if (STALE_USA_SEED_DOC_IDS.has(d.id)) return false
+      if (d.kind === 'passport' && !includePassports) return false
+      return true
+    })
     const haveId = new Set(kept.map(d => d.id))
     const haveGmail = new Set(kept.map(d => d.sourceMessageId).filter(Boolean) as string[])
     const havePassportPerson = new Set(

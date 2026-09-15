@@ -41,9 +41,8 @@ export function storageBucketFor(doc: Pick<TripDocument, 'kind' | 'storageBucket
 }
 
 /**
- * Members may list passport *slots*. The storage key of an uploaded scan must
- * not ride in trip JSON / localStorage — that's how a stolen phone dumps paths
- * that createSignedUrl can turn into downloads.
+ * Members never see passport rows. The storage key of an uploaded scan must
+ * not ride in trip JSON / localStorage — that's how a stolen phone dumps paths.
  */
 export function redactSensitiveDocument<T extends Pick<TripDocument, 'kind' | 'path'>>(doc: T): T {
   if (!isSensitiveKind(doc.kind)) return doc
@@ -51,6 +50,15 @@ export function redactSensitiveDocument<T extends Pick<TripDocument, 'kind' | 'p
     return doc
   }
   return { ...doc, path: '' }
+}
+
+export function documentsVisibleToViewer<T extends Pick<TripDocument, 'kind'>>(
+  docs: T[] | undefined,
+  isOwner: boolean,
+): T[] {
+  if (!docs?.length) return []
+  if (isOwner) return docs
+  return docs.filter(d => d.kind !== 'passport')
 }
 
 export function capSignedUrlTtl(kind: TripDocument['kind'] | undefined, requestedSec?: number): number {

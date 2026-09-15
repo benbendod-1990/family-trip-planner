@@ -12,7 +12,8 @@ import { GmailAuthError, GmailForbiddenError } from '@/lib/gmailToken'
 import { documentHref, isLinkOnlyDocument } from '@/lib/seedBookingDocuments'
 import { isFamilyCatalogEmail } from '@/lib/familyCatalog'
 import { useAuth } from '@/lib/AuthContext'
-import { ensureSensitiveUnlocked, probeAuthenticator, type UnlockCopy } from '@/lib/webauthnUnlock'
+import { useIsTripOwner } from '@/hooks/useIsTripOwner'
+import { ensureSensitiveUnlocked, probeAuthenticator, WebAuthnUnavailableError, type UnlockCopy } from '@/lib/webauthnUnlock'
 import { hasPassportFile, isPendingPassport, isSensitiveKind } from '@/lib/sensitiveDocument'
 import TripDocCard from '@/components/dashboard/TripDocCard'
 import AuthReconnectBanner from '@/components/auth/AuthReconnectBanner'
@@ -121,6 +122,7 @@ export default function TripDoc() {
   const { isMobile } = useBreakpoint()
   const { user } = useAuth()
   const canGmail = isFamilyCatalogEmail(user?.email)
+  const { isOwner, loading: ownerLoading } = useIsTripOwner(id)
   const [gmailReconnect, setGmailReconnect] = useState(false)
 
   const [openDoc, setOpenDoc] = useState<TripDocument | null>(null)
@@ -144,7 +146,7 @@ export default function TripDoc() {
     () => [...(trip?.documents ?? [])].sort((a, b) => b.addedAt.localeCompare(a.addedAt)),
     [trip?.documents],
   )
-  const passports = documents.filter(d => d.kind === 'passport')
+  const passports = isOwner ? documents.filter(d => d.kind === 'passport') : []
   const photos = documents.filter(d => d.kind === 'photo')
   const bookings = documents.filter(d => d.kind !== 'passport' && d.kind !== 'photo')
 
@@ -170,9 +172,17 @@ export default function TripDoc() {
   }
 
   const requirePassportUnlock = async () => {
+    if (!isOwner) throw new Error('רק יוצרי הטיול יכולים לגשת לדרכונים')
     if (!user?.id) throw new Error('צריך להתחבר כדי לפתוח דרכון')
-    const copy = await ensureSensitiveUnlocked(user.id, user.email ?? 'user')
-    setUnlockCopy(copy)
+    try {
+      const copy = await ensureSensitiveUnlocked(user.id, user.email ?? 'user')
+      setUnlockCopy(copy)
+    } catch (e) {
+      if (e instanceof WebAuthnUnavailableError) {
+        setUnlockCopy(e.copy)
+      }
+      throw e
+    }
   }
 
   if (!trip) return null
@@ -193,6 +203,7 @@ export default function TripDoc() {
     setDocError(null)
     try {
       if (forcedKind === 'passport' || slot?.kind === 'passport') {
+        if (!isOwner) throw new Error('רק יוצרי הטיול יכולים להעלות דרכונים')
         await requirePassportUnlock()
       }
       const added: TripDocument[] = []
@@ -251,7 +262,10 @@ export default function TripDoc() {
   const onDelete = async (doc: TripDocument) => {
     if (!confirm(`למחוק את "${doc.filename}"?`)) return
     try {
-      if (isSensitiveKind(doc.kind) && hasPassportFile(doc)) await requirePassportUnlock()
+      if (isSensitiveKind(doc.kind) && hasPassportFile(doc)) {
+        if (!isOwner) throw new Error('רק יוצרי הטיול יכולים למחוק דרכונים')
+        await requirePassportUnlock()
+      }
       await deleteDocument(doc)
     } catch (e) {
       if (e instanceof Error && /אימות|דרכון/.test(e.message)) {
@@ -267,7 +281,10 @@ export default function TripDoc() {
   const onOpenFile = async (doc: TripDocument) => {
     try {
       if (isPendingPassport(doc)) return
-      if (isSensitiveKind(doc.kind)) await requirePassportUnlock()
+      if (isSensitiveKind(doc.kind)) {
+        if (!isOwner) throw new Error('רק יוצרי הטיול יכולים לפתוח דרכונים')
+        await requirePassportUnlock()
+      }
       showDoc(doc)
     } catch (e) {
       setDocError(e instanceof Error ? e.message : 'האימות נכשל')
@@ -384,16 +401,28 @@ export default function TripDoc() {
       <Stack direction="column" spacing="sm">
         <Stack direction="row" align="center" justify="between">
           <Typography variant="body1" style={{ fontWeight: 600 }}>
-            🛂 דרכונים ({passports.length})
+            🛂 דרכונים {isOwner ? `(${passports.length})` : ''}
           </Typography>
         </Stack>
-        <Typography variant="body2" style={{ color: '#8F7B5C' }}>
-          {unlockCopy?.body ?? 'לפני הצגת סריקת דרכון נבקש אימות מכשיר. שמות השמורים מופיעים בלי הקובץ.'}
-        </Typography>
-        {passports.length === 0 ? (
-          <Typography variant="body2" style={{ color: '#8F7B5C' }}>אין משבצות דרכון בטיול הזה.</Typography>
+        {!isOwner ? (
+          <Typography variant="body2" style={{ color: '#8F7B5C' }}>
+            {ownerLoading
+              ? 'בודקים הרשאות…'
+              : 'סריקות דרכון שמורות ליוצרי הטיול. תמונות ומסמכי נסיעה נשארים משותפים לכל החברים.'}
+          </Typography>
         ) : (
-          passports.map(renderDocRow)
+          <>
+            <Typography variant="body2" style={{ color: '#8F7B5C' }}>
+              {unlockCopy?.method === 'unavailable'
+                ? unlockCopy.body
+                : (unlockCopy?.body ?? 'לפני הצגת סריקת דרכון נבקש אימות מכשיר שנבדק בשרת. שמות השמורים מופיעים בלי הקובץ.')}
+            </Typography>
+            {passports.length === 0 ? (
+              <Typography variant="body2" style={{ color: '#8F7B5C' }}>אין משבצות דרכון בטיול הזה.</Typography>
+            ) : (
+              passports.map(renderDocRow)
+            )}
+          </>
         )}
       </Stack>
 

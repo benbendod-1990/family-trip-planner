@@ -234,6 +234,20 @@ export async function listTripMembers(tripId: string): Promise<TripMember[]> {
   return (data ?? []) as TripMember[]
 }
 
+/** Trips where the current user is owner (or legacy admin). One round-trip. */
+export async function listMyOwnedTripIds(userId: string): Promise<Set<string>> {
+  const { data, error } = await supabase
+    .from('trip_members')
+    .select('trip_id, role')
+    .eq('user_id', userId)
+  if (error) throw describe(error, 'listMyOwnedTripIds')
+  const ids = new Set<string>()
+  for (const row of (data ?? []) as Array<{ trip_id: string; role: string }>) {
+    if (row.role === 'owner' || row.role === 'admin') ids.add(row.trip_id)
+  }
+  return ids
+}
+
 export async function listPendingTripInvites(tripId: string): Promise<TripPendingInvite[]> {
   const { data, error } = await supabase.rpc('list_pending_trip_invites', { _trip_id: tripId })
   if (error) throw describe(error, 'list_pending_trip_invites')

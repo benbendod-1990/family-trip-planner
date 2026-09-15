@@ -1,11 +1,19 @@
 // Mint short-TTL signed URLs for trip files after a membership check.
 //
-// Passports live in `trip-sensitive-documents`, which has no SELECT policy
-// for authenticated users — createSignedUrl from the browser cannot work.
-// The Worker uses the service role only on the server (never in the client)
-// and only after confirming the JWT subject is a trip member.
+// Neither bucket has a SELECT policy for authenticated users — createSignedUrl
+// from the browser cannot work. The Worker uses the service role only on the
+// server (never in the client). Regular files: ≤15 min after JWT + membership.
+// Passports: 2 min after JWT + trip-owner locator + a server-verified WebAuthn
+// assertion (or a 10-minute unlock minted by that assertion).
 
-import type { AuthedCaller } from './auth'
+import type { AuthedCaller } from './auth.ts'
+import {
+  assertWebAuthn,
+  hasUnlock,
+  originIsAllowed,
+  requirePassportWebAuthn,
+  type WebAuthnAssertionBody,
+} from './webauthn.ts'
 
 const SENSITIVE_BUCKET = 'trip-sensitive-documents'
 const REGULAR_BUCKET = 'trip-documents'
@@ -30,7 +38,8 @@ interface LocatorRow {
 export async function signDocumentUrl(
   env: SupabaseEnv,
   caller: AuthedCaller,
-  body: { documentId?: unknown },
+  body: { documentId?: unknown; assertion?: WebAuthnAssertionBody },
+  ctx: { origin: string | null; allowedOrigin: string },
 ): Promise<
   | { signed_url: string; expires_in: number; expires_at: string; filename: string; mime_type: string }
   | { error: string; detail?: string; status: number }
@@ -57,6 +66,26 @@ export async function signDocumentUrl(
   if (sensitive && bucket !== SENSITIVE_BUCKET) {
     return { error: 'misconfigured', detail: 'passport is not in the sensitive bucket', status: 500 }
   }
+
+  if (sensitive) {
+    if (!originIsAllowed(ctx.origin, ctx.allowedOrigin)) {
+      return { error: 'unauthorized', detail: 'origin not allowed', status: 401 }
+    }
+    const unlockValid = await hasUnlock(env, caller.userId)
+    let assertionVerified = false
+    if (!unlockValid && body.assertion) {
+      const asserted = await assertWebAuthn(env, caller.userId, ctx.origin, body.assertion)
+      if ('error' in asserted) return asserted
+      assertionVerified = true
+    }
+    const gate = requirePassportWebAuthn({
+      kind: row.kind,
+      unlockValid,
+      assertionVerified,
+    })
+    if (!('ok' in gate)) return gate
+  }
+
   const ttl = sensitive ? SENSITIVE_TTL_SEC : REGULAR_TTL_SEC
 
   const signed = await mintSignedUrl(env, bucket, row.path, ttl)

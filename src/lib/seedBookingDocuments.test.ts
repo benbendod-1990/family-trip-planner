@@ -166,6 +166,14 @@ describe('ensureSeedBookingDocuments', () => {
     assert.equal(docs.some(d => d.id === seedGal!.id), false)
     assert.equal(docs.some(d => d.id === 'real-gal'), true)
   })
+
+  it('strips and does not inject passports for trips the viewer does not own', () => {
+    const live: TripPlan = { ...usa }
+    const out = ensureSeedBookingDocuments([live], [usa], { passportTripIds: new Set() })
+    const docs = out[0]?.documents ?? []
+    assert.equal(docs.some(d => d.kind === 'passport'), false)
+    assert.equal(docs.filter(d => d.kind !== 'passport').length > 0, true)
+  })
 })
 
 describe('dropCoveredLinkDocuments', () => {

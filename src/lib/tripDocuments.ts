@@ -1,19 +1,21 @@
 // Travel documents: the files behind TripPlan.documents.
 //
 // Regular files live in the private `trip-documents` bucket (migration 0006).
-// Passport scans live in `trip-sensitive-documents` (0016): members can upload
-// and delete, but there is no SELECT, so the browser cannot mint signed URLs.
-// The Worker issues a 2-minute URL after a session + membership check.
+// Passport scans live in `trip-sensitive-documents` (0016). Neither bucket
+// grants authenticated SELECT, so the browser cannot mint signed URLs.
+// The Worker is the only signer: ≤15 min for regular files, 2 min + a
+// server-verified WebAuthn assertion for passports. Passport rows are
+// trip-owner only.
 
 import { supabase } from './supabase'
 import { generateId } from '@/utils/id'
 import type { TripDocument } from '@/types/trip-plan'
 import { documentHref, encodeLinkPath, isLinkOnlyDocument, isPersistableSeedDocument } from './seedBookingDocuments'
 import { workerAuthHeaders } from './workerAuth'
+import { ensureSensitiveUnlocked, WebAuthnRequiredError } from './webauthnUnlock'
 import {
   REGULAR_DOC_BUCKET,
   SENSITIVE_DOC_BUCKET,
-  capSignedUrlTtl,
   isPendingPassport,
   isSensitiveKind,
   redactSensitiveDocument,
@@ -44,8 +46,8 @@ function humanize(message: string, raw: string): DocumentStoreError {
   }
   if (/row-level security|not authorized|403/i.test(raw)) {
     return new DocumentStoreError(
-      'אין הרשאה למסמכי הטיול הזה',
-      'רק חברי הטיול יכולים לראות את המסמכים. ודא שאתה מחובר עם המשתמש הנכון.',
+      'אין הרשאה למסמך הזה',
+      'דרכונים שמורים ליוצרי הטיול. מסמכים רגילים — לכל חבר בטיול.',
     )
   }
   return new DocumentStoreError(message, raw.slice(0, 200))
@@ -191,6 +193,13 @@ async function signViaWorker(documentId: string): Promise<string> {
     headers: await workerAuthHeaders(),
     body: JSON.stringify({ documentId }),
   })
+  if (res.status === 403) {
+    const t = await res.text().catch(() => '')
+    if (/webauthn_required|passport_assertion_required/.test(t)) {
+      throw new WebAuthnRequiredError()
+    }
+    throw humanize('רק יוצרי הטיול יכולים לפתוח דרכונים', `${res.status} ${t}`)
+  }
   if (!res.ok) {
     const t = await res.text().catch(() => '')
     throw humanize('לא ניתן לפתוח את המסמך', `${res.status} ${t}`)
@@ -200,47 +209,43 @@ async function signViaWorker(documentId: string): Promise<string> {
   return body.signed_url
 }
 
+async function currentUser(): Promise<{ id: string; email: string } | null> {
+  const { data } = await supabase.auth.getSession()
+  const user = data.session?.user
+  if (!user?.id) return null
+  return { id: user.id, email: user.email ?? 'user' }
+}
+
 /**
- * A short-lived URL for viewing a document. Passports always go through the
- * Worker (no client createSignedUrl). Regular files cap at 15 minutes — the
- * old default of 1 hour was a shareable leak.
+ * A short-lived URL for viewing a document. Always minted by the Worker —
+ * the client never calls createSignedUrl. Passports additionally require a
+ * server-verified WebAuthn assertion (2-minute URL). Regular files: 15 min.
  */
-export async function documentUrl(doc: TripDocument | string, expiresInSec?: number): Promise<string> {
-  if (typeof doc !== 'string') {
-    const href = documentHref(doc)
+export async function documentUrl(doc: TripDocument | string, _expiresInSec?: number): Promise<string> {
+  if (typeof doc === 'string') {
+    const href = documentHref({ path: doc, url: undefined })
     if (href) return href
-    if (isPendingPassport(doc)) {
-      throw new DocumentStoreError('עדיין אין קובץ דרכון — רק מקום שמור')
-    }
-    if (isSensitiveKind(doc.kind) || !doc.path) {
-      return signViaWorker(doc.id)
-    }
-    const ttl = capSignedUrlTtl(doc.kind, expiresInSec)
-    const bucket = storageBucketFor(doc)
-    const { data, error } = await supabase.storage
-      .from(bucket)
-      .createSignedUrl(doc.path, ttl)
-    if (error || !data?.signedUrl) {
-      // Sensitive-style buckets, or SELECT revoked: Worker is the other door.
-      try {
-        return await signViaWorker(doc.id)
-      } catch {
-        throw humanize('לא ניתן לפתוח את המסמך', error?.message ?? 'no signed url')
-      }
-    }
-    return data.signedUrl
+    throw new DocumentStoreError('לא ניתן לפתוח את המסמך בלי מזהה. רענן את העמוד.')
   }
 
-  const href = documentHref({ path: doc, url: undefined })
+  const href = documentHref(doc)
   if (href) return href
-  const ttl = capSignedUrlTtl('other', expiresInSec)
-  const { data, error } = await supabase.storage
-    .from(REGULAR_DOC_BUCKET)
-    .createSignedUrl(doc, ttl)
-  if (error || !data?.signedUrl) {
-    throw humanize('לא ניתן לפתוח את המסמך', error?.message ?? 'no signed url')
+  if (isPendingPassport(doc)) {
+    throw new DocumentStoreError('עדיין אין קובץ דרכון — רק מקום שמור')
   }
-  return data.signedUrl
+  if (!doc.path && !isSensitiveKind(doc.kind)) {
+    throw new DocumentStoreError('לא ניתן לפתוח את המסמך', 'missing path')
+  }
+
+  try {
+    return await signViaWorker(doc.id)
+  } catch (e) {
+    if (!(e instanceof WebAuthnRequiredError)) throw e
+    const user = await currentUser()
+    if (!user) throw new DocumentStoreError('צריך להתחבר כדי לפתוח דרכון')
+    await ensureSensitiveUnlocked(user.id, user.email)
+    return signViaWorker(doc.id)
+  }
 }
 
 export async function deleteDocument(doc: TripDocument): Promise<void> {

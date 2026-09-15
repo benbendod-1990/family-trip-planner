@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs'
 import type { TripDocument } from '../types/trip-plan.ts'
 import {
   capSignedUrlTtl,
+  documentsVisibleToViewer,
   hasPassportFile,
   isPendingPassport,
   isSensitiveKind,
@@ -50,6 +51,8 @@ describe('sensitive document redaction', () => {
     assert.equal(hasPassportFile(uploaded), true)
     assert.equal(redactSensitiveDocument(uploaded).path, '')
     assert.equal(storageBucketFor(uploaded), SENSITIVE_DOC_BUCKET)
+    assert.equal(documentsVisibleToViewer([pending, uploaded], true).length, 2)
+    assert.equal(documentsVisibleToViewer([pending, uploaded], false).length, 0)
   })
 
   it('does not redact boarding-pass paths', () => {
