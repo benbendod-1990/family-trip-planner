@@ -46,7 +46,10 @@ function LineCard({ line }: { line: UsaBudgetLine }) {
 export default function UsaBudgetLedger() {
   const remaining = USA_SUPPLIER_LINES.filter(l => l.remainingDue)
   const paid = USA_SUPPLIER_LINES.filter(l => l.paidToSupplier)
-  const open = USA_SUPPLIER_LINES.filter(l => !l.remainingDue && !l.paidToSupplier)
+  const knownFare = USA_SUPPLIER_LINES.filter(
+    l => l.money.kind === 'usd' && !l.remainingDue && !l.paidToSupplier,
+  )
+  const open = USA_SUPPLIER_LINES.filter(l => l.money.kind === 'tbd')
 
   return (
     <Wrap>
@@ -80,6 +83,12 @@ export default function UsaBudgetLedger() {
         {remaining.map(line => <LineCard key={line.id} line={line} />)}
         <Sub>שולם לספק (ידוע מקבלה)</Sub>
         {paid.map(line => <LineCard key={line.id} line={line} />)}
+        {knownFare.length > 0 && (
+          <>
+            <Sub>עלות ידועה — תשלום לספק לא אושר עם תאריך</Sub>
+            {knownFare.map(line => <LineCard key={line.id} line={line} />)}
+          </>
+        )}
         <Sub>עדיין לא הוזמן / סכום לא ידוע</Sub>
         {open.map(line => <LineCard key={line.id} line={line} />)}
       </Section>
