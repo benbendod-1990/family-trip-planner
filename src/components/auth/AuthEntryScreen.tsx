@@ -7,7 +7,6 @@ const AUTH_BRAND_ICON_SRC = '/apple-touch-icon.png'
 const AUTH_BRAND_NAME = 'המסע של משפחת בן דוד'
 
 const Page = styled.div`
-  position: relative;
   min-height: 100dvh;
   display: grid;
   place-items: center;
@@ -16,13 +15,6 @@ const Page = styled.div`
     radial-gradient(ellipse 90% 48% at 50% -8%, rgba(237, 179, 92, 0.28), transparent 58%),
     radial-gradient(ellipse 55% 40% at 108% 108%, rgba(181, 99, 15, 0.08), transparent 52%),
     ${warmPageBackground};
-`
-
-const BannerSlot = styled.div`
-  position: absolute;
-  top: max(12px, env(safe-area-inset-top));
-  inset-inline: 16px;
-  z-index: 1;
 `
 
 const Card = styled.section`
@@ -184,17 +176,14 @@ export function AuthEntryCard({ title, lead, subtitle, mark = 'brand', footnote,
 
 interface ScreenProps extends CardProps {
   children?: ReactNode
-  /** Viewport chrome outside the card (preview bar). Does not change the card. */
-  banner?: ReactNode
 }
 
 /** Full-viewport cream gate. Login and Join wrap with warmTheme so they
  *  don't inherit the inverted tripTheme from main.tsx. */
-export default function AuthEntryScreen({ banner, ...props }: ScreenProps) {
+export default function AuthEntryScreen(props: ScreenProps) {
   return (
     <ThemeProvider theme={warmTheme}>
       <Page className="warm-shell">
-        {banner ? <BannerSlot>{banner}</BannerSlot> : null}
         <AuthEntryCard {...props} />
       </Page>
     </ThemeProvider>

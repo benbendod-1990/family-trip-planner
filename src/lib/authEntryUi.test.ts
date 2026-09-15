@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
-import { readFileSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { GMAIL_READONLY_SCOPE } from './googleOAuth.ts'
@@ -84,30 +84,21 @@ describe('auth entry UI', () => {
     assert.equal(btn.includes(GMAIL_READONLY_SCOPE), false)
   })
 
-  it('signed-in login preview reuses LoginEntry for every authenticated user', () => {
-    const preview = src('../pages/LoginPreview.tsx')
-    const entry = src('../components/auth/LoginEntry.tsx')
+  it('Home and routing have no signed-in login preview', () => {
     const home = src('../pages/Home.tsx')
     const app = src('../App.tsx')
-    assert.match(preview, /LoginEntry/)
-    assert.match(preview, /preview/)
-    assert.match(preview, /<Navigate to="\/login" replace/)
-    assert.equal(preview.includes('signInWithGoogle'), false)
-    assert.equal(preview.includes('isFamilyCatalogEmail'), false)
-    assert.equal(preview.includes('FAMILY_CATALOG'), false)
-    assert.equal(preview.includes('canViewAdminUsers'), false)
-    assert.match(entry, /disabled=\{preview\}/)
-    assert.match(entry, /if \(preview\) return/)
-    assert.match(entry, /תצוגה בלבד/)
-    assert.match(entry, />\s*חזרה\s*</)
-    assert.match(home, /\{session && \(/)
-    assert.match(home, /navigate\('\/login-preview'\)/)
-    assert.match(home, /תצוגת מסך כניסה/)
-    const previewAt = home.indexOf("navigate('/login-preview')")
-    const adminBtnAt = home.indexOf('{showAdminUsers && (')
-    assert.ok(previewAt > 0)
-    assert.ok(adminBtnAt > previewAt, 'preview is for any session; admin users stay separately gated')
-    assert.match(app, /path="\/login-preview"/)
-    assert.match(app, /lazy\(\(\) => import\('\.\/pages\/LoginPreview'\)\)/)
+    const entry = src('../components/auth/LoginEntry.tsx')
+    assert.equal(home.includes('login-preview'), false)
+    assert.equal(home.includes('תצוגת מסך כניסה'), false)
+    assert.equal(home.includes('LogIn'), false)
+    assert.match(home, /showAdminUsers && \(/)
+    assert.match(home, /משתמשים רשומים/)
+    assert.equal(app.includes('login-preview'), false)
+    assert.equal(app.includes('LoginPreview'), false)
+    assert.match(app, /path="\/login"/)
+    assert.equal(entry.includes('preview'), false)
+    assert.equal(entry.includes('תצוגה בלבד'), false)
+    assert.equal(entry.includes('onBack'), false)
+    assert.equal(existsSync(join(dirname(fileURLToPath(import.meta.url)), '../pages/LoginPreview.tsx')), false)
   })
 })

@@ -68,11 +68,8 @@ describe('Google OAuth call sites', () => {
     assert.equal(login.includes(GMAIL_READONLY_SCOPE), false)
     assert.equal(home.includes(GMAIL_READONLY_SCOPE), false)
     const entry = readFileSync(new URL('../components/auth/LoginEntry.tsx', import.meta.url), 'utf8')
-    const preview = readFileSync(new URL('../pages/LoginPreview.tsx', import.meta.url), 'utf8')
     assert.equal(entry.includes(GMAIL_READONLY_SCOPE), false)
     assert.equal(entry.includes('gmail: true'), false)
-    assert.equal(preview.includes('signInWithGoogle'), false)
-    assert.equal(preview.includes(GMAIL_READONLY_SCOPE), false)
   })
 
   it('session reconnect banner stays on identity scopes', () => {
