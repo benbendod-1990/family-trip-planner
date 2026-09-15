@@ -50,6 +50,7 @@ const MIGRATIONS = [
   { file: '0012_trip_share_links.sql',              title: 'לינק שיתוף לטיול בודד (וואטסאפ)', status: 'pending' },
   { file: '0013_fix_share_link_expires_at.sql',     title: 'תיקון שיתוף: expires_at ambiguous', status: 'pending' },
   { file: '0014_fix_claim_share_link_trip_id_ambiguous.sql', title: 'תיקון שיתוף: trip_id ambiguous ב-claim', status: 'pending' },
+  { file: '0015_admin_list_registered_users.sql', title: 'מסך אדמין: משתמשים רשומים (בן/גל בלבד)', status: 'pending' },
 ] as const
 
 function CopyButton({ file }: { file: string }) {

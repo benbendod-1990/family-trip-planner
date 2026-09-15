@@ -25,6 +25,7 @@ const Travel = lazy(() => import('./pages/Travel'))
 const Tasks = lazy(() => import('./pages/Tasks'))
 const Packing = lazy(() => import('./pages/Packing'))
 const TripDoc = lazy(() => import('./pages/TripDoc'))
+const AdminUsers = lazy(() => import('./pages/AdminUsers'))
 
 function App() {
   /*
@@ -42,6 +43,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/join/:token" element={<JoinTrip />} />
         <Route path="/quickstart" element={<Quickstart />} />
+        <Route path="/admin/users" element={<AdminUsers />} />
         <Route path="/profile" element={<Navigate to="/" replace />} />
         <Route path="/trip/:id" element={<AppLayout />}>
           <Route index element={<Navigate to="dashboard" replace />} />
