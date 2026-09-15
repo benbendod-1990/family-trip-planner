@@ -1,9 +1,14 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Button, Stack } from 'myk-library'
-import { CloudOff, Loader2, Check, AlertCircle, RefreshCw, Mail } from 'lucide-react'
+import { CloudOff, Loader2, Check, AlertCircle, RefreshCw, Mail, LogOut } from 'lucide-react'
 import styled from 'styled-components'
 import { useAuth } from '@/lib/AuthContext'
+import {
+  HomeConnectButton,
+  HomeToolAction,
+  HomeToolbar,
+} from '@/components/home/HomeChrome'
 import { useTripStore } from '@/stores/tripStore'
 import { pushLocalToRemote, listTrips, deleteTrip, foldRemoteTrips, deleteCollapsedDuplicates } from '@/lib/tripRepo'
 import { suppressNextPush } from '@/lib/tripAutoSync'
@@ -88,6 +93,11 @@ type Mode = 'idle' | 'syncing' | 'gmail'
 type ToastAction = { label: string; onClick: () => void }
 type ToastState = { kind: 'ok' | 'err' | 'info'; text: string; action?: ToastAction } | null
 
+interface Props {
+  /** `home` is the cream toolbar on the trip list; navbar stays compact. */
+  variant?: 'compact' | 'home'
+}
+
 function formatRelative(iso: string): string {
   const ms = Date.now() - new Date(iso).getTime()
   if (!Number.isFinite(ms) || ms < 0) return iso
@@ -100,7 +110,7 @@ function formatRelative(iso: string): string {
   return `לפני ${days} ימים`
 }
 
-export default function CloudSyncButton() {
+export default function CloudSyncButton({ variant = 'compact' }: Props) {
   const navigate = useNavigate()
   const { session, user, signOut, signInWithGoogle } = useAuth()
   const trips = useTripStore(s => s.trips)
@@ -167,6 +177,17 @@ export default function CloudSyncButton() {
   }, [session?.user?.id])
 
   if (!session) {
+    if (variant === 'home') {
+      return (
+        <HomeConnectButton
+          onClick={() => navigate('/login')}
+          title="התחבר לסנכרון משפחתי"
+        >
+          <CloudOff size={18} strokeWidth={2} />
+          <span>התחבר</span>
+        </HomeConnectButton>
+      )
+    }
     return (
       <Button variant="ghost" onClick={() => navigate('/login')} title="התחבר לסנכרון משפחתי">
         <Stack direction="row" spacing="xs" align="center">
@@ -268,48 +289,96 @@ export default function CloudSyncButton() {
 
   const busy = mode !== 'idle'
   const lastSync = getLastSync(user?.id)
+  const showGmail = isFamilyCatalogEmail(user?.email)
   const gmailTooltip = lastSync
     ? `סורק רק מיילים חדשים מאז ${formatRelative(lastSync.lastSyncIso)}. בסנכרון הקודם: ${lastSync.lastScanned} מיילים, ${lastSync.lastAdded} נוספו לטיולים.`
     : 'סורק את הGmail שלך לאישורי הזמנות (טיסות, מלונות, רכבים) ומשייך לטיולים לפי תאריכים. הסנכרון הראשון יקח קצת יותר.'
+  const syncTitle = `מחובר כ-${user?.email}. מסנכרן את הטיולים עם הענן.`
+  const logoutLabel = `התנתק (${user?.email})`
+  const iconSize = variant === 'home' ? 18 : 16
+  const syncIcon = mode === 'syncing'
+    ? <Loader2 size={iconSize} className="spin" />
+    : <RefreshCw size={iconSize} strokeWidth={2} />
+  const gmailIcon = mode === 'gmail'
+    ? <Loader2 size={iconSize} className="spin" />
+    : <Mail size={iconSize} strokeWidth={2} />
+
+  const toastEl = toast && (
+    <Toast $kind={toast.kind}>
+      {toast.kind === 'ok' && <Check size={16} />}
+      {toast.kind === 'err' && <AlertCircle size={16} />}
+      <span>{toast.text}</span>
+      {toast.action && (
+        <>
+          <ToastButton
+            onClick={() => { toast.action?.onClick(); setToast(null) }}
+          >
+            {toast.action.label}
+          </ToastButton>
+          <ToastDismiss onClick={() => setToast(null)} aria-label="סגור">✕</ToastDismiss>
+        </>
+      )}
+    </Toast>
+  )
+
+  if (variant === 'home') {
+    return (
+      <>
+        <HomeToolbar cols={showGmail ? 3 : 2} data-home-toolbar="signed-in">
+          <HomeToolAction
+            icon={syncIcon}
+            onClick={syncNow}
+            disabled={busy}
+            title={syncTitle}
+          >
+            סנכרן
+          </HomeToolAction>
+          {showGmail && (
+            <HomeToolAction
+              icon={gmailIcon}
+              onClick={syncGmail}
+              disabled={busy}
+              title={gmailTooltip}
+            >
+              Gmail
+            </HomeToolAction>
+          )}
+          <HomeToolAction
+            icon={<LogOut size={iconSize} strokeWidth={2} />}
+            onClick={signOut}
+            title={logoutLabel}
+            aria-label={logoutLabel}
+          >
+            התנתק
+          </HomeToolAction>
+        </HomeToolbar>
+        {toastEl}
+      </>
+    )
+  }
 
   return (
     <>
       <Stack direction="row" spacing="xs" align="center">
-        <Button variant="ghost" onClick={syncNow} disabled={busy} title={`מחובר כ-${user?.email}. מסנכרן את הטיולים עם הענן.`}>
+        <Button variant="ghost" onClick={syncNow} disabled={busy} title={syncTitle}>
           <Stack direction="row" spacing="xs" align="center">
-            {mode === 'syncing' ? <Loader2 size={16} className="spin" /> : <RefreshCw size={16} />}
+            {syncIcon}
             <span>סנכרן</span>
           </Stack>
         </Button>
-        {isFamilyCatalogEmail(user?.email) && (
+        {showGmail && (
           <Button variant="ghost" onClick={syncGmail} disabled={busy} title={gmailTooltip}>
             <Stack direction="row" spacing="xs" align="center">
-              {mode === 'gmail' ? <Loader2 size={16} className="spin" /> : <Mail size={16} />}
+              {gmailIcon}
               <span>Gmail</span>
             </Stack>
           </Button>
         )}
-        <Button variant="ghost" onClick={signOut} title={`התנתק (${user?.email})`}>
-          <span style={{ fontSize: 14 }}>🚪</span>
+        <Button variant="ghost" onClick={signOut} title={logoutLabel} aria-label={logoutLabel}>
+          <LogOut size={16} strokeWidth={2} />
         </Button>
       </Stack>
-      {toast && (
-        <Toast $kind={toast.kind}>
-          {toast.kind === 'ok' && <Check size={16} />}
-          {toast.kind === 'err' && <AlertCircle size={16} />}
-          <span>{toast.text}</span>
-          {toast.action && (
-            <>
-              <ToastButton
-                onClick={() => { toast.action?.onClick(); setToast(null) }}
-              >
-                {toast.action.label}
-              </ToastButton>
-              <ToastDismiss onClick={() => setToast(null)} aria-label="סגור">✕</ToastDismiss>
-            </>
-          )}
-        </Toast>
-      )}
+      {toastEl}
     </>
   )
 }
