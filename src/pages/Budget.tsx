@@ -10,9 +10,18 @@ import { useTripStore, getTotalSpent, getBudgetByCategory } from '@/stores/tripS
 import { useBreakpoint } from '@/hooks/useBreakpoint'
 import { formatCurrency, CURRENCY_OPTIONS } from '@/utils/currency'
 import ExpenseFormModal from '@/components/budget/ExpenseFormModal'
+import UsaBudgetLedger from '@/components/budget/UsaBudgetLedger'
 import type { BudgetItem } from '@/types/budget'
 import { Plus, Pencil, Trash2, Wallet } from 'lucide-react'
 import styled from 'styled-components'
+import {
+  USA_BUDGET_FRAME,
+  USA_BUDGET_SEED_ITEM_IDS,
+  USA_TRIP_ID,
+  formatUsd,
+  usaPaidToSupplierUsd,
+  usaSupplierRemainingUsd,
+} from '@/data/usaBudget'
 
 const CATEGORY_LABEL: Record<string, string> = {
   flights: '✈️ טיסות',
@@ -47,12 +56,16 @@ export default function Budget() {
 
   if (!trip) return null
 
+  const isUsa = trip.id === USA_TRIP_ID
   const totalSpent = getTotalSpent(trip)
   const totalBudget = trip.budget.totalBudget
   const currency = trip.budget.currency
   const remaining = totalBudget - totalSpent
   const overBudget = totalSpent > totalBudget && totalBudget > 0
   const byCategory = getBudgetByCategory(trip)
+  const userItems = isUsa
+    ? trip.budget.items.filter(i => !USA_BUDGET_SEED_ITEM_IDS.has(i.id))
+    : trip.budget.items
 
   const columns: ColumnDef<BudgetItem>[] = [
     { key: 'category', header: 'קטגוריה', cell: r => <Badge size="sm">{CATEGORY_LABEL[r.category]}</Badge> },
@@ -86,34 +99,65 @@ export default function Budget() {
         </Button>
       </Stack>
 
+      {isUsa && (
+        <Alert variant="warning" title="בלי המצאות מ-WhatsApp">
+          אין סכומי «כבר שולם» עם תאריך לטיול 2027 בצ׳אט. אשראי מול אבנר הוזכר בלי סכום. יתרות כאן הן לספקים; התחשבנות בין בני המשפחה ריקה עד שיהיה הסכם עם סכום.
+        </Alert>
+      )}
+
       {overBudget && (
         <Alert variant="error" title="חריגה מהתקציב!">
           {`חרגת ב-${formatCurrency(Math.abs(remaining), currency)} מהתקציב המתוכנן`}
         </Alert>
       )}
 
-      <Grid columns={isMobile ? 1 : isTablet ? 2 : 3} gap="md">
-        <StatCard
-          title="תקציב כולל"
-          value={formatCurrency(totalBudget, currency)}
-          icon={<Wallet size={20} />}
-          description={editBudget ? '' : 'עדכן תקציב'}
-          color="#f59e0b"
-          onClick={!editBudget ? () => { setNewTotal(totalBudget); setNewCurrency(currency); setEditBudget(true) } : undefined}
-        />
-        <StatCard
-          title="הוצאות בפועל"
-          value={formatCurrency(totalSpent, currency)}
-          color={overBudget ? '#ef4444' : '#f59e0b'}
-          trend={totalBudget > 0 ? { value: Math.round((totalSpent / totalBudget) * 100) - 100, label: 'מהתקציב' } : undefined}
-        />
-        <StatCard
-          title="יתרה"
-          value={formatCurrency(Math.abs(remaining), currency)}
-          color={remaining < 0 ? '#ef4444' : '#10b981'}
-          description={remaining < 0 ? 'חריגה מהתקציב' : 'נותר לשימוש'}
-        />
-      </Grid>
+      {isUsa ? (
+        <Grid columns={isMobile ? 1 : isTablet ? 2 : 3} gap="md">
+          <StatCard
+            title="מסגרת עם קרוז"
+            value={formatUsd(USA_BUDGET_FRAME.withCruiseUsd)}
+            icon={<Wallet size={20} />}
+            description="אומדן רמי — לא שולם"
+            color="#f59e0b"
+            onClick={!editBudget ? () => { setNewTotal(totalBudget); setNewCurrency(currency); setEditBudget(true) } : undefined}
+          />
+          <StatCard
+            title="יתרה לספקים"
+            value={formatUsd(usaSupplierRemainingUsd())}
+            color="#B5630F"
+            description="RC 3753418 / 3753537 / 3753278"
+          />
+          <StatCard
+            title="שולם לספק (ידוע)"
+            value={formatUsd(usaPaidToSupplierUsd())}
+            color="#10b981"
+            description="פיקדון אבנר + Refreshment/VOOM של בן"
+          />
+        </Grid>
+      ) : (
+        <Grid columns={isMobile ? 1 : isTablet ? 2 : 3} gap="md">
+          <StatCard
+            title="תקציב כולל"
+            value={formatCurrency(totalBudget, currency)}
+            icon={<Wallet size={20} />}
+            description={editBudget ? '' : 'עדכן תקציב'}
+            color="#f59e0b"
+            onClick={!editBudget ? () => { setNewTotal(totalBudget); setNewCurrency(currency); setEditBudget(true) } : undefined}
+          />
+          <StatCard
+            title="הוצאות בפועל"
+            value={formatCurrency(totalSpent, currency)}
+            color={overBudget ? '#ef4444' : '#f59e0b'}
+            trend={totalBudget > 0 ? { value: Math.round((totalSpent / totalBudget) * 100) - 100, label: 'מהתקציב' } : undefined}
+          />
+          <StatCard
+            title="יתרה"
+            value={formatCurrency(Math.abs(remaining), currency)}
+            color={remaining < 0 ? '#ef4444' : '#10b981'}
+            description={remaining < 0 ? 'חריגה מהתקציב' : 'נותר לשימוש'}
+          />
+        </Grid>
+      )}
 
       {editBudget && (
         <Stack direction="row" spacing="sm" align="center">
@@ -126,7 +170,9 @@ export default function Budget() {
         </Stack>
       )}
 
-      {Object.keys(byCategory).length > 0 && (
+      {isUsa && <UsaBudgetLedger />}
+
+      {!isUsa && Object.keys(byCategory).length > 0 && (
         <Stack direction="column" spacing="sm">
           <Typography variant="h6" style={{ margin: 0 }}>פילוח לפי קטגוריה</Typography>
           {Object.entries(byCategory).map(([cat, vals]) => {
@@ -145,16 +191,18 @@ export default function Budget() {
       )}
 
       <Stack direction="column" spacing="sm">
-        <Typography variant="h6" style={{ margin: 0 }}>רשימת הוצאות</Typography>
-        {trip.budget.items.length === 0 ? (
+        <Typography variant="h6" style={{ margin: 0 }}>
+          {isUsa ? 'הוצאות שנוספו ידנית' : 'רשימת הוצאות'}
+        </Typography>
+        {userItems.length === 0 ? (
           <Typography variant="body2" style={{ color: '#9ca3af', textAlign: 'center', padding: '24px' }}>
-            לא נוספו הוצאות עדיין
+            {isUsa ? 'אין הוצאות ידניות. הכללים והיתרות למעלה מגיעים מה-seed, לא מצ׳אט.' : 'לא נוספו הוצאות עדיין'}
           </Typography>
         ) : (
           <Box style={{ overflowX: 'auto' }}>
             <DataTable
               columns={columns}
-              data={trip.budget.items}
+              data={userItems}
               variant="striped"
               size="sm"
             />
